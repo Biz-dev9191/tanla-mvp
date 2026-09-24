@@ -1,4 +1,5 @@
 import { CustomerProfile, BusinessEvent, AgentExecutionStep } from '../types';
+import { CustomerPersona, matchCustomerPersona } from '../personas';
 
 export interface ContextAnalysisOutput {
   segmentSummary: string;
@@ -12,6 +13,7 @@ export interface ContextAnalysisOutput {
     reassurancePriority: 'High' | 'Standard';
   };
   digitalMaturity: 'Digital-first' | 'Mixed' | 'Assisted';
+  matchedPersona: CustomerPersona;
   sensitivities: string[];
   missingInformation: string[];
   chainOfThought: string[];
@@ -27,18 +29,26 @@ export function runCustomerContextAgent(
   const missingInfo: string[] = [];
   const chainOfThought: string[] = [];
 
-  // Chain-of-thought 1: Persona & Demographic Synthesis
+  // Match against 25+ Persona Catalog
+  const matchedPersona = matchCustomerPersona(customer);
+
+  // Chain-of-thought 1: Persona & Generational Ingestion
   chainOfThought.push(
-    `[Step 1 - Profile Ingestion] Ingesting profile for customer '${customer.name}' (Age: ${customer.age || 34}, Age Group: ${customer.ageGroup}, Segment: ${customer.segment}, Tenure: ${customer.tenureMonths} months, Value Tier: ${customer.customerValue}).`
+    `[Step 1 - Profile Ingestion & Persona Synthesis (CCAP-2026)] Ingested profile for '${customer.name}' (Age: ${customer.age || 34}, Age Group: ${customer.ageGroup}, Segment: ${customer.segment}, Tenure: ${customer.tenureMonths}m, Value: ${customer.customerValue}). Matched to Persona Archetype: '${matchedPersona.name}' (${matchedPersona.cohort} - ${matchedPersona.archetype}).`
   );
 
-  // Chain-of-thought 2: Support History & Sentiment Dynamics
+  // Chain-of-thought 2: Persona Tone & Communication Style Calibration
+  chainOfThought.push(
+    `[Step 2 - Persona Behavioral Matrix] Tone Blueprint: "${matchedPersona.tonePreference}". Communication Style: "${matchedPersona.communicationStyle}". Key Frustration Triggers: [${matchedPersona.frustrationTriggers.join(', ')}]. Reassurance Requirements: "${matchedPersona.reassuranceRequirements}".`
+  );
+
+  // Chain-of-thought 3: Support History & Sentiment Dynamics
   const prevContacts = customer.previousSupportContacts || 0;
   const isHighValue = customer.customerValue === 'VIP' || customer.customerValue === 'High';
   const isAnxious = customer.sentiment === 'Anxious' || customer.sentiment === 'Frustrated' || customer.sentiment === 'Urgent';
 
   chainOfThought.push(
-    `[Step 2 - History & Sentiment Evaluation] Prior support contact count: ${prevContacts}. Observed emotional sentiment: '${customer.sentiment}'. ${
+    `[Step 3 - History & Sentiment Evaluation] Prior support contact count: ${prevContacts}. Observed emotional sentiment: '${customer.sentiment}'. ${
       prevContacts > 1 ? 'Customer exhibits cumulative friction; reassurance buffer required.' : 'No critical friction history.'
     }`
   );
@@ -55,7 +65,7 @@ export function runCustomerContextAgent(
     sensitivities.push(`Customer sentiment flagged as '${customer.sentiment}'. Tone must be calm, direct, and reassuring without corporate defensiveness.`);
   }
 
-  // Chain-of-thought 3: Message Velocity & Attention Fatigue Assessment
+  // Chain-of-thought 4: Message Velocity & Attention Fatigue Assessment
   const transactional24h = customer.recentCommunicationCount24h.transactional || 0;
   const promotional24h = customer.recentCommunicationCount24h.promotional || 0;
   const totalRecent = transactional24h + promotional24h;
@@ -67,10 +77,10 @@ export function runCustomerContextAgent(
   const fatigueRisk = fatigueScore >= 70 ? 'High' : fatigueScore >= 40 ? 'Moderate' : 'Low';
 
   chainOfThought.push(
-    `[Step 3 - Attention Fatigue Calculus] 24h Outbound Velocity: ${transactional24h} transactional, ${promotional24h} promotional (Total: ${totalRecent}). Computed Attention Fatigue Score: ${fatigueScore}/100 (Risk: ${fatigueRisk}).`
+    `[Step 4 - Attention Fatigue Calculus (CTX-FATIGUE-002)] 24h Outbound Velocity: ${transactional24h} transactional, ${promotional24h} promotional (Total: ${totalRecent}). Computed Attention Fatigue Score: ${fatigueScore}/100 (Risk: ${fatigueRisk}).`
   );
 
-  // Chain-of-thought 4: Channel Capability & Masking Constraints
+  // Chain-of-thought 5: Channel Capability & Contactability Check
   if (customer.preferredChannel === 'Email' && !customer.email) {
     missingInfo.push('Customer preferred channel is Email but email address is unverified.');
   }
@@ -79,19 +89,20 @@ export function runCustomerContextAgent(
   }
 
   chainOfThought.push(
-    `[Step 4 - Channel Affinity & Contactability] Preferred channel: ${customer.preferredChannel}. Consent: Transactional=${customer.consent.transactional}, Promotional=${customer.consent.promotional}, Voice=${customer.consent.voice}. Contact verification status: ${missingInfo.length === 0 ? 'Verified' : 'Missing metadata'}.`
+    `[Step 5 - Channel Consent & Verification (CTX-CONSENT-003)] Preferred channel: ${customer.preferredChannel}. Consent: Transactional=${customer.consent.transactional}, Promotional=${customer.consent.promotional}, Voice=${customer.consent.voice}. Contact verification status: ${missingInfo.length === 0 ? 'Verified' : 'Missing metadata'}.`
   );
 
   const duration = Date.now() - startTime + 45;
 
   const step: AgentExecutionStep = {
     agentId: 'context',
-    agentName: 'Customer Context Agent',
+    agentName: 'Customer Context & Persona Agent',
     status: 'completed',
-    summary: `Profile structured: ${customer.name} (${customer.segment}, ${customer.digitalProfile}, ${customer.preferredChannel})`,
+    summary: `Profile structured: ${customer.name} -> Persona: ${matchedPersona.name}`,
     details: [
-      `Understood ${customer.name}'s digital profile as '${customer.digitalProfile}' with language '${customer.preferredLanguage}'.`,
-      `Identified preferred communication channel: ${customer.preferredChannel} (Consent verified).`,
+      `Ingested profile and matched to Persona: '${matchedPersona.name}' (${matchedPersona.cohort}).`,
+      `Persona tone blueprint: "${matchedPersona.tonePreference}".`,
+      `Preferred channel: ${customer.preferredChannel} (Transactional consent verified).`,
       `Assessed 24h message frequency (${totalRecent} recent messages, Fatigue Score: ${fatigueScore}/100, Risk: ${fatigueRisk}).`,
       `Factored ${prevContacts} prior support contacts and '${customer.sentiment}' sentiment dynamics.`,
     ],
@@ -112,10 +123,10 @@ export function runCustomerContextAgent(
       reassurancePriority: isAnxious || prevContacts >= 1 ? 'High' : 'Standard',
     },
     digitalMaturity: customer.digitalProfile,
+    matchedPersona,
     sensitivities,
     missingInformation: missingInfo,
     chainOfThought,
     step,
   };
 }
-

@@ -201,7 +201,7 @@ export interface GuardrailEvaluation {
 }
 
 export interface AgentExecutionStep {
-  agentId: 'context' | 'objective' | 'policy' | 'strategy' | 'message' | 'guardrail';
+  agentId: 'context' | 'objective' | 'policy_tree' | 'policy' | 'strategy' | 'message' | 'guardrail';
   agentName: string;
   status: 'waiting' | 'processing' | 'completed' | 'needs_revision' | 'escalated' | 'suppressed' | 'failed';
   summary: string;

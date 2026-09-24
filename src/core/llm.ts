@@ -15,6 +15,8 @@ export interface LLMAgentDecision {
     name: string;
     segment: string;
     digitalProfile: string;
+    personaCohort?: string;
+    personaArchetype?: string;
     sensitivities: string[];
     fatigueRisk: 'Low' | 'Moderate' | 'High';
     fatigueScore: number;
@@ -26,6 +28,12 @@ export interface LLMAgentDecision {
     customerActionRequired: boolean;
     recommendedAction: 'None' | 'Upload Document' | 'Retry Payment' | 'Contact Support';
     actionFriction: 'Zero Friction' | 'Low (1-Click)' | 'Moderate (Doc Upload)' | 'High (Manual Intervention)';
+    chainOfThought: string[];
+  };
+  policyTreeDecision?: {
+    status: 'EXECUTED' | 'SKIPPED_BASELINE';
+    nodeCount: number;
+    summary: string;
     chainOfThought: string[];
   };
   policyDecision: {
@@ -82,16 +90,17 @@ export async function callLiveLLM(
 
   const systemPrompt = `You are the Aurora Cloud AI Customer Communication Orchestrator—an enterprise multi-agent engine powering governed customer communications across WhatsApp, SMS, Email, and Voice.
 
-You execute 6 specialized collaborative AI agents in an autonomous chain-of-thought pipeline:
-1. Customer Context Agent: Ingests profile, demographic, digital maturity, 24h message velocity, prior support friction, and emotional sentiment.
-2. Objective & Resolution Agent: Performs root-cause analysis on verified telemetry, formulating the primary business objective, friction-minimizing pathway, and support deflection strategy.
-3. Policy Agent (RAG): Traverses enterprise governance rules, retrieves clause-level citations with exact excerpts (e.g., Section 3.1: Automated Refund Notification, Section 5.2: Goodwill Credit Gate), evaluates $0 unauthorized financial promises (POL-FIN-001), opt-in consent, and PII masking.
-4. Communication Strategy Agent: Synthesizes channel suitability (WhatsApp vs SMS vs Email vs Voice), tone matrix (Direct, Calm, Competent), formality, CTA friction, and dispatch verdict (SEND | SUPPRESS | ESCALATE).
-5. Message Generation Agent: Crafts 4 hyper-tailored channel messages complying strictly with the Aurora Brand Voice:
-   - ZERO exclamation marks (!) anywhere in customer communications.
-   - Sentence case throughout, second person ('you').
-   - Grounded solely in verified telemetry (never hallucinate settlement dates or unverified compensation).
-6. Critic & Guardrail Agent: Executes rigorous 7-point validation. If any violation occurs (exclamation marks, unmasked cards, length limit overflows), it initiates an autonomous reflection loop to refine the draft before final sign-off.
+You execute 7 specialized collaborative AI agents strictly governed by organizational policy documents:
+1. Customer Context & Persona Agent (CCAP-2026): Maps customer to 1 of 25+ distinct demographic/psychographic personas across cohorts (Gen Z, Millennial, Gen X, Baby Boomer, Silent Gen), evaluates 24h message velocity attention fatigue (0-100), and checks channel consent.
+2. Objective & Resolution Agent (ORAP-2026): Extracts verified root causes from telemetry, defines the primary resolution target, and optimizes for zero-friction support deflection.
+3. Policy Tree Generator Agent (PTGAP-2026): Extracts dynamic hierarchical decision DAGs from uploaded documents. If NO custom policy document is uploaded, explicitly marks status as SKIPPED_BASELINE and passes the enterprise baseline tree.
+4. Enterprise Policy & Compliance Agent (EPAP-2026): Traverses the policy tree, enforces statutory laws (TRAI/GDPR/TCPA), retrieves clause citations, applies PII masking (card last 4 digits only), and gates financial compensation > $0 behind mandatory Human Approval (POL-FIN-001).
+5. Communication Strategy Agent (CSAP-2026): Calibrates channel routing and tone matrix specifically for the matched Persona (e.g., Casual-competent for Gen Z, Step-by-step reassuring for Baby Boomers, High-efficiency for Millennials).
+6. Multi-Channel Message Generation Agent (CMGAP-2026): Drafts messages across WhatsApp, SMS, Email, and Voice.
+   - ABSOLUTE RAILGUARD: ZERO EXCLAMATION MARKS (!) anywhere in customer communications.
+   - Strict character limits: SMS <= 160 characters (GSM-7), WhatsApp <= 1024.
+   - Grounded solely in verified telemetry (never hallucinate unverified refund dates, discounts, or voucher codes).
+7. Critic, Safety Guardrail & Reflection Agent (CSGAP-2026): Executes 7-point validation. If violations (exclamation marks, unmasked cards, length overflows) are detected, executes autonomous reflection loops (up to 2 iterations) to refine the draft before final sign-off.
 
 Return a strictly valid JSON object matching the requested schema.`;
 
@@ -108,9 +117,9 @@ BUSINESS OBJECTIVE:
 Description: ${input.objectiveText || 'N/A'}
 Filter Pills: ${input.objectivePills.join(', ') || 'Resolve issue'}
 
-${input.customRulesText ? `CUSTOM POLICY DOCUMENT:\n${input.customRulesText}` : ''}
+${input.customRulesText ? `CUSTOM POLICY DOCUMENT:\n${input.customRulesText}` : 'CUSTOM POLICY DOCUMENT: None uploaded (Skip dynamic policy tree generation and use Enterprise Baseline).'}
 
-Execute the 6 specialized agents with step-by-step chain of thought, retrieve clause citations with excerpts, synthesize channel strategies, generate 4 compliant messages (NO exclamation marks), run Critic verification, and produce the final decision trace.`;
+Execute the 7 specialized agents with step-by-step chain of thought, retrieve clause citations with excerpts, synthesize channel strategies, generate 4 compliant messages (NO exclamation marks), run Critic verification, and produce the final decision trace.`;
 
   // 1. Try Google Gemini API if key is present
   if (geminiKey) {
@@ -122,60 +131,60 @@ Execute the 6 specialized agents with step-by-step chain of thought, retrieve cl
           contents: [
             {
               role: 'user',
-              parts: [{ text: `${systemPrompt}\n\n${userPrompt}\n\nReturn JSON only.` }],
-            },
+              parts: [{ text: `${systemPrompt}\n\n${userPrompt}\n\nProvide the output in pure JSON format only with no markdown backticks around the json.` }]
+            }
           ],
           generationConfig: {
-            responseMimeType: 'application/json',
-            temperature: 0.2,
-          },
-        }),
+            responseMimeType: "application/json",
+            temperature: 0.1,
+          }
+        })
       });
 
       if (res.ok) {
         const data = await res.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (text) {
-          return JSON.parse(text) as LLMAgentDecision;
+        const rawText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          const cleanText = rawText.replace(/```json/gi, '').replace(/```/g, '').trim();
+          return JSON.parse(cleanText) as LLMAgentDecision;
         }
       }
-    } catch (err) {
-      console.warn('Gemini API call error, continuing to fallback:', err);
+    } catch (e) {
+      console.warn("Gemini API call failed, attempting fallback:", e);
     }
   }
 
-  // 2. Try OpenRouter API if key is present
+  // 2. Try OpenRouter API if available
   if (openrouterKey) {
     try {
-      const model = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5';
       const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${openrouterKey}`,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${openrouterKey.trim()}`,
-          'HTTP-Referer': 'https://auroracloud.app',
+          'HTTP-Referer': 'https://auroracloud.tanla.com',
           'X-Title': 'Aurora Cloud Orchestrator',
         },
         body: JSON.stringify({
-          model,
+          model: 'meta-llama/llama-3.3-70b-instruct',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
+            { role: 'user', content: userPrompt }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.2,
-        }),
+          temperature: 0.1,
+        })
       });
 
       if (res.ok) {
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content;
-        if (text) {
-          return JSON.parse(text) as LLMAgentDecision;
+        const content = data?.choices?.[0]?.message?.content;
+        if (content) {
+          return JSON.parse(content) as LLMAgentDecision;
         }
       }
-    } catch (err) {
-      console.warn('OpenRouter API call error, continuing to fallback:', err);
+    } catch (e) {
+      console.warn("OpenRouter API call failed:", e);
     }
   }
 
@@ -185,33 +194,31 @@ Execute the 6 specialized agents with step-by-step chain of thought, retrieve cl
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${openaiKey}`,
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiKey}`,
         },
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
             { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
+            { role: 'user', content: userPrompt }
           ],
           response_format: { type: 'json_object' },
-          temperature: 0.2,
-        }),
+          temperature: 0.1,
+        })
       });
 
       if (res.ok) {
         const data = await res.json();
-        const text = data.choices?.[0]?.message?.content;
-        if (text) {
-          return JSON.parse(text) as LLMAgentDecision;
+        const content = data?.choices?.[0]?.message?.content;
+        if (content) {
+          return JSON.parse(content) as LLMAgentDecision;
         }
       }
-    } catch (err) {
-      console.warn('OpenAI API call error, continuing to fallback:', err);
+    } catch (e) {
+      console.warn("OpenAI API call failed:", e);
     }
   }
 
-  // Return null if no external keys configured (orchestrator will use built-in engine)
   return null;
 }
-

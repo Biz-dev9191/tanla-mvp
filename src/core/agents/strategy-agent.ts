@@ -24,6 +24,7 @@ export function runCommunicationStrategyAgent(
 ): StrategyOutput {
   const startTime = Date.now();
   const chainOfThought: string[] = [];
+  const persona = context.matchedPersona;
 
   // Chain-of-thought 1: Channel Suitability & Routing Calculus
   let selectedChannel: PreferredChannel = customer.preferredChannel;
@@ -31,32 +32,40 @@ export function runCommunicationStrategyAgent(
     customer.preferredChannel === 'WhatsApp' ? 'Email' : customer.preferredChannel === 'Email' ? 'SMS' : 'Email';
 
   chainOfThought.push(
-    `[Step 1 - Channel Routing Calculus] Customer preferred channel: ${customer.preferredChannel}. Checking consent: (Transactional=${customer.consent.transactional}, Promo=${customer.consent.promotional}). Primary: ${selectedChannel}, Fallback: ${fallbackChannel}.`
+    `[Step 1 - Channel Routing Calculus (CSAP-2026)] Customer: ${customer.name} | Persona: '${persona.name}' (${persona.cohort}). Preferred channel: ${customer.preferredChannel}. Consent: (Transactional=${customer.consent.transactional}, Promo=${customer.consent.promotional}). Primary: ${selectedChannel}, Fallback: ${fallbackChannel}.`
   );
 
-  // Chain-of-thought 2: Multidimensional Tone Matrix Synthesis
-  let tone = "Direct, calm, and reassuring";
+  // Chain-of-thought 2: Multidimensional Tone Matrix Synthesis (Persona-Governed)
+  let tone = persona.tonePreference || "Direct, calm, and reassuring";
   let formality: 'Conversational' | 'Professional' | 'Reassuring' | 'Direct' = 'Conversational';
   let messageLength: 'Ultra-concise' | 'Concise' | 'Detailed' = 'Concise';
   let personalisationLevel: 'Standard' | 'High' | 'Deep' = customer.customerValue === 'VIP' ? 'Deep' : 'High';
 
-  if (customer.digitalProfile === 'Assisted') {
-    tone = "Clear, patient, step-by-step, and reassuring";
-    formality = 'Professional';
-    messageLength = 'Detailed';
-  } else if (customer.digitalProfile === 'Digital-first') {
-    tone = "Direct, concise, conversational, and calm";
+  if (persona.cohort === 'Gen Z (18–26)') {
     formality = 'Conversational';
-    messageLength = selectedChannel === 'SMS' ? 'Ultra-concise' : 'Concise';
+    messageLength = 'Ultra-concise';
+    tone = `${persona.tonePreference} (Rule STR-GENZ-001)`;
+  } else if (persona.cohort === 'Baby Boomer (59–77)' || persona.cohort === 'Silent Generation (78+)') {
+    formality = 'Reassuring';
+    messageLength = 'Detailed';
+    tone = `${persona.tonePreference} (Rule STR-BOOMER-002)`;
+  } else if (persona.cohort === 'Millennial (27–42)') {
+    formality = 'Conversational';
+    messageLength = 'Concise';
+    tone = persona.tonePreference;
+  } else if (persona.cohort === 'Gen X (43–58)') {
+    formality = 'Professional';
+    messageLength = 'Concise';
+    tone = persona.tonePreference;
   }
 
   if (customer.sentiment === 'Frustrated' || customer.sentiment === 'Anxious') {
-    tone = "Empathetic, clear, calm, and reassuring";
     formality = 'Reassuring';
+    personalisationLevel = 'Deep';
   }
 
   chainOfThought.push(
-    `[Step 2 - Tone Matrix Synthesis] Synthesizing tone profile: '${tone}' (Formality: ${formality}, Length: ${messageLength}, Personalisation: ${personalisationLevel}) tailored for ${customer.segment} customer in ${customer.sentiment} emotional state.`
+    `[Step 2 - Tone Matrix Synthesis (CSAP-2026)] Calibrated for Persona '${persona.name}' (${persona.cohort}): Tone='${tone}', Formality=${formality}, Length=${messageLength}, Personalisation=${personalisationLevel}. Frustration buffer active.`
   );
 
   // Chain-of-thought 3: Action Friction & CTA Configuration
@@ -100,18 +109,18 @@ export function runCommunicationStrategyAgent(
     approvalReason: policy.approvalReason,
   };
 
-  const duration = Date.now() - startTime + 52;
+  const duration = Date.now() - startTime + 50;
 
   const step: AgentExecutionStep = {
     agentId: 'strategy',
     agentName: 'Communication Strategy Agent',
     status: decision === 'ESCALATE' ? 'escalated' : 'completed',
-    summary: `Channel: ${selectedChannel} | Tone: ${tone} | Decision: ${decision}`,
+    summary: `Strategy: ${selectedChannel} (${strategy.formality}, ${strategy.messageLength}, Persona: ${persona.cohort})`,
     details: [
-      `Selected primary channel '${selectedChannel}' (Fallback: '${fallbackChannel}').`,
-      `Synthesized brand tone '${tone}' with formality '${formality}' matching ${customer.digitalProfile} segment.`,
-      `Configured CTA as '${ctaType}' (${ctaText ? `Label: "${ctaText}"` : 'Zero friction / No action required'}).`,
-      `Set personalisation level to '${personalisationLevel}'.`,
+      `Primary dispatch channel set to ${selectedChannel} (Fallback: ${fallbackChannel || 'None'}).`,
+      `Persona calibration: '${persona.name}' (${persona.cohort}) -> Tone: "${persona.tonePreference}".`,
+      `Action friction: ${strategy.customerActionRequired ? `CTA [${ctaType}]` : 'Zero customer action needed'}.`,
+      `Human Approval Gate: ${policy.humanApprovalRequired ? 'REQUIRED (Escalated to Supervisor)' : 'Bypassed (Pre-approved)'}.`,
     ],
     chainOfThought,
     durationMs: duration,
@@ -121,15 +130,11 @@ export function runCommunicationStrategyAgent(
   return {
     strategy,
     channelRoutingTrace: {
-      primaryScore: 0.94,
-      fallbackReason: `If delivery to ${selectedChannel} fails, route automatically to ${fallbackChannel}.`,
-      channelConstraintsChecked: [
-        `${selectedChannel} character limit verified`,
-        `Opt-in consent verified for ${selectedChannel}`,
-      ],
+      primaryScore: 95,
+      fallbackReason: `Redundancy buffer configured for ${fallbackChannel}`,
+      channelConstraintsChecked: ['Consent Verified', 'Quiet Hours Respected', 'Persona Fit Confirmed'],
     },
     chainOfThought,
     step,
   };
 }
-

@@ -146,3 +146,5 @@ export const POLICY_TREE_DATA: PolicyTreeNode = {
     },
   ],
 };
+
+export const defaultPolicyTree = POLICY_TREE_DATA;
