@@ -13,10 +13,17 @@ import {
   AlertTriangle,
   ShieldCheck,
   ShieldAlert,
+  Calculator,
+  HelpCircle,
+  Clock,
+  Sparkles,
+  BarChart3,
+  HeartHandshake,
+  CheckCircle2,
 } from 'lucide-react';
 
 export const KnowledgeBaseView: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<'agent_policies' | 'personas' | 'hierarchy' | 'channels'>('agent_policies');
+  const [activeSection, setActiveSection] = useState<'agent_policies' | 'personas' | 'hierarchy' | 'channels' | 'heuristics'>('agent_policies');
   const [personaSearch, setPersonaSearch] = useState<string>('');
   const [selectedCohort, setSelectedCohort] = useState<string>('all');
   const [selectedAgentPolicy, setSelectedAgentPolicy] = useState<string>('CCAP-2026-v2.4');
@@ -41,14 +48,14 @@ export const KnowledgeBaseView: React.FC = () => {
       <div className="pb-4 border-b border-aurora-neutral-200">
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-            Agent Governance & Knowledge Base
+            Knowledge Base & Governance
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-          Governed Knowledge Base & Agent Engine
+          Knowledge Base & Agent Governance
         </h1>
         <p className="text-sm text-aurora-neutral-700 mt-1 max-w-4xl leading-relaxed">
-          The central repository for specialized AI agent governance rules, demographic customer personas, multi-agent transformation hierarchies, and channel formatting constraints.
+          The central guide for AI agent governance rules, customer personas, multi-agent execution pipeline, channel guidelines, and scoring formulas.
         </p>
       </div>
 
@@ -56,9 +63,10 @@ export const KnowledgeBaseView: React.FC = () => {
       <div className="flex space-x-2 border-b border-aurora-neutral-200 pb-3 overflow-x-auto">
         {[
           { id: 'agent_policies', label: 'Agent Governance Rules (7)', icon: Shield },
+          { id: 'heuristics', label: 'Scoring & Heuristic Formulas', icon: Calculator },
           { id: 'personas', label: 'Customer Personas (25+)', icon: Users },
-          { id: 'hierarchy', label: 'Transformation Hierarchy', icon: Layers },
-          { id: 'channels', label: 'Channel Constraints', icon: Smartphone },
+          { id: 'hierarchy', label: 'Execution Pipeline', icon: Layers },
+          { id: 'channels', label: 'Channel Guidelines', icon: Smartphone },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeSection === tab.id;
@@ -138,7 +146,7 @@ export const KnowledgeBaseView: React.FC = () => {
 
               <div className="p-3 bg-aurora-neutral-50 rounded-lg border border-aurora-neutral-200 text-xs max-w-sm">
                 <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-1">
-                  Transformation Layer
+                  Pipeline Role
                 </span>
                 <p className="text-aurora-neutral-600 leading-snug">{currentPolicy.transformationRole}</p>
               </div>
@@ -147,18 +155,18 @@ export const KnowledgeBaseView: React.FC = () => {
             {/* Governance Objective */}
             <div className="p-4 bg-sky-50/70 rounded-lg border border-sky-200 space-y-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-sky-800 block">
-                Official Governance Objective
+                Primary Objective
               </span>
               <p className="text-xs text-sky-950 leading-relaxed font-medium">
                 {currentPolicy.governanceObjective}
               </p>
             </div>
 
-            {/* Mandatory Inputs & Governed Outputs */}
+            {/* Ingested Inputs & Produced Outputs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-2 text-xs">
                 <span className="font-bold text-aurora-neutral-800 uppercase tracking-wider block text-[11px]">
-                  Mandatory Ingested Inputs
+                  Input Information
                 </span>
                 <ul className="space-y-1.5 text-aurora-neutral-700">
                   {currentPolicy.mandatoryInputs.map((input, idx) => (
@@ -172,7 +180,7 @@ export const KnowledgeBaseView: React.FC = () => {
 
               <div className="p-4 rounded-lg bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-2 text-xs">
                 <span className="font-bold text-aurora-neutral-800 uppercase tracking-wider block text-[11px]">
-                  Governed Transformation Outputs
+                  Produced Outputs
                 </span>
                 <ul className="space-y-1.5 text-aurora-neutral-700">
                   {currentPolicy.governedOutputs.map((output, idx) => (
@@ -189,7 +197,7 @@ export const KnowledgeBaseView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-emerald-50/60 border border-emerald-200 space-y-2 text-xs">
                 <span className="font-bold text-emerald-900 uppercase tracking-wider block text-[11px]">
-                  Permitted Agent Actions
+                  Allowed Actions
                 </span>
                 <ul className="space-y-1.5 text-emerald-950">
                   {currentPolicy.permittedActions.map((action, idx) => (
@@ -203,7 +211,7 @@ export const KnowledgeBaseView: React.FC = () => {
 
               <div className="p-4 rounded-lg bg-red-50/60 border border-red-200 space-y-2 text-xs">
                 <span className="font-bold text-red-900 uppercase tracking-wider block text-[11px]">
-                  Prohibited Agent Actions
+                  Prohibited Actions
                 </span>
                 <ul className="space-y-1.5 text-red-950">
                   {currentPolicy.prohibitedActions.map((action, idx) => (
@@ -216,12 +224,12 @@ export const KnowledgeBaseView: React.FC = () => {
               </div>
             </div>
 
-            {/* Strict Railguards & Anti-Hallucination Constraints */}
+            {/* Strict Quality Checks & Anti-Hallucination Constraints */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="p-4 rounded-lg bg-amber-50/60 border border-amber-200 space-y-2 text-xs">
                 <div className="flex items-center space-x-1.5 text-amber-900 font-bold">
                   <ShieldCheck strokeWidth={1.5} className="w-4 h-4 text-amber-700" />
-                  <span className="uppercase tracking-wider text-[11px]">Strict Railguards</span>
+                  <span className="uppercase tracking-wider text-[11px]">Strict Quality Checks</span>
                 </div>
                 <ul className="space-y-1.5 text-amber-950">
                   {currentPolicy.strictRailguards.map((rg, idx) => (
@@ -233,7 +241,7 @@ export const KnowledgeBaseView: React.FC = () => {
               <div className="p-4 rounded-lg bg-purple-50/60 border border-purple-200 space-y-2 text-xs">
                 <div className="flex items-center space-x-1.5 text-purple-900 font-bold">
                   <ShieldAlert strokeWidth={1.5} className="w-4 h-4 text-purple-700" />
-                  <span className="uppercase tracking-wider text-[11px]">Anti-Hallucination Constraints</span>
+                  <span className="uppercase tracking-wider text-[11px]">Zero-Hallucination Rules</span>
                 </div>
                 <ul className="space-y-1.5 text-purple-950">
                   {currentPolicy.antiHallucinationConstraints.map((ah, idx) => (
@@ -246,14 +254,14 @@ export const KnowledgeBaseView: React.FC = () => {
             {/* Governance Rules Table */}
             <div className="space-y-3">
               <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-700">
-                Agent Policy Rules ({currentPolicy.rules.length})
+                Agent Specific Rules ({currentPolicy.rules.length})
               </h3>
               <div className="border border-aurora-neutral-200 rounded-lg overflow-hidden">
                 <table className="w-full text-left text-xs">
                   <thead className="bg-aurora-neutral-100 text-aurora-neutral-600 uppercase text-[10px] tracking-wider border-b border-aurora-neutral-200">
                     <tr>
                       <th className="py-2.5 px-3">Rule Code</th>
-                      <th className="py-2.5 px-3">Rule Name & Description</th>
+                      <th className="py-2.5 px-3">Rule Name & Explanation</th>
                       <th className="py-2.5 px-3">Category</th>
                       <th className="py-2.5 px-3">Enforcement</th>
                     </tr>
@@ -296,7 +304,7 @@ export const KnowledgeBaseView: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="p-3 bg-aurora-neutral-50 rounded-lg border border-aurora-neutral-200 text-xs space-y-1.5">
                 <span className="font-bold text-aurora-neutral-800 uppercase tracking-wider block text-[11px]">
-                  Decision Heuristics
+                  Decision Guidelines
                 </span>
                 <ul className="space-y-1 text-aurora-neutral-700 text-[11px]">
                   {currentPolicy.decisionHeuristics.map((dh, i) => (
@@ -310,7 +318,7 @@ export const KnowledgeBaseView: React.FC = () => {
 
               <div className="p-3 bg-red-50/50 rounded-lg border border-red-200 text-xs space-y-1.5">
                 <span className="font-bold text-red-800 uppercase tracking-wider block text-[11px]">
-                  Mandatory Human Approval Triggers
+                  Human Supervisor Approval Triggers
                 </span>
                 <ul className="space-y-1 text-red-900 text-[11px]">
                   {currentPolicy.escalationTriggers.map((et, i) => (
@@ -326,7 +334,170 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: 25+ Customer Personas Catalog */}
+      {/* TAB 2: Scoring & Heuristic Formulas (NEW TAB) */}
+      {activeSection === 'heuristics' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-6">
+            <div>
+              <h2 className="text-lg font-bold text-aurora-neutral-900">
+                System Heuristics & Calculation Formulas
+              </h2>
+              <p className="text-xs text-aurora-neutral-600 mt-1">
+                Every score, risk tier, and decision threshold in Aurora Cloud is backed by deterministic business logic. Here is how each metric is calculated.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Formula Card 1: Attention Fatigue */}
+              <div className="p-5 rounded-xl bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-aurora-neutral-200">
+                  <div className="flex items-center space-x-2">
+                    <Clock strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                    <h3 className="font-bold text-sm text-aurora-neutral-900">24-Hour Attention Fatigue Score</h3>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-aurora-primary bg-aurora-primary-light px-2 py-0.5 rounded">
+                    0 to 100 Scale
+                  </span>
+                </div>
+                <p className="text-xs text-aurora-neutral-700 leading-relaxed">
+                  Measures recent message frequency and emotional state to prevent customer inbox fatigue, spam complaints, and opt-outs.
+                </p>
+                
+                <div className="p-3 bg-white rounded-lg border border-aurora-neutral-200 font-mono text-xs text-aurora-neutral-900 space-y-1">
+                  <div className="font-bold text-aurora-primary">Fatigue Score = (Velocity × 25) + Sentiment Modifier</div>
+                  <div className="text-[11px] text-aurora-neutral-500">Velocity = Total Transactional + Promotional messages in last 24h</div>
+                </div>
+
+                <div className="space-y-1.5 text-xs">
+                  <span className="font-bold text-aurora-neutral-800 text-[11px] uppercase tracking-wider block">Decision Action Bands</span>
+                  <div className="grid grid-cols-3 gap-2 text-[11px]">
+                    <div className="p-2 rounded bg-emerald-50 border border-emerald-200">
+                      <span className="font-bold text-emerald-800 block">0–30 (Low)</span>
+                      <span className="text-emerald-950 text-[10px]">Safe to send. Full dispatch allowed.</span>
+                    </div>
+                    <div className="p-2 rounded bg-amber-50 border border-amber-200">
+                      <span className="font-bold text-amber-800 block">31–69 (Medium)</span>
+                      <span className="text-amber-950 text-[10px]">Consolidate updates into single brief.</span>
+                    </div>
+                    <div className="p-2 rounded bg-red-50 border border-red-200">
+                      <span className="font-bold text-red-800 block">70–100 (High)</span>
+                      <span className="text-red-950 text-[10px]">Auto-suppress non-critical messages.</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Formula Card 2: 7-Point Quality Scorecard */}
+              <div className="p-5 rounded-xl bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-aurora-neutral-200">
+                  <div className="flex items-center space-x-2">
+                    <ShieldCheck strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                    <h3 className="font-bold text-sm text-aurora-neutral-900">7-Point Governance Scorecard</h3>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Pass / Fail Gate
+                  </span>
+                </div>
+                <p className="text-xs text-aurora-neutral-700 leading-relaxed">
+                  Before any message is ready to send, the autonomous Critic agent executes 7 deterministic quality checks:
+                </p>
+                
+                <div className="space-y-1.5 text-xs">
+                  {[
+                    { name: '1. Personalisation Depth', desc: 'Customer name on line 1, exact account & event context.' },
+                    { name: '2. Tone Alignment', desc: 'Direct, Calm, Competent. Strictly zero exclamation marks.' },
+                    { name: '3. Policy Compliance', desc: 'Complies with financial liability and consent rules.' },
+                    { name: '4. Factual Grounding', desc: 'Only cites verified facts, numbers, and references.' },
+                    { name: '5. Channel Fit', desc: 'Adheres to character limits and formatting rules.' },
+                    { name: '6. Fatigue Check', desc: 'Verifies customer is below 24-hour message thresholds.' },
+                    { name: '7. Zero Hallucinations', desc: 'Zero unauthorized promises, discounts, or dates.' },
+                  ].map((chk, i) => (
+                    <div key={i} className="flex items-start space-x-2 p-1.5 rounded bg-white border border-aurora-neutral-200 text-[11px]">
+                      <CheckCircle2 strokeWidth={2} className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <strong className="text-aurora-neutral-900">{chk.name}:</strong>{' '}
+                        <span className="text-aurora-neutral-600">{chk.desc}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Formula Card 3: Inbound Support Deflection */}
+              <div className="p-5 rounded-xl bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-aurora-neutral-200">
+                  <div className="flex items-center space-x-2">
+                    <HeartHandshake strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                    <h3 className="font-bold text-sm text-aurora-neutral-900">Inbound Support Deflection Logic</h3>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+                    Deflection Rate ~85%+
+                  </span>
+                </div>
+                <p className="text-xs text-aurora-neutral-700 leading-relaxed">
+                  Support calls are deflected by proactively answering the 4 questions customers always call about before they have to ask:
+                </p>
+
+                <div className="space-y-2 text-xs">
+                  <div className="p-2.5 bg-white rounded-lg border border-aurora-neutral-200">
+                    <span className="font-bold text-aurora-neutral-900 block">1. What happened to my transaction?</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">State clear event outcome (e.g. Order #4012 failed, payment was captured).</span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-aurora-neutral-200">
+                    <span className="font-bold text-aurora-neutral-900 block">2. Where is my money?</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">State exact refund reference number and 3-5 business days banking cycle.</span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-aurora-neutral-200">
+                    <span className="font-bold text-aurora-neutral-900 block">3. Do I need to do anything?</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">Explicitly declare "No action is required from you" to eliminate repeat inquiries.</span>
+                  </div>
+                  <div className="p-2.5 bg-white rounded-lg border border-aurora-neutral-200">
+                    <span className="font-bold text-aurora-neutral-900 block">4. What if I still need help?</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">Provide a direct 1-click support tracking link without forcing a phone call.</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Formula Card 4: Sentiment Trajectory Tracking */}
+              <div className="p-5 rounded-xl bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-3">
+                <div className="flex items-center justify-between pb-2 border-b border-aurora-neutral-200">
+                  <div className="flex items-center space-x-2">
+                    <BarChart3 strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                    <h3 className="font-bold text-sm text-aurora-neutral-900">Sentiment Trajectory Scoring</h3>
+                  </div>
+                  <span className="font-mono text-xs font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
+                    Multi-Turn Analysis
+                  </span>
+                </div>
+                <p className="text-xs text-aurora-neutral-700 leading-relaxed">
+                  During multi-turn customer roleplay simulations, emotional trajectory is scored across 5 sentiment bands:
+                </p>
+
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between p-2 bg-white rounded border border-aurora-neutral-200">
+                    <span className="font-bold text-red-700">Frustrated / Anxious</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">Initial inbound state • High friction & worry</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-white rounded border border-aurora-neutral-200">
+                    <span className="font-bold text-amber-700">Neutral / Inquiring</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">Seeking clarification on reference ID or timeline</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-white rounded border border-aurora-neutral-200">
+                    <span className="font-bold text-emerald-700">Reassured / Relieved</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">Issue resolved autonomously • Zero-action acknowledged</span>
+                  </div>
+                  <div className="flex items-center justify-between p-2 bg-white rounded border border-aurora-neutral-200">
+                    <span className="font-bold text-sky-700">Delighted (5/5 Rating)</span>
+                    <span className="text-aurora-neutral-600 text-[11px]">Customer thanks agent and closes conversation</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 3: 25+ Customer Personas Catalog */}
       {activeSection === 'personas' && (
         <div className="space-y-6">
           {/* Persona Cohort Filter & Search */}
@@ -411,7 +582,7 @@ export const KnowledgeBaseView: React.FC = () => {
                       </div>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Reassurance Requirement</span>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700 block">Reassurance Needs</span>
                       <p className="text-emerald-900 text-[11px] leading-snug">{persona.reassuranceRequirements}</p>
                     </div>
                   </div>
@@ -427,16 +598,16 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: Transformation Layer Hierarchy */}
+      {/* TAB 4: Multi-Agent Execution Pipeline */}
       {activeSection === 'hierarchy' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-6">
             <div>
               <h2 className="text-lg font-bold text-aurora-neutral-900">
-                Multi-Agent Transformation Pipeline & Execution Flow
+                Multi-Agent Execution Pipeline
               </h2>
               <p className="text-xs text-aurora-neutral-600 mt-1">
-                Visualizing the sequential layers through which a raw customer event is ingested, contextualized, compliant-checked, strategically formatted, drafted, and verified by the Critic agent.
+                Visualizing the sequential layers through which customer information is ingested, contextualized, compliance-checked, strategically formatted, drafted, and verified by the Critic agent.
               </p>
             </div>
 
@@ -481,7 +652,7 @@ export const KnowledgeBaseView: React.FC = () => {
 
                     <div className="p-2.5 bg-amber-50/70 rounded-lg border border-amber-200">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 block mb-0.5">
-                        Key Railguards Enforced
+                        Key Quality Checks
                       </span>
                       <div className="flex flex-wrap gap-1 mt-0.5">
                         {layer.keyRailguards.map((rg, i) => (
@@ -499,7 +670,7 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: Channels */}
+      {/* TAB 5: Channel Guidelines */}
       {activeSection === 'channels' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(CHANNEL_GUIDELINES).map(([channel, data]) => (
@@ -511,16 +682,16 @@ export const KnowledgeBaseView: React.FC = () => {
                 </span>
               </div>
               <div>
-                <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-0.5">Structural Guideline:</span>
+                <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-0.5">Structure & Layout:</span>
                 <p className="text-aurora-neutral-700">{data.structure}</p>
               </div>
               <div className="grid grid-cols-2 gap-2 text-[11px]">
                 <div className="p-2 bg-aurora-neutral-50 rounded border border-aurora-neutral-200">
-                  <span className="font-bold text-aurora-neutral-700 block text-[10px] uppercase">Greeting Format:</span>
+                  <span className="font-bold text-aurora-neutral-700 block text-[10px] uppercase">Greeting:</span>
                   <span className="text-aurora-neutral-900 italic font-mono">{data.greeting}</span>
                 </div>
                 <div className="p-2 bg-aurora-neutral-50 rounded border border-aurora-neutral-200">
-                  <span className="font-bold text-aurora-neutral-700 block text-[10px] uppercase">Signoff Format:</span>
+                  <span className="font-bold text-aurora-neutral-700 block text-[10px] uppercase">Sign-Off:</span>
                   <span className="text-aurora-neutral-900 italic font-mono">{data.signoff}</span>
                 </div>
               </div>
@@ -534,7 +705,7 @@ export const KnowledgeBaseView: React.FC = () => {
                   ))}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 mr-1">Prohibitions:</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-red-700 mr-1">Prohibited:</span>
                   {data.prohibitions.map((pr, i) => (
                     <span key={i} className="text-[10px] bg-red-50 text-red-800 border border-red-200 px-1.5 py-0.2 rounded">
                       {pr}

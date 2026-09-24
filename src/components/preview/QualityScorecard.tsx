@@ -59,8 +59,8 @@ export const QualityScorecard: React.FC<QualityScorecardProps> = ({ guardrails }
         <div className="flex items-center space-x-2">
           <Award strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
           <div>
-            <h3 className="text-sm font-bold text-aurora-neutral-900">Message Governance & Quality Scorecard</h3>
-            <p className="text-[11px] text-aurora-neutral-500">Autonomous Critic Verification & Reflection Metrics</p>
+            <h3 className="text-sm font-bold text-aurora-neutral-900">7-Point Quality & Governance Scorecard</h3>
+            <p className="text-[11px] text-aurora-neutral-500">Autonomous verification checks executed before message dispatch</p>
           </div>
         </div>
         <span className="text-xs text-aurora-neutral-500 font-mono">
@@ -74,10 +74,10 @@ export const QualityScorecard: React.FC<QualityScorecardProps> = ({ guardrails }
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs font-bold text-aurora-accent">
               <RefreshCw strokeWidth={1.5} className="w-4 h-4 text-aurora-accent" />
-              <span>Autonomous Multi-Agent Reflection Loops ({guardrails.reflectionLoops.length})</span>
+              <span>Multi-Agent Self-Correction Loops ({guardrails.reflectionLoops.length})</span>
             </div>
             <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-white text-aurora-accent border border-aurora-accent/30">
-              Autonomous Self-Correction
+              Auto-Corrected
             </span>
           </div>
 

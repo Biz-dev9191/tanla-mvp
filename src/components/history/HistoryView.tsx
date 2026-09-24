@@ -20,13 +20,13 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-            Governance & Compliance
+            Audit History
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-            Communication Audit History
+            Communication Dispatch History
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-2xl leading-relaxed">
-            Audit log of sent communications, dispatch timestamps, channel choices, and governance decisions.
+            Review all messages sent to customers, delivery channels, and decision logs.
           </p>
         </div>
 
@@ -56,16 +56,16 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
       {history.length === 0 ? (
         <div className="bg-aurora-neutral-0 rounded-lg p-12 text-center border border-aurora-neutral-200 shadow-aurora">
           <History strokeWidth={1.5} className="w-10 h-10 text-aurora-neutral-300 mx-auto mb-3" />
-          <h3 className="text-sm font-bold text-aurora-neutral-900">No dispatched communications logged yet</h3>
+          <h3 className="text-sm font-bold text-aurora-neutral-900">No sent communications logged yet</h3>
           <p className="text-xs text-aurora-neutral-500 mt-1 max-w-md mx-auto leading-relaxed">
-            Communications are recorded in this audit history only when you click <strong>Send</strong> (either for an individual channel or across all channels) on the Agent Control Room page.
+            Communications are recorded in this audit history only when you click <strong>Send</strong> (either for an individual channel or across all channels) from the Decision & Previews page.
           </p>
           <button
             type="button"
             onClick={onNewRun}
             className="mt-4 px-4 py-2 bg-aurora-primary text-white rounded-md text-xs font-semibold shadow-sm"
           >
-            Create Communication Brief
+            Go to Communication Brief
           </button>
         </div>
       ) : (
@@ -80,7 +80,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                   <th className="py-3 px-4">Objective</th>
                   <th className="py-3 px-4">Dispatched Channel</th>
                   <th className="py-3 px-4">Decision</th>
-                  <th className="py-3 px-4">Guardrails</th>
+                  <th className="py-3 px-4">Quality Checks</th>
                   <th className="py-3 px-4 text-right">Action</th>
                 </tr>
               </thead>

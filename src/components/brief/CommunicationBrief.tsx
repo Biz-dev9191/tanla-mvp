@@ -270,10 +270,10 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-            AI Customer Communication Orchestrator
+            Customer Communication Brief
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-            Configure customer profile context, event telemetry, and business objectives below. The multi-agent engine dynamically adapts its persona voice, channel routing, and policy compliance.
+            Enter customer profile details, event information, and business goals—or choose from pre-configured scenarios below. The AI engine automatically adapts tone, channel routing, and policy guardrails.
           </p>
         </div>
       </div>
@@ -885,11 +885,11 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             {isLoading ? (
               <span className="flex items-center space-x-2">
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Agents Orchestrating Live ({structCustomerName})...</span>
+                <span>Generating Governed Communication...</span>
               </span>
             ) : (
               <span className="flex items-center space-x-2">
-                <span>Analyse & Create Governed Communication</span>
+                <span>Generate Communication & Previews</span>
                 <ArrowRight strokeWidth={1.75} className="w-4 h-4" />
               </span>
             )}

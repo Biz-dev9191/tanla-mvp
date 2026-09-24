@@ -293,11 +293,11 @@ export default function Home() {
                         <ArrowLeft strokeWidth={1.5} className="w-4 h-4" />
                       </button>
                       <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-                        Agent Control Room
+                        Decision & Previews
                       </span>
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-                      Communication Decision & Execution
+                      Communication Decision & Previews
                     </h1>
                     <p className="text-xs text-aurora-neutral-500 mt-0.5 font-mono">
                       Run ID: {currentResult.id} · Customer: {currentResult.customer.name} ({currentResult.customer.segment})
@@ -365,15 +365,15 @@ export default function Home() {
             ) : (
               <div className="bg-aurora-neutral-0 rounded-lg p-12 text-center border border-aurora-neutral-200 shadow-aurora">
                 <RefreshCw strokeWidth={1.5} className="w-10 h-10 text-aurora-neutral-300 mx-auto mb-3" />
-                <h3 className="text-sm font-bold text-aurora-neutral-900">No active orchestration run</h3>
+                <h3 className="text-sm font-bold text-aurora-neutral-900">No active communication generated yet</h3>
                 <p className="text-xs text-aurora-neutral-500 mt-1 max-w-sm mx-auto">
-                  Configure your customer scenario in the communication brief to start agent orchestration.
+                  Configure customer details and event information in the brief to generate multi-channel communications.
                 </p>
                 <button
                   onClick={() => setActiveTab('brief')}
                   className="mt-4 px-4 py-2 bg-aurora-primary text-white rounded-md text-xs font-semibold"
                 >
-                  Go to Brief
+                  Go to Communication Brief
                 </button>
               </div>
             )}
@@ -388,10 +388,10 @@ export default function Home() {
                 Policy Governance
               </span>
               <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-                Enterprise Policy Tree Explorer
+                Policy Tree & Governance Rules
               </h1>
               <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-                Upload custom policy documents, paste company rules, or inspect the interactive deterministic rule hierarchy governing all automated outbound communications.
+                View governance rules or upload custom policy documents to dynamically steer agent communications.
               </p>
             </div>
 

@@ -9,19 +9,19 @@ interface StrategyCardProps {
 
 export const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, primaryObjective }) => {
   const rows = [
-    { label: 'Business Objective', value: primaryObjective.replace(/_/g, ' ').toUpperCase() },
-    { label: 'Decision Verdict', value: strategy.decision },
+    { label: 'Business Goal', value: primaryObjective.replace(/_/g, ' ').toUpperCase() },
+    { label: 'Delivery Decision', value: strategy.decision },
     { label: 'Recommended Channel', value: strategy.selectedChannel },
     { label: 'Fallback Channel', value: strategy.fallbackChannel || 'None' },
-    { label: 'Synthesized Tone', value: strategy.tone },
-    { label: 'Formality Level', value: strategy.formality },
-    { label: 'Message Density', value: strategy.messageLength },
+    { label: 'Tone & Style', value: strategy.tone },
+    { label: 'Formality', value: strategy.formality },
+    { label: 'Message Length', value: strategy.messageLength },
     { label: 'Personalisation', value: strategy.personalisationLevel },
-    { label: 'Call to Action', value: strategy.ctaType === 'None' ? 'None (Zero Friction)' : strategy.ctaType },
-    { label: 'Customer Action Required', value: strategy.customerActionRequired ? 'Yes (Document / Payment)' : 'None (Proactive)' },
+    { label: 'Call to Action (CTA)', value: strategy.ctaType === 'None' ? 'None (Zero Friction)' : strategy.ctaType },
+    { label: 'Customer Action Required', value: strategy.customerActionRequired ? 'Yes (Document / Payment)' : 'None (No Action Required)' },
     {
       label: 'Human Supervisor Review',
-      value: strategy.humanApprovalRequired ? 'Mandatory (Compensation / Exception)' : 'Not Required (Autonomous)',
+      value: strategy.humanApprovalRequired ? 'Required (Escalated to Supervisor)' : 'Not Required (Autonomous)',
       highlight: strategy.humanApprovalRequired,
     },
   ];
@@ -50,8 +50,8 @@ export const StrategyCard: React.FC<StrategyCardProps> = ({ strategy, primaryObj
         <table className="w-full text-xs text-left">
           <thead>
             <tr className="border-b border-aurora-neutral-200 text-aurora-neutral-500 uppercase tracking-wider">
-              <th className="py-2 font-semibold">Strategic Attribute</th>
-              <th className="py-2 font-semibold">Agent Decision</th>
+              <th className="py-2 font-semibold">Strategy Factor</th>
+              <th className="py-2 font-semibold">Determined Setting</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-aurora-neutral-200/60">

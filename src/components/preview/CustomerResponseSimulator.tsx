@@ -196,8 +196,8 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         <div className="flex items-center space-x-2">
           <MessageSquareText strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
           <div>
-            <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Roleplay & Multi-Turn Situation Simulator</h3>
-            <p className="text-[11px] text-aurora-neutral-500">Generate persona reactions or paste custom customer responses to trigger automated agent handling</p>
+            <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Roleplay & Response Simulator</h3>
+            <p className="text-[11px] text-aurora-neutral-500">Simulate how customers react to this message and generate automated follow-up responses in real time</p>
           </div>
         </div>
 

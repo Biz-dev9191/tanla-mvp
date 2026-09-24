@@ -12,9 +12,9 @@ export const DecisionTraceView: React.FC<DecisionTraceViewProps> = ({ trace, isS
       <div className="flex items-center justify-between pb-3 border-b border-aurora-neutral-200 mb-4">
         <div className="flex items-center space-x-2">
           <FileText strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-          <h3 className="text-sm font-bold text-aurora-neutral-900">Governance Decision Trace</h3>
+          <h3 className="text-sm font-bold text-aurora-neutral-900">Decision & Audit Trace</h3>
         </div>
-        <span className="text-xs text-aurora-neutral-500 font-medium">Safe Business Evidence</span>
+        <span className="text-xs text-aurora-neutral-500 font-medium">Step-by-Step Verification</span>
       </div>
 
       <div className="space-y-2.5">

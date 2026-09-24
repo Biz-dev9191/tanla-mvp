@@ -35,31 +35,31 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
     {
       id: 'brief' as const,
       label: 'Communication Brief',
-      description: 'Configure customer profile, events & business objectives',
+      description: 'Set up customer details, event history, and business goals',
       icon: PlusCircle,
     },
     {
       id: 'control-room' as const,
-      label: 'Agent Control Room',
-      description: 'Observe multi-agent reasoning, decision traces & previews',
+      label: 'Decision & Previews',
+      description: 'Review AI decisions, message previews, quality checks, and customer simulation',
       icon: Activity,
     },
     {
       id: 'policy-tree' as const,
       label: 'Policy Tree',
-      description: 'Inspect governance rules and upload dynamic policy docs',
+      description: 'View governance rules or upload custom policy documents',
       icon: GitBranch,
     },
     {
       id: 'knowledge-base' as const,
       label: 'Knowledge Base',
-      description: 'Enterprise brand guidelines, tone rules & templates',
+      description: 'Explore agent rules, personas, pipeline steps, and scoring formulas',
       icon: BookOpen,
     },
     {
       id: 'history' as const,
       label: 'Audit History',
-      description: 'View previous orchestration runs and decision records',
+      description: 'Track sent communications, channel delivery logs, and decision records',
       icon: History,
     },
   ];
