@@ -6,20 +6,17 @@ import {
   GitBranch,
   History,
   PlusCircle,
-  Key,
   Menu,
   X,
   ChevronRight,
   Home as HomeIcon,
-  ShieldCheck,
-  Cpu,
 } from 'lucide-react';
 
 export type TabType = 'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
 
 interface HeaderProps {
   activeTab?: TabType;
-  onTabChange?: (tab: TabType | 'settings') => void;
+  onTabChange?: (tab: TabType) => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange }) => {
@@ -81,11 +78,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
     setIsMenuOpen(false);
   };
 
-  const handleOpenSettings = () => {
-    setIsMenuOpen(false);
-    onTabChange?.('settings');
-  };
-
   return (
     <>
       <header className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 sticky top-0 z-30 shadow-aurora">
@@ -98,7 +90,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
                 type="button"
                 onClick={() => setIsMenuOpen(true)}
                 className="flex items-center space-x-2 px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
-                aria-label="Open Left Navigation Menu"
+                aria-label="Open Navigation Menu"
               >
                 <Menu strokeWidth={1.5} className="w-4 h-4" />
                 <span className="hidden sm:inline">Menu</span>
@@ -112,7 +104,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
               </div>
             </div>
 
-            {/* Right: Active View Badge + API Keys */}
+            {/* Right: Active View Badge + Status Indicator */}
             <div className="flex items-center space-x-2 sm:space-x-3">
               {/* Current Active Tab Pill */}
               <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs font-semibold text-aurora-neutral-700">
@@ -120,16 +112,11 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
                 <span className="hidden sm:inline">{currentActiveItem.label}</span>
               </div>
 
-              {/* API Keys quick access */}
-              <button
-                type="button"
-                onClick={() => onTabChange?.('settings')}
-                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-md text-xs font-semibold text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 flex items-center space-x-1 transition"
-                title="API Keys & Settings"
-              >
-                <Key strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-                <span className="hidden md:inline">API Keys</span>
-              </button>
+              {/* Status Indicator */}
+              <div className="hidden md:flex items-center space-x-1.5 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-300 px-3 py-1.5 rounded-md">
+                <span className="w-2 h-2 rounded-full bg-aurora-success"></span>
+                <span className="font-semibold">Backend Engine Online</span>
+              </div>
             </div>
           </div>
         </div>
@@ -151,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
               {/* Drawer Header */}
               <div className="p-6 border-b border-aurora-neutral-200 flex items-center justify-between bg-aurora-neutral-100/50">
                 <div>
-                  <h2 className="text-base font-bold text-aurora-neutral-900">Navigation & System</h2>
+                  <h2 className="text-base font-bold text-aurora-neutral-900">Navigation & Views</h2>
                   <p className="text-xs text-aurora-neutral-500 mt-0.5">
                     Aurora Cloud Agent Orchestration Suite
                   </p>
@@ -220,30 +207,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
                       );
                     })}
                   </nav>
-                </div>
-
-                {/* Configuration & Keys */}
-                <div>
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 block mb-3">
-                    Configuration
-                  </span>
-                  <button
-                    onClick={handleOpenSettings}
-                    className="w-full flex items-start space-x-3.5 p-3 rounded-lg text-left text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 transition shadow-sm bg-aurora-neutral-0"
-                  >
-                    <div className="p-2 rounded-md mt-0.5 bg-aurora-neutral-200 text-aurora-primary flex-shrink-0">
-                      <Key strokeWidth={1.5} className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-sm font-bold text-aurora-neutral-900">
-                        API Keys & Provider Settings
-                      </span>
-                      <p className="text-xs text-aurora-neutral-500 mt-0.5">
-                        Configure Resend API key for live emails and Google Gemini LLM
-                      </p>
-                    </div>
-                    <ChevronRight strokeWidth={1.5} className="w-4 h-4 mt-2 text-aurora-neutral-400" />
-                  </button>
                 </div>
 
                 {/* Telemetry Status Card */}

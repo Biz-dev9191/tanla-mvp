@@ -20,14 +20,12 @@ import { PolicyDetailModal } from '@/components/policy/PolicyDetailModal';
 import { PolicyUploader } from '@/components/policy/PolicyUploader';
 import { KnowledgeBaseView } from '@/components/knowledge/KnowledgeBaseView';
 import { HistoryView } from '@/components/history/HistoryView';
-import { SettingsModal } from '@/components/layout/SettingsModal';
 import { PolicyTreeNode } from '@/core/policy-tree-data';
 import { DynamicPolicyParseResult } from '@/core/policy-generator';
 import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2, MessageSquare, ArrowRight } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('home');
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentResult, setCurrentResult] = useState<OrchestrationResult | null>(null);
   const [history, setHistory] = useState<OrchestrationResult[]>([]);
@@ -166,13 +164,7 @@ export default function Home() {
     <div className="min-h-screen flex flex-col bg-aurora-neutral-100 text-aurora-neutral-900 font-sans">
       <Header
         activeTab={activeTab}
-        onTabChange={(t) => {
-          if ((t as string) === 'settings') {
-            setIsSettingsOpen(true);
-          } else {
-            setActiveTab(t as any);
-          }
-        }}
+        onTabChange={(t) => setActiveTab(t)}
       />
 
       {errorMessage && (
@@ -418,13 +410,6 @@ export default function Home() {
           />
         )}
       </main>
-
-      {/* Settings Modal */}
-      <SettingsModal
-        isOpen={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-        onSaveKeys={() => {}}
-      />
 
       {/* Footer */}
       <footer className="bg-aurora-neutral-0 border-t border-aurora-neutral-200 py-6 text-center text-xs text-aurora-neutral-500">

@@ -82,6 +82,6 @@ export async function sendOutboundEmail(params: SendEmailParams): Promise<EmailD
     deliveredAt: new Date().toISOString(),
     recipient: params.to,
     status: 'SIMULATED',
-    details: `Simulated Email delivery to ${params.to}. Click "API Keys & Settings" in the header to enter your free Resend API key for live external inbox delivery.`,
+    details: `Simulated Email delivery to ${params.to}. (Live delivery active when RESEND_API_KEY is configured in backend environment).`,
   };
 }
