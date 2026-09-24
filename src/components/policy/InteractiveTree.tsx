@@ -8,6 +8,9 @@ interface InteractiveTreeProps {
   onSelectNode?: (node: PolicyTreeNode) => void;
   onLoadSampleTree?: () => void;
   onOpenUploader?: () => void;
+  onApplyToCurrentRun?: () => void;
+  canApplyToCurrentRun?: boolean;
+  isApplying?: boolean;
 }
 
 export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
@@ -16,6 +19,9 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
   onSelectNode,
   onLoadSampleTree,
   onOpenUploader,
+  onApplyToCurrentRun,
+  canApplyToCurrentRun = false,
+  isApplying = false,
 }) => {
   const activeTreeData = tree;
 
@@ -166,7 +172,7 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
 
   return (
     <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-aurora-neutral-200 mb-4 gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-aurora-neutral-200 mb-4 gap-3">
         <div>
           <h3 className="text-sm font-bold text-aurora-neutral-900">Interactive Policy Decision Hierarchy</h3>
           <p className="text-xs text-aurora-neutral-500">
@@ -175,28 +181,47 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
               : 'Policy tree is currently empty (bypassed). Created dynamically only when sample is selected or custom doc uploaded.'}
           </p>
         </div>
-        {activeTreeData && (
-          <button
-            type="button"
-            onClick={handleToggleFilterApplied}
-            className={`flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
-              filterAppliedOnly
-                ? 'bg-aurora-primary text-white border-aurora-primary shadow-xs font-bold'
-                : 'bg-aurora-neutral-50 hover:bg-aurora-neutral-100 border-aurora-neutral-300 text-aurora-neutral-800'
-            }`}
-          >
-            <span
-              className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                filterAppliedOnly
-                  ? 'bg-white border-white text-aurora-primary font-bold text-[10px]'
-                  : 'bg-white border-aurora-neutral-400'
+
+        <div className="flex flex-wrap items-center gap-2">
+          {onApplyToCurrentRun && (
+            <button
+              type="button"
+              onClick={onApplyToCurrentRun}
+              disabled={!canApplyToCurrentRun || isApplying}
+              className={`flex items-center space-x-1.5 text-xs px-3.5 py-1.5 rounded-lg font-bold transition shadow-sm ${
+                canApplyToCurrentRun && !isApplying
+                  ? 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer ring-1 ring-aurora-primary'
+                  : 'bg-aurora-neutral-200 text-aurora-neutral-400 cursor-not-allowed opacity-60'
               }`}
             >
-              {filterAppliedOnly && '✓'}
-            </span>
-            <span>Applied in Current Run</span>
-          </button>
-        )}
+              <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <span>{isApplying ? 'Applying & Regenerating...' : 'Apply to Current Run'}</span>
+            </button>
+          )}
+
+          {activeTreeData && (
+            <button
+              type="button"
+              onClick={handleToggleFilterApplied}
+              className={`flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+                filterAppliedOnly
+                  ? 'bg-aurora-primary text-white border-aurora-primary shadow-xs font-bold'
+                  : 'bg-aurora-neutral-50 hover:bg-aurora-neutral-100 border-aurora-neutral-300 text-aurora-neutral-800'
+              }`}
+            >
+              <span
+                className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                  filterAppliedOnly
+                    ? 'bg-white border-white text-aurora-primary font-bold text-[10px]'
+                    : 'bg-white border-aurora-neutral-400'
+                }`}
+              >
+                {filterAppliedOnly && '✓'}
+              </span>
+              <span>Applied in Current Run</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {activeTreeData ? (

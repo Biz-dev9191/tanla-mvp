@@ -32,6 +32,7 @@ export default function Home() {
   const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
   const [customPolicyRules, setCustomPolicyRules] = useState<any[]>([]);
   const [customPolicyDocText, setCustomPolicyDocText] = useState<string | null>(null);
+  const [isApplyingPolicy, setIsApplyingPolicy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Load history from localStorage on mount
@@ -104,15 +105,31 @@ export default function Home() {
     if (!currentResult) return;
     
     let resolvedChannel: PreferredChannel = 'WhatsApp';
+    let dispatchedChannelName = target.channelName;
     const chLower = target.channel.toLowerCase();
-    if (chLower.includes('sms')) resolvedChannel = 'SMS';
-    else if (chLower.includes('email')) resolvedChannel = 'Email';
-    else if (chLower.includes('voice')) resolvedChannel = 'Voice';
 
-    const dispatchedRun: OrchestrationResult = {
+    if (chLower === 'all') {
+      dispatchedChannelName = 'All Channels (WhatsApp, SMS, Email, Voice)';
+      resolvedChannel = 'WhatsApp';
+    } else if (chLower.includes('sms')) {
+      resolvedChannel = 'SMS';
+      dispatchedChannelName = 'SMS';
+    } else if (chLower.includes('email')) {
+      resolvedChannel = 'Email';
+      dispatchedChannelName = 'Email';
+    } else if (chLower.includes('voice')) {
+      resolvedChannel = 'Voice';
+      dispatchedChannelName = 'Voice';
+    } else {
+      resolvedChannel = 'WhatsApp';
+      dispatchedChannelName = 'WhatsApp';
+    }
+
+    const dispatchedRun: any = {
       ...currentResult,
       id: `DISP-${Date.now()}`,
       timestamp: new Date().toISOString(),
+      dispatchedChannel: dispatchedChannelName,
       strategy: {
         ...currentResult.strategy,
         selectedChannel: resolvedChannel,
@@ -156,34 +173,40 @@ export default function Home() {
     });
   };
 
-  // Dynamic policy applied: Stores policy in session state, re-executes pipeline, lands on preview page
-  const handleApplyDynamicPolicy = async (result: DynamicPolicyParseResult, rawPolicyText?: string) => {
+  // 1. Generate policy tree from uploaded/pasted text
+  const handleGeneratePolicyTree = (result: DynamicPolicyParseResult, rawPolicyText: string) => {
     setCustomPolicyTree(result.tree);
     setCustomPolicyRules(result.rules);
-    if (rawPolicyText) {
-      setCustomPolicyDocText(rawPolicyText);
-    }
+    setCustomPolicyDocText(rawPolicyText);
+  };
 
-    if (currentResult) {
-      await handleRunOrchestration({
-        customer: currentResult.customer,
-        event: currentResult.event,
-        objective: currentResult.objective,
-        customRules: result.rules,
-        customPolicyDocText: rawPolicyText || customPolicyDocText || undefined,
-        useSamplePolicyTree: true,
-      });
-    } else {
-      await handleRunOrchestration({
-        customerProfileText: "Customer: Standard Customer, Segment: Standard",
-        eventHistoryText: "Payment succeeded for online transaction, order confirmation pending",
-        objectiveText: "Primary Objective: Reassure customer of order status and payment safety",
-        customRules: result.rules,
-        customPolicyDocText: rawPolicyText || undefined,
-        useSamplePolicyTree: true,
-      });
+  // 2. Apply generated policy tree to current run and regenerate output
+  const handleApplyToCurrentRun = async () => {
+    try {
+      setIsApplyingPolicy(true);
+      if (currentResult) {
+        await handleRunOrchestration({
+          customer: currentResult.customer,
+          event: currentResult.event,
+          objective: currentResult.objective,
+          customRules: customPolicyRules,
+          customPolicyDocText: customPolicyDocText || undefined,
+          useSamplePolicyTree: true,
+        });
+      } else {
+        await handleRunOrchestration({
+          customerProfileText: "Customer: Standard Customer, Segment: Standard",
+          eventHistoryText: "Payment succeeded for online transaction, order confirmation pending",
+          objectiveText: "Primary Objective: Reassure customer of order status and payment safety",
+          customRules: customPolicyRules,
+          customPolicyDocText: customPolicyDocText || undefined,
+          useSamplePolicyTree: true,
+        });
+      }
+      setActiveTab('control-room');
+    } finally {
+      setIsApplyingPolicy(false);
     }
-    setActiveTab('control-room');
   };
 
 
@@ -455,7 +478,7 @@ export default function Home() {
             {/* Dynamic Policy Document Uploader */}
             <div id="policy-uploader-card">
               <PolicyUploader
-                onApplyDynamicPolicy={handleApplyDynamicPolicy}
+                onGeneratePolicyTree={handleGeneratePolicyTree}
                 activePolicyText={customPolicyDocText || undefined}
               />
             </div>
@@ -465,32 +488,18 @@ export default function Home() {
               tree={customPolicyTree !== null ? customPolicyTree : currentResult?.policyTree !== undefined ? currentResult.policyTree : null}
               highlightedPath={currentResult?.appliedPolicyPath || ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"]}
               onSelectNode={(node) => setSelectedPolicyNode(node)}
-              onLoadSampleTree={() => setCustomPolicyTree(defaultPolicyTree)}
+              onLoadSampleTree={() => {
+                setCustomPolicyTree(defaultPolicyTree);
+                setCustomPolicyRules([]);
+              }}
               onOpenUploader={() => {
                 const el = document.getElementById('policy-uploader-card');
                 if (el) el.scrollIntoView({ behavior: 'smooth' });
               }}
+              onApplyToCurrentRun={handleApplyToCurrentRun}
+              canApplyToCurrentRun={Boolean(customPolicyTree || (customPolicyRules && customPolicyRules.length > 0))}
+              isApplying={isApplyingPolicy}
             />
-
-            {/* Bottom Navigation CTAs */}
-            <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-aurora-neutral-200 gap-3">
-              <button
-                type="button"
-                onClick={() => setActiveTab('brief')}
-                className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-1.5"
-              >
-                <ArrowLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
-                <span>Back to Communication Brief</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab('control-room')}
-                className="w-full sm:w-auto px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-1.5"
-              >
-                <span>Go to Decision & Previews</span>
-                <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
-              </button>
-            </div>
 
             <PolicyDetailModal
               node={selectedPolicyNode}

@@ -103,8 +103,20 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     <td className="py-3 px-4 text-aurora-neutral-900 font-medium">
                       {run.objective.primary.replace(/_/g, ' ')}
                     </td>
-                    <td className="py-3 px-4 font-semibold text-aurora-primary font-mono">
-                      {run.strategy.selectedChannel}
+                    <td className="py-3 px-4 font-semibold text-aurora-primary font-mono text-[11px]">
+                      {(run as any).dispatchedChannel ? (
+                        <span
+                          className={
+                            (run as any).dispatchedChannel.includes(',') || (run as any).dispatchedChannel.includes('All Channels')
+                              ? 'text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-block font-sans font-bold'
+                              : ''
+                          }
+                        >
+                          {(run as any).dispatchedChannel}
+                        </span>
+                      ) : (
+                        run.strategy.selectedChannel
+                      )}
                     </td>
                     <td className="py-3 px-4">
                       <span

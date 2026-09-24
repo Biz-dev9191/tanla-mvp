@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Upload, FileText, Sparkles, CheckCircle2, Network } from 'lucide-react';
 import { parsePolicyDocumentText, DynamicPolicyParseResult } from '@/core/policy-generator';
 
 interface PolicyUploaderProps {
-  onApplyDynamicPolicy: (result: DynamicPolicyParseResult, rawPolicyText?: string) => void;
+  onGeneratePolicyTree: (result: DynamicPolicyParseResult, rawPolicyText: string) => void;
   activePolicyText?: string;
 }
 
-export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPolicy, activePolicyText }) => {
+export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicyTree, activePolicyText }) => {
   const [policyText, setPolicyText] = useState(activePolicyText || "");
-  const [appliedPolicyText, setAppliedPolicyText] = useState<string | null>(activePolicyText || null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -41,21 +40,20 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
     reader.onload = (event) => {
       const content = event.target?.result as string;
       setPolicyText(content);
-      setStatusMessage(`Loaded "${file.name}". Click "Apply to Current Run" to parse and update communication outputs.`);
+      setStatusMessage(`Loaded "${file.name}". Click "Generate Policy Tree" below to build the decision hierarchy.`);
     };
     reader.readAsText(file);
   };
 
-  const handleApply = () => {
+  const handleGenerate = () => {
     const trimmed = policyText.trim();
     if (!trimmed) return;
     const parsed = parsePolicyDocumentText(trimmed);
-    setAppliedPolicyText(trimmed);
-    onApplyDynamicPolicy(parsed, trimmed);
-    setStatusMessage(`Successfully applied policy (${parsed.rules.length} rules) to current session. Regenerating preview.`);
+    onGeneratePolicyTree(parsed, trimmed);
+    setStatusMessage(`Policy tree generated with ${parsed.rules.length} governance rules. Click "Apply to Current Run" on the Policy Tree box below to update communication outputs.`);
   };
 
-  const isApplyDisabled = !policyText.trim() || policyText.trim() === appliedPolicyText?.trim();
+  const isGenerateDisabled = !policyText.trim();
 
   return (
     <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
@@ -71,7 +69,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
           onClick={() => {
             setPolicyText(sampleFintechPolicy);
             setFileName("fintech-policy-sample.md");
-            setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Apply to Current Run' to execute.");
+            setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
           }}
           className="text-xs text-aurora-primary font-semibold hover:underline flex items-center space-x-1"
         >
@@ -110,16 +108,16 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
             </span>
             <button
               type="button"
-              onClick={handleApply}
-              disabled={isApplyDisabled}
+              onClick={handleGenerate}
+              disabled={isGenerateDisabled}
               className={`px-4 py-2 rounded text-xs font-bold shadow-sm transition flex items-center justify-center space-x-1.5 ${
-                isApplyDisabled
+                isGenerateDisabled
                   ? 'bg-aurora-neutral-300 text-aurora-neutral-500 cursor-not-allowed opacity-60'
                   : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
               }`}
             >
-              <span>Apply to Current Run</span>
-              <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <Network strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <span>Generate Policy Tree</span>
             </button>
           </div>
         </div>
