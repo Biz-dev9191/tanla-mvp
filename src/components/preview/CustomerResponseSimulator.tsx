@@ -8,10 +8,11 @@ import {
   Loader2,
   Send,
   RotateCcw,
-  ShieldCheck,
   Star,
   CheckCircle2,
-  AlertTriangle
+  ClipboardPaste,
+  ArrowRight,
+  ShieldCheck,
 } from 'lucide-react';
 
 interface CustomerResponseSimulatorProps {
@@ -60,16 +61,18 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
 }) => {
   const [selectedPersona, setSelectedPersona] = useState<string>('anxious_buyer');
   const [turns, setTurns] = useState<SimulationTurn[]>([]);
-  const [customInput, setCustomInput] = useState<string>('');
+  const [customerInput, setCustomerInput] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingAction, setLoadingAction] = useState<'customer' | 'agent' | null>(null);
   const [sentimentTrajectory, setSentimentTrajectory] = useState<string[]>(['Anxious']);
   const [overallSatisfaction, setOverallSatisfaction] = useState<number | null>(null);
   const [deflectionStatus, setDeflectionStatus] = useState<string | null>(null);
 
   // Trigger customer response simulation turn
-  const handleSimulateTurn = async (customMessage?: string) => {
+  const handleSimulateCustomerTurn = async (injectedMsg?: string) => {
     try {
       setIsLoading(true);
+      setLoadingAction('customer');
       const geminiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_gemini_key') || undefined : undefined;
       const openaiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_openai_key') || undefined : undefined;
 
@@ -79,10 +82,11 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         body: JSON.stringify({
           customer,
           event,
-          message: message.body,
+          message: message?.body || '',
           turns,
           personaId: selectedPersona,
-          userInjectedMessage: customMessage || undefined,
+          userInjectedMessage: injectedMsg || undefined,
+          action: 'simulate_customer',
           geminiKey,
           openaiKey,
         }),
@@ -105,27 +109,74 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         setSentimentTrajectory((prev) => [...prev, data.sentiment]);
         setOverallSatisfaction(data.satisfactionRating || 5);
         setDeflectionStatus(data.summary || 'Inbound support contact deflected.');
-        setCustomInput('');
+        setCustomerInput('');
       }
     } catch (err) {
-      console.error('Simulation error:', err);
+      console.error('Customer simulation error:', err);
     } finally {
       setIsLoading(false);
+      setLoadingAction(null);
     }
   };
 
-  // Add agent follow-up reply
-  const handleAddAgentReply = () => {
-    if (!customInput.trim()) return;
-    const newAgentTurn: SimulationTurn = {
+  // Add custom pasted or typed customer message
+  const handleAddCustomCustomerMessage = () => {
+    if (!customerInput.trim()) return;
+    const newCustomerTurn: SimulationTurn = {
       turnIndex: turns.length + 1,
-      speaker: 'agent',
+      speaker: 'customer',
       channel: customer.preferredChannel,
-      message: customInput.trim(),
+      message: customerInput.trim(),
+      sentiment: 'Neutral',
+      sentimentScore: 80,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    setTurns((prev) => [...prev, newAgentTurn]);
-    setCustomInput('');
+    setTurns((prev) => [...prev, newCustomerTurn]);
+    setCustomerInput('');
+  };
+
+  // Generate automated agent response for the situation / latest customer query
+  const handleGenerateAutomatedAgentReply = async (specificMessage?: string) => {
+    try {
+      setIsLoading(true);
+      setLoadingAction('agent');
+      const geminiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_gemini_key') || undefined : undefined;
+      const openaiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_openai_key') || undefined : undefined;
+
+      const res = await fetch('/api/simulate-response', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer,
+          event,
+          message: message?.body || '',
+          turns,
+          personaId: selectedPersona,
+          userInjectedMessage: specificMessage || undefined,
+          action: 'simulate_agent',
+          geminiKey,
+          openaiKey,
+        }),
+      });
+
+      const data = await res.json();
+      if (data.reply) {
+        const newAgentTurn: SimulationTurn = {
+          turnIndex: turns.length + 1,
+          speaker: 'agent',
+          channel: customer.preferredChannel,
+          message: data.reply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+
+        setTurns((prev) => [...prev, newAgentTurn]);
+      }
+    } catch (err) {
+      console.error('Agent reply simulation error:', err);
+    } finally {
+      setIsLoading(false);
+      setLoadingAction(null);
+    }
   };
 
   const handleResetSimulation = () => {
@@ -133,8 +184,10 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
     setSentimentTrajectory(['Anxious']);
     setOverallSatisfaction(null);
     setDeflectionStatus(null);
-    setCustomInput('');
+    setCustomerInput('');
   };
+
+  const lastSpeaker = turns.length > 0 ? turns[turns.length - 1].speaker : 'agent';
 
   return (
     <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
@@ -143,13 +196,14 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         <div className="flex items-center space-x-2">
           <MessageSquareText strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
           <div>
-            <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Roleplay & Multi-Turn Simulator</h3>
-            <p className="text-[11px] text-aurora-neutral-500">Observe how different customer personas react to orchestrated outbound communications</p>
+            <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Roleplay & Multi-Turn Situation Simulator</h3>
+            <p className="text-[11px] text-aurora-neutral-500">Generate persona reactions or paste custom customer responses to trigger automated agent handling</p>
           </div>
         </div>
 
-        {/* Persona Selector */}
+        {/* Persona Selector & Reset */}
         <div className="flex items-center space-x-2">
+          <span className="text-[11px] text-aurora-neutral-500 font-medium hidden sm:inline">Persona:</span>
           <select
             value={selectedPersona}
             onChange={(e) => {
@@ -187,7 +241,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
               <React.Fragment key={i}>
                 <span
                   className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                    sent === 'Delighted' || sent === 'Relieved' || sent === 'Satisfied'
+                    sent === 'Delighted' || sent === 'Relieved' || sent === 'Satisfied' || sent === 'Reassured'
                       ? 'bg-aurora-success-light text-aurora-success border border-aurora-success/20'
                       : sent === 'Frustrated' || sent === 'Anxious'
                       ? 'bg-aurora-warning-light text-aurora-warning border border-aurora-warning/20'
@@ -210,7 +264,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
             )}
             <div className="flex items-center space-x-1 text-aurora-success font-medium">
               <CheckCircle2 strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>Support Ticket Deflected</span>
+              <span>Inbound Deflected</span>
             </div>
           </div>
         </div>
@@ -224,8 +278,8 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
             <Bot strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
             <span>Aurora Orchestrator ({customer.preferredChannel})</span>
           </div>
-          <div className="bg-aurora-primary text-white p-3 rounded-2xl rounded-tr-none text-xs leading-relaxed max-w-[85%] shadow-sm">
-            {message.body}
+          <div className="bg-aurora-primary text-white p-3 rounded-2xl rounded-tr-none text-xs leading-relaxed max-w-[85%] shadow-sm whitespace-pre-wrap">
+            {message?.body || 'Initial outbound communication dispatched.'}
           </div>
         </div>
 
@@ -251,7 +305,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
               ) : (
                 <>
                   <Bot strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-                  <span>Aurora Agent</span>
+                  <span>Aurora Automated Agent Reply</span>
                 </>
               )}
               <span className="text-[10px] text-aurora-neutral-400 font-mono">{turn.timestamp}</span>
@@ -261,10 +315,10 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
               className={`p-3 rounded-2xl text-xs leading-relaxed max-w-[85%] shadow-sm ${
                 turn.speaker === 'customer'
                   ? 'bg-white text-aurora-neutral-900 border border-neutral-200 rounded-tl-none italic'
-                  : 'bg-aurora-neutral-200 text-aurora-neutral-900 rounded-tr-none'
+                  : 'bg-aurora-neutral-200 text-aurora-neutral-900 rounded-tr-none font-medium'
               }`}
             >
-              "{turn.message}"
+              {turn.message}
             </div>
           </div>
         ))}
@@ -272,87 +326,113 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         {isLoading && (
           <div className="flex items-center space-x-2 text-xs text-aurora-neutral-500 italic p-2">
             <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin text-aurora-primary" />
-            <span>Simulating {customer.name}'s multi-turn reaction...</span>
+            <span>
+              {loadingAction === 'customer'
+                ? `Simulating ${customer.name}'s response...`
+                : 'Generating automated agent response...'}
+            </span>
           </div>
         )}
       </div>
 
       {/* Simulator Action Controls */}
-      <div className="space-y-2 pt-1">
-        {turns.length === 0 ? (
+      <div className="space-y-3 pt-1">
+        {/* Row 1: Primary Action Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {/* Button 1: Autonomous Persona Simulation */}
           <button
             type="button"
-            onClick={() => handleSimulateTurn()}
+            onClick={() => handleSimulateCustomerTurn()}
             disabled={isLoading}
-            className="w-full py-2.5 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-sm disabled:opacity-50"
+            className="py-2 px-3 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-sm disabled:opacity-50"
           >
-            {isLoading ? (
+            {isLoading && loadingAction === 'customer' ? (
               <>
-                <Loader2 strokeWidth={1.5} className="w-4 h-4 animate-spin" />
+                <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
                 <span>Simulating Persona Reaction...</span>
               </>
             ) : (
               <>
-                <Sparkles strokeWidth={1.5} className="w-4 h-4" />
-                <span>Predict {customer.name}'s Reaction ({PERSONAS.find((p) => p.id === selectedPersona)?.name})</span>
+                <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
+                <span>
+                  {turns.length === 0 ? 'Generate Customer Response' : 'Simulate Customer Follow-Up'} ({PERSONAS.find((p) => p.id === selectedPersona)?.name})
+                </span>
               </>
             )}
           </button>
-        ) : (
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                type="text"
-                value={customInput}
-                onChange={(e) => setCustomInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleAddAgentReply();
-                }}
-                placeholder="Type a follow-up agent response or customer message..."
-                className="flex-1 text-xs bg-white border border-aurora-neutral-300 rounded-lg px-3 py-2 text-aurora-neutral-900 focus:outline-none focus:ring-1 focus:ring-aurora-primary"
-              />
-              <button
-                type="button"
-                onClick={handleAddAgentReply}
-                disabled={!customInput.trim()}
-                className="px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-900 border border-aurora-neutral-300 rounded-lg text-xs font-semibold flex items-center space-x-1 disabled:opacity-40 transition"
-              >
-                <Send strokeWidth={1.5} className="w-3.5 h-3.5" />
-                <span>Send</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSimulateTurn()}
-                disabled={isLoading}
-                className="px-3 py-2 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-xs font-bold flex items-center space-x-1.5 transition disabled:opacity-50"
-              >
-                <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
-                <span>Simulate Turn {turns.length + 1}</span>
-              </button>
-            </div>
 
-            {/* Quick Canned Injections */}
-            <div className="flex flex-wrap gap-1.5 text-[11px]">
-              <span className="text-aurora-neutral-500 self-center text-[10px] font-semibold">Sample Inbound Inquiry:</span>
-              <button
-                type="button"
-                onClick={() => handleSimulateTurn('When exactly will the funds show up in my Citibank app?')}
-                className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700"
-              >
-                "When will funds show in Citibank?"
-              </button>
-              <button
-                type="button"
-                onClick={() => handleSimulateTurn('Can I also get a 10% coupon for the trouble?')}
-                className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700"
-              >
-                "Can I get a coupon voucher?"
-              </button>
-            </div>
+          {/* Button 2: Generate Automated Agent Reply */}
+          <button
+            type="button"
+            onClick={() => handleGenerateAutomatedAgentReply()}
+            disabled={isLoading || lastSpeaker !== 'customer'}
+            className="py-2 px-3 bg-aurora-neutral-900 hover:bg-black text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-sm disabled:opacity-40"
+          >
+            {isLoading && loadingAction === 'agent' ? (
+              <>
+                <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
+                <span>Generating Agent Reply...</span>
+              </>
+            ) : (
+              <>
+                <Bot strokeWidth={1.5} className="w-3.5 h-3.5" />
+                <span>Generate Automated Agent Reply</span>
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Row 2: Copy-Paste or Type Customer Response Input */}
+        <div className="space-y-1.5">
+          <div className="flex items-center space-x-2">
+            <input
+              type="text"
+              value={customerInput}
+              onChange={(e) => setCustomerInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') handleAddCustomCustomerMessage();
+              }}
+              placeholder="Paste or type customer response here to simulate custom roleplay situation..."
+              className="flex-1 text-xs bg-white border border-aurora-neutral-300 rounded-md px-3 py-2 text-aurora-neutral-900 focus:outline-none focus:ring-1 focus:ring-aurora-primary"
+            />
+            <button
+              type="button"
+              onClick={handleAddCustomCustomerMessage}
+              disabled={!customerInput.trim() || isLoading}
+              className="px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-900 border border-aurora-neutral-300 rounded-md text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-40 transition"
+            >
+              <ClipboardPaste strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
+              <span>Post Customer Query</span>
+            </button>
           </div>
-        )}
+
+          {/* Sample Canned Inbound Queries */}
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] pt-1">
+            <span className="text-aurora-neutral-500 text-[10px] font-semibold">Quick Roleplay Scenarios:</span>
+            <button
+              type="button"
+              onClick={() => handleSimulateCustomerTurn('When exactly will the funds show up in my Citibank app?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px]"
+            >
+              "When will funds show in Citibank?"
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulateCustomerTurn('Can I get a courtesy coupon voucher for the trouble?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px]"
+            >
+              "Can I get a coupon voucher?"
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSimulateCustomerTurn('What is the reference number for this refund?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px]"
+            >
+              "What is the reference number?"
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
 };
-

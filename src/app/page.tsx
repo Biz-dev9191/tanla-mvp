@@ -12,6 +12,7 @@ import { PolicyPathViewer } from '@/components/control-room/PolicyPathViewer';
 import { HumanApprovalBanner } from '@/components/control-room/HumanApprovalBanner';
 import { ChannelPreviewTabs } from '@/components/preview/ChannelPreviewTabs';
 import { QualityScorecard } from '@/components/preview/QualityScorecard';
+import { ExpandableAnalysisSection } from '@/components/control-room/ExpandableAnalysisSection';
 import { CustomerResponseSimulator } from '@/components/preview/CustomerResponseSimulator';
 import { InteractiveTree } from '@/components/policy/InteractiveTree';
 import { PolicyDetailModal } from '@/components/policy/PolicyDetailModal';
@@ -295,10 +296,29 @@ export default function Home() {
                   customer={currentResult.customer}
                 />
 
-                {/* 2. Message Quality & Guardrail Scorecard */}
-                <QualityScorecard guardrails={currentResult.guardrails} />
+                {/* 2. Multi-Agent Execution Pipeline with Reflection Loops */}
+                <AgentStepper
+                  steps={currentResult.agentSteps}
+                  reflectionLoops={currentResult.reflectionLoops}
+                />
 
-                {/* 3. Customer Response Simulation */}
+                {/* 3. Expandable Analysis Section (Governance Scorecard, Strategy Decision & Trace, conditional Policy Citations) */}
+                <ExpandableAnalysisSection
+                  guardrails={currentResult.guardrails}
+                  strategy={currentResult.strategy}
+                  primaryObjective={currentResult.objective.primary}
+                  trace={currentResult.decisionTrace}
+                  appliedPolicyPath={currentResult.appliedPolicyPath}
+                  appliedPolicies={currentResult.appliedPolicies}
+                  clauseCitations={currentResult.clauseCitations}
+                  hasPolicyTreeOrCitations={Boolean(
+                    (currentResult.appliedPolicies && currentResult.appliedPolicies.length > 0) ||
+                    (currentResult.clauseCitations && currentResult.clauseCitations.length > 0) ||
+                    (currentResult.policyTree !== null && currentResult.policyTree !== undefined)
+                  )}
+                />
+
+                {/* 4. Customer Roleplay & Multi-Turn Situation Simulator */}
                 <CustomerResponseSimulator
                   customer={currentResult.customer}
                   event={currentResult.event}
@@ -307,31 +327,6 @@ export default function Home() {
                       currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
                     ] || currentResult.messages.whatsapp
                   }
-                />
-
-                {/* 6. Agent Stepper Pipeline with Reflection Loops */}
-                <AgentStepper
-                  steps={currentResult.agentSteps}
-                  reflectionLoops={currentResult.reflectionLoops}
-                />
-
-                {/* 7. Grid: Decision Trace + Strategy Card */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <DecisionTraceView
-                    trace={currentResult.decisionTrace}
-                    isSuppressed={currentResult.strategy.decision === 'SUPPRESS'}
-                  />
-                  <StrategyCard
-                    strategy={currentResult.strategy}
-                    primaryObjective={currentResult.objective.primary}
-                  />
-                </div>
-
-                {/* 8. Applied Policy Path & Clause Citations */}
-                <PolicyPathViewer
-                  policyPath={currentResult.appliedPolicyPath}
-                  appliedPolicies={currentResult.appliedPolicies}
-                  clauseCitations={currentResult.clauseCitations}
                 />
               </>
             ) : (
