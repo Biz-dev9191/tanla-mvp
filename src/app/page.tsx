@@ -23,7 +23,7 @@ import { DynamicPolicyParseResult } from '@/core/policy-generator';
 import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2, MessageSquare, ArrowRight } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('brief');
+  const [activeTab, setActiveTab] = useState<'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('home');
   const [isLoading, setIsLoading] = useState(false);
   const [currentResult, setCurrentResult] = useState<OrchestrationResult | null>(null);
   const [history, setHistory] = useState<OrchestrationResult[]>([]);

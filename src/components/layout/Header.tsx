@@ -92,7 +92,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
 
               <div
                 className="cursor-pointer flex items-center"
-                onClick={() => handleSelectTab('brief')}
+                onClick={() => handleSelectTab('home')}
               >
                 <BrandBadge />
               </div>
