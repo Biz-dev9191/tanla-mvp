@@ -290,13 +290,52 @@ export default function Home() {
                   onSuppress={handleSuppress}
                 />
 
-                {/* Agent Stepper Pipeline with Reflection Loops */}
+                {/* 1. Multi-Channel Previews (WhatsApp, SMS, Email, Voice) - ON TOP */}
+                <ChannelPreviewTabs
+                  messages={currentResult.messages}
+                  recommendedChannel={currentResult.strategy.selectedChannel}
+                  customer={currentResult.customer}
+                />
+
+                {/* 2. Message Quality & Guardrail Scorecard */}
+                <QualityScorecard guardrails={currentResult.guardrails} />
+
+                {/* 3. Before vs AI Comparison */}
+                <BeforeAfterCompare
+                  genericTemplateText={currentResult.genericTemplateComparison.templateText}
+                  aiMessageText={
+                    currentResult.messages[
+                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
+                    ]?.body || currentResult.messages.whatsapp.body
+                  }
+                  differences={currentResult.genericTemplateComparison.differences}
+                />
+
+                {/* 4. Objective Pivot & Live Re-run Bar */}
+                <ObjectivePivotBar
+                  currentObjective={currentResult.objective.primary}
+                  onPivotObjective={handlePivotObjective}
+                  isLoading={isLoading}
+                />
+
+                {/* 5. Customer Response Simulation */}
+                <CustomerResponseSimulator
+                  customer={currentResult.customer}
+                  event={currentResult.event}
+                  message={
+                    currentResult.messages[
+                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
+                    ] || currentResult.messages.whatsapp
+                  }
+                />
+
+                {/* 6. Agent Stepper Pipeline with Reflection Loops */}
                 <AgentStepper
                   steps={currentResult.agentSteps}
                   reflectionLoops={currentResult.reflectionLoops}
                 />
 
-                {/* Grid: Decision Trace + Strategy Card */}
+                {/* 7. Grid: Decision Trace + Strategy Card */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <DecisionTraceView
                     trace={currentResult.decisionTrace}
@@ -308,51 +347,11 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Applied Policy Path & Clause Citations */}
+                {/* 8. Applied Policy Path & Clause Citations */}
                 <PolicyPathViewer
                   policyPath={currentResult.appliedPolicyPath}
                   appliedPolicies={currentResult.appliedPolicies}
                   clauseCitations={currentResult.clauseCitations}
-                />
-
-
-                {/* Multi-Channel Previews (WhatsApp, SMS, Email, Voice) */}
-                <ChannelPreviewTabs
-                  messages={currentResult.messages}
-                  recommendedChannel={currentResult.strategy.selectedChannel}
-                  customer={currentResult.customer}
-                />
-
-                {/* Message Quality & Guardrail Scorecard */}
-                <QualityScorecard guardrails={currentResult.guardrails} />
-
-                {/* Before vs AI Comparison */}
-                <BeforeAfterCompare
-                  genericTemplateText={currentResult.genericTemplateComparison.templateText}
-                  aiMessageText={
-                    currentResult.messages[
-                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
-                    ]?.body || currentResult.messages.whatsapp.body
-                  }
-                  differences={currentResult.genericTemplateComparison.differences}
-                />
-
-                {/* Objective Pivot & Live Re-run Bar */}
-                <ObjectivePivotBar
-                  currentObjective={currentResult.objective.primary}
-                  onPivotObjective={handlePivotObjective}
-                  isLoading={isLoading}
-                />
-
-                {/* Customer Response Simulation */}
-                <CustomerResponseSimulator
-                  customer={currentResult.customer}
-                  event={currentResult.event}
-                  message={
-                    currentResult.messages[
-                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
-                    ] || currentResult.messages.whatsapp
-                  }
                 />
               </>
             ) : (
