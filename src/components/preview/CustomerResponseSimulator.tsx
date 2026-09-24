@@ -120,28 +120,54 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
   };
 
   // Add custom pasted or typed customer message
-  const handleAddCustomCustomerMessage = () => {
+  const handleAddCustomCustomerMessage = async () => {
     if (!customerInput.trim()) return;
+    const query = customerInput.trim();
     const newCustomerTurn: SimulationTurn = {
       turnIndex: turns.length + 1,
       speaker: 'customer',
       channel: customer.preferredChannel,
-      message: customerInput.trim(),
+      message: query,
       sentiment: 'Neutral',
       sentimentScore: 80,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
-    setTurns((prev) => [...prev, newCustomerTurn]);
+    const updatedTurns = [...turns, newCustomerTurn];
+    setTurns(updatedTurns);
     setCustomerInput('');
   };
 
+  // Select Quick Roleplay Scenario Pill: Posts the exact query and automatically generates agent reply
+  const handleSelectQuickScenario = async (queryText: string) => {
+    if (isLoading) return;
+    const newCustomerTurn: SimulationTurn = {
+      turnIndex: turns.length + 1,
+      speaker: 'customer',
+      channel: customer.preferredChannel,
+      message: queryText,
+      sentiment: selectedPersona === 'urgent_escalator' ? 'Frustrated' : 'Anxious',
+      sentimentScore: 78,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    const updatedTurns = [...turns, newCustomerTurn];
+    setTurns(updatedTurns);
+    setSentimentTrajectory((prev) => [...prev, selectedPersona === 'urgent_escalator' ? 'Frustrated' : 'Anxious']);
+
+    // Immediately trigger policy-governed agent response
+    await handleGenerateAutomatedAgentReply(queryText, updatedTurns);
+  };
+
   // Generate automated agent response for the situation / latest customer query
-  const handleGenerateAutomatedAgentReply = async (specificMessage?: string) => {
+  const handleGenerateAutomatedAgentReply = async (specificMessage?: string, explicitTurns?: SimulationTurn[]) => {
     try {
       setIsLoading(true);
       setLoadingAction('agent');
       const geminiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_gemini_key') || undefined : undefined;
       const openaiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_openai_key') || undefined : undefined;
+
+      const activeTurns = explicitTurns || turns;
+      const lastMsg = specificMessage || (activeTurns.length > 0 ? activeTurns[activeTurns.length - 1].message : undefined);
 
       const res = await fetch('/api/simulate-response', {
         method: 'POST',
@@ -150,9 +176,9 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
           customer,
           event,
           message: message?.body || '',
-          turns,
+          turns: activeTurns,
           personaId: selectedPersona,
-          userInjectedMessage: specificMessage || undefined,
+          userInjectedMessage: lastMsg,
           action: 'simulate_agent',
           geminiKey,
           openaiKey,
@@ -162,14 +188,17 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
       const data = await res.json();
       if (data.reply) {
         const newAgentTurn: SimulationTurn = {
-          turnIndex: turns.length + 1,
+          turnIndex: activeTurns.length + 1,
           speaker: 'agent',
           channel: customer.preferredChannel,
           message: data.reply,
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         };
 
-        setTurns((prev) => [...prev, newAgentTurn]);
+        setTurns([...activeTurns, newAgentTurn]);
+        setSentimentTrajectory((prev) => [...prev, data.sentiment || 'Reassured']);
+        setOverallSatisfaction(data.satisfactionRating || 5);
+        setDeflectionStatus(data.summary || 'Inbound support contact deflected.');
       }
     } catch (err) {
       console.error('Agent reply simulation error:', err);
@@ -411,24 +440,31 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
             <span className="text-aurora-neutral-500 text-[10px] font-semibold">Quick Roleplay Scenarios:</span>
             <button
               type="button"
-              onClick={() => handleSimulateCustomerTurn('When exactly will the funds show up in my Citibank app?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px]"
+              onClick={() => handleSelectQuickScenario('When exactly will the refund reflect in my account?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
             >
-              "When will funds show in Citibank?"
+              "When will the refund reflect?"
             </button>
             <button
               type="button"
-              onClick={() => handleSimulateCustomerTurn('Can I get a courtesy coupon voucher for the trouble?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px]"
+              onClick={() => handleSelectQuickScenario('Can I get a courtesy coupon voucher for the inconvenience?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
             >
-              "Can I get a coupon voucher?"
+              "Can I get a courtesy coupon voucher?"
             </button>
             <button
               type="button"
-              onClick={() => handleSimulateCustomerTurn('What is the reference number for this refund?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px]"
+              onClick={() => handleSelectQuickScenario('What is the transaction reference number for this refund?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
             >
               "What is the reference number?"
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSelectQuickScenario('Do I need to take any action or call customer support?')}
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
+            >
+              "Do I need to call support?"
             </button>
           </div>
         </div>

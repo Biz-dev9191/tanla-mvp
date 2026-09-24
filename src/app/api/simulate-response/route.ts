@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       },
       'frustrated_senior': {
         name: 'Frustrated Senior Citizen',
-        traits: 'Prefers simple step-by-step instructions, dislikes technical jargon, values human warmth and clarity.',
+        traits: 'Prefers simple step-by-step instructions, dislikes technical jargon, values warmth and clarity.',
         initialSentiment: 'Frustrated',
       },
       'tech_millennial': {
@@ -52,78 +52,72 @@ export async function POST(req: NextRequest) {
       ? 'Customer'
       : rawCustName.split(' ')[0] || 'Customer';
 
-    // 1. Try Live LLM simulation if key is available
+    const eventTitle = event?.title || 'Transaction & Order Resolution';
+    const eventFacts = (event?.verifiedFacts && event.verifiedFacts.length > 0)
+      ? event.verifiedFacts.join('; ')
+      : 'Automated refund initiated, 3-5 business days banking turnaround';
+
+    // 1. If user injected an explicit message for a customer turn, return it directly
+    if (action === 'simulate_customer' && userInjectedMessage && userInjectedMessage.trim().length > 0) {
+      const cleanMsg = userInjectedMessage.trim().replace(/!+/g, '.');
+      return NextResponse.json({
+        reply: cleanMsg,
+        sentiment: currentPersona.initialSentiment || 'Anxious',
+        sentimentScore: 78,
+        escalationRisk: currentPersona.initialSentiment === 'Frustrated' ? 'Moderate' : 'Low',
+        followupNeeded: true,
+        satisfactionRating: 4,
+        summary: `Customer posed query regarding: "${cleanMsg}"`,
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    // 2. Try Live LLM simulation if key is available
     if (geminiKey) {
       try {
         let prompt = '';
         if (action === 'simulate_agent') {
-          prompt = `You are Aurora Cloud's autonomous multi-agent customer communication assistant.
-Generate an automated, empathetic, policy-compliant agent reply to the customer's message in the roleplay thread.
+          prompt = `You are Aurora Cloud's autonomous multi-agent customer communication system.
+Generate an automated, empathetic, policy-compliant agent reply following the enterprise agentic workflow.
 
 CRITICAL GOVERNANCE RULES:
 1. Strictly ZERO exclamation marks anywhere in the output.
-2. Ground all claims in the verified telemetry and business facts provided.
-3. Be calm, polite, and helpful. Address the customer by their first name "${customerFirstName}".
+2. Ground all facts in the customer context: Customer="${customerFirstName}", Event="${eventTitle}".
+3. If the customer asks for a discount/coupon/goodwill compensation, cite Policy POL-FIN-001 (supervisor approval required for compensation above $0).
+4. If the customer asks about refund timelines, state 3 to 5 business days banking cycle with zero action required.
+5. If the customer asks about reference IDs, cite the verified reference or state that it is recorded in their dashboard.
 
-CUSTOMER PROFILE:
-- Name: ${customer?.name || 'Customer'}
-- Persona: ${currentPersona.name}
-- Segment: ${customer?.segment || 'Standard'}
-
-BUSINESS EVENT:
-- Event: ${event?.title || 'Payment / Order Update'}
-- Status: ${event?.resolutionStatus || 'Refund Initiated'}
-- Verified Telemetry: ${(event?.verifiedFacts || []).join('; ') || 'PAY_99482, ORD-7721, $49.50'}
-
-INITIAL ORCHESTRATED MESSAGE:
-"${message || ''}"
-
-CONVERSATION THREAD:
+CUSTOMER: ${customerFirstName} (${currentPersona.name})
+EVENT: ${eventTitle} (${eventFacts})
+INITIAL OUTBOUND MESSAGE: "${message || ''}"
+ROLEPLAY THREAD:
 ${turns.map((t: SimulationTurn) => `[${t.speaker.toUpperCase()}]: ${t.message}`).join('\n')}
 
-${userInjectedMessage ? `LATEST CUSTOMER INBOUND QUERY:\n"${userInjectedMessage}"` : ''}
+${userInjectedMessage ? `LATEST CUSTOMER QUERY:\n"${userInjectedMessage}"` : ''}
 
-Generate the agent's automated response in JSON:
+Generate JSON:
 {
-  "reply": "string (the polite, accurate agent response with zero exclamation marks)",
-  "sentiment": "Satisfied | Reassured | Relieved",
-  "sentimentScore": 95,
-  "summary": "string (agent response resolution summary)"
+  "reply": "string (agent response with zero exclamation marks)",
+  "sentiment": "Reassured",
+  "sentimentScore": 92,
+  "summary": "string"
 }`;
         } else {
-          prompt = `You are a Customer Response Simulator for enterprise customer communication testing.
-Simulate the next natural customer message in an ongoing multi-turn customer communication roleplay.
+          prompt = `You are simulating a customer response for roleplay testing.
+Persona: ${currentPersona.name} (${currentPersona.traits})
+Event: ${eventTitle}
+INITIAL OUTBOUND MESSAGE: "${message || ''}"
+THREAD:
+${turns.map((t: SimulationTurn) => `[${t.speaker.toUpperCase()}]: ${t.message}`).join('\n') || 'Initial Outbound Received'}
 
-CUSTOMER PROFILE:
-- Name: ${customer?.name || 'Customer'}
-- Persona: ${currentPersona.name} (${currentPersona.traits})
-- Customer Segment: ${customer?.segment || 'Standard'}
-
-BUSINESS EVENT:
-- Event: ${event?.title || 'Payment / Order Update'}
-- Resolution: ${event?.resolutionStatus || 'Refund Initiated'}
-- Verified Telemetry: ${(event?.verifiedFacts || []).join('; ') || 'PAY_99482, ORD-7721, $49.50'}
-
-INITIAL ORCHESTRATED MESSAGE SENT TO CUSTOMER:
-"${message || ''}"
-
-PAST CONVERSATION TURNS:
-${turns.map((t: SimulationTurn) => `[${t.speaker.toUpperCase()}]: ${t.message}`).join('\n') || 'None (Initial Outbound Just Received)'}
-
-${userInjectedMessage ? `USER / CUSTOMER TOPIC:\n"${userInjectedMessage}"` : ''}
-
-TASK:
-Generate the next response in character. React authentically according to your persona's emotional traits with NO exclamation marks.
-
-Return a strictly valid JSON object:
+Generate next natural customer message without exclamation marks:
 {
-  "reply": "string (the natural simulated message without exclamation marks)",
-  "sentiment": "Relieved | Frustrated | Satisfied | Anxious | Skeptical | Neutral | Delighted | Cooperative",
-  "sentimentScore": number (0 to 100),
-  "escalationRisk": "Low | Moderate | High",
-  "followupNeeded": boolean,
-  "satisfactionRating": number (1 to 5),
-  "summary": "string (brief assessment of customer sentiment)"
+  "reply": "string",
+  "sentiment": "Relieved | Satisfied | Anxious | Frustrated | Delighted",
+  "sentimentScore": 85,
+  "escalationRisk": "Low",
+  "satisfactionRating": 5,
+  "summary": "string"
 }`;
         }
 
@@ -140,7 +134,6 @@ Return a strictly valid JSON object:
           const data = await res.json();
           const parsed = JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text || '{}');
           if (parsed.reply) {
-            // Enforce zero exclamation marks rule
             const cleanReply = parsed.reply.replace(/!+/g, '.');
             return NextResponse.json({
               reply: cleanReply,
@@ -155,24 +148,26 @@ Return a strictly valid JSON object:
           }
         }
       } catch (e) {
-        console.warn('Live LLM simulation error, falling back to deterministic roleplay:', e);
+        console.warn('Live LLM simulation error, falling back to deterministic agentic workflow:', e);
       }
     }
 
-    // 2. Deterministic Engine (Zero Exclamation Marks)
+    // 3. Deterministic Policy-Governed Agent Reply Engine (Strict Zero Exclamation Marks)
     if (action === 'simulate_agent') {
       const lastTurn = turns.length > 0 ? turns[turns.length - 1] : null;
       const lastMsg = (userInjectedMessage || lastTurn?.message || '').toLowerCase();
       let agentReply = '';
 
-      if (lastMsg.includes('when') || lastMsg.includes('time') || lastMsg.includes('bank') || lastMsg.includes('deposit')) {
-        agentReply = `Hello ${customerFirstName}, refund deposits typically reflect within 3 to 5 business days depending on your bank's settlement cycle. You will receive an automated SMS confirmation as soon as Citibank completes the posting.`;
-      } else if (lastMsg.includes('coupon') || lastMsg.includes('discount') || lastMsg.includes('compensation') || lastMsg.includes('credit')) {
-        agentReply = `Hello ${customerFirstName}, we understand the inconvenience. While the primary refund of $49.50 has been processed, we have recorded your request with our senior customer care team for courtesy review.`;
-      } else if (lastMsg.includes('reference') || lastMsg.includes('id') || lastMsg.includes('receipt')) {
-        agentReply = `Hello ${customerFirstName}, your transaction reference number is PAY_99482 for order ORD-7721. You can track this status anytime directly in your account dashboard.`;
+      if (lastMsg.includes('when') || lastMsg.includes('time') || lastMsg.includes('bank') || lastMsg.includes('deposit') || lastMsg.includes('show') || lastMsg.includes('reflect')) {
+        agentReply = `Hello ${customerFirstName}, refund deposits typically reflect in your original payment method within 3 to 5 business days depending on your bank's processing cycle. No further action is required from your side.`;
+      } else if (lastMsg.includes('coupon') || lastMsg.includes('discount') || lastMsg.includes('compensation') || lastMsg.includes('credit') || lastMsg.includes('voucher') || lastMsg.includes('waiver')) {
+        agentReply = `Hello ${customerFirstName}, while the full refund has been initiated, goodwill compensation and vouchers require supervisor authorization under policy POL-FIN-001. We have recorded your request and routed it to our supervisor review queue.`;
+      } else if (lastMsg.includes('reference') || lastMsg.includes('id') || lastMsg.includes('receipt') || lastMsg.includes('number') || lastMsg.includes('track')) {
+        agentReply = `Hello ${customerFirstName}, your transaction refund details have been logged and verified in your account dashboard. You will receive an automated confirmation as soon as settlement completes.`;
+      } else if (lastMsg.includes('action') || lastMsg.includes('call') || lastMsg.includes('phone') || lastMsg.includes('need') || lastMsg.includes('step')) {
+        agentReply = `Hello ${customerFirstName}, zero action is required on your part. You do not need to call support or submit any forms, as our automated system is handling everything end-to-end.`;
       } else {
-        agentReply = `Hello ${customerFirstName}, thank you for checking in. All automated updates have been recorded under reference PAY_99482, and no further action is required from your end.`;
+        agentReply = `Hello ${customerFirstName}, thank you for reaching out. We have logged your inquiry and confirmed that all automated updates for your transaction are proceeding as scheduled.`;
       }
 
       return NextResponse.json({
@@ -182,12 +177,12 @@ Return a strictly valid JSON object:
         escalationRisk: 'Low',
         followupNeeded: false,
         satisfactionRating: 5,
-        summary: `Aurora agent provided an automated grounded response to ${customerFirstName}'s inquiry.`,
+        summary: `Aurora agent provided a policy-grounded response to ${customerFirstName}'s inquiry.`,
         timestamp: new Date().toISOString(),
       });
     }
 
-    // Customer Simulation
+    // 4. Deterministic Customer Reaction Engine
     let simulatedReply = '';
     let sentiment: 'Relieved' | 'Frustrated' | 'Satisfied' | 'Anxious' | 'Skeptical' | 'Neutral' | 'Delighted' | 'Cooperative' = 'Relieved';
     let sentimentScore = 88;
@@ -197,47 +192,38 @@ Return a strictly valid JSON object:
 
     if (turnCount === 0) {
       if (personaId === 'frustrated_senior') {
-        simulatedReply = `Thank you for explaining clearly that the refund is going back to my card ending in 4012. I was worried I had to call a number and wait on hold. This was very straightforward.`;
+        simulatedReply = `Thank you for explaining clearly that the refund is going back to my original account. I was worried I had to call a number and wait on hold. This was very straightforward.`;
         sentiment = 'Relieved';
         sentimentScore = 90;
         escalationRisk = 'Low';
         satisfactionRating = 5;
       } else if (personaId === 'vip_exec') {
-        simulatedReply = `Appreciate the prompt automated notification and refund initiation reference (PAY_99482). Please ensure the invoice is also updated in our portal.`;
+        simulatedReply = `Appreciate the prompt automated notification and refund confirmation. Please ensure the transaction status is also updated in our portal.`;
         sentiment = 'Satisfied';
         sentimentScore = 84;
         escalationRisk = 'Low';
         satisfactionRating = 4;
       } else if (personaId === 'urgent_escalator') {
-        if (event?.eventType === 'customer_complaint') {
-          simulatedReply = `Thank you for applying the $25 fee waiver. I will wait for the supervisor to confirm the additional credit within the 4-hour window promised.`;
-          sentiment = 'Cooperative';
-          sentimentScore = 75;
-          escalationRisk = 'Moderate';
-          followupNeeded = true;
-          satisfactionRating = 4;
-        } else {
-          simulatedReply = `Glad you caught the provisioning failure and initiated the refund automatically before I had to reach out. Thank you.`;
-          sentiment = 'Relieved';
-          sentimentScore = 86;
-          escalationRisk = 'Low';
-          satisfactionRating = 5;
-        }
+        simulatedReply = `Glad you caught this issue and initiated the refund automatically before I had to reach out. Thank you for the proactive update.`;
+        sentiment = 'Relieved';
+        sentimentScore = 86;
+        escalationRisk = 'Low';
+        satisfactionRating = 5;
       } else if (personaId === 'tech_millennial') {
-        simulatedReply = `Clean update. Thanks for the auto-refund ref and no-action confirmation. Saved me a support ticket.`;
+        simulatedReply = `Clean update. Thanks for the auto-refund confirmation and no-action notice. Saved me a support ticket.`;
         sentiment = 'Delighted';
         sentimentScore = 95;
         escalationRisk = 'Low';
         satisfactionRating = 5;
       } else {
-        simulatedReply = `Thank you so much for the confirmation. I was anxious when the order failed, but seeing the refund already initiated to my card (4012) puts my mind at ease.`;
+        simulatedReply = `Thank you for the confirmation. I was anxious when the transaction failed, but seeing the refund already initiated puts my mind at ease.`;
         sentiment = 'Relieved';
         sentimentScore = 92;
         escalationRisk = 'Low';
         satisfactionRating = 5;
       }
     } else if (turnCount === 1) {
-      simulatedReply = `One quick follow-up: will I receive an SMS notification once my bank deposits the refund back into my account?`;
+      simulatedReply = `One quick follow-up: will I receive an automated notification once my bank deposits the refund back into my account?`;
       sentiment = 'Satisfied';
       sentimentScore = 90;
       escalationRisk = 'Low';
@@ -252,7 +238,7 @@ Return a strictly valid JSON object:
       satisfactionRating = 5;
     }
 
-    // Double-check no exclamation marks
+    // Double-check zero exclamation marks
     simulatedReply = simulatedReply.replace(/!+/g, '.');
 
     return NextResponse.json({
@@ -262,7 +248,7 @@ Return a strictly valid JSON object:
       escalationRisk,
       followupNeeded,
       satisfactionRating,
-      summary: `Persona '${currentPersona.name}' acknowledged with '${sentiment}' sentiment. Inbound support ticket successfully deflected.`,
+      summary: `Persona '${currentPersona.name}' acknowledged with '${sentiment}' sentiment. Inbound support contact successfully deflected.`,
       timestamp: new Date().toISOString(),
     });
   } catch (error: any) {

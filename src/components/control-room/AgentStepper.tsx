@@ -1,6 +1,22 @@
 import React, { useState } from 'react';
 import { AgentExecutionStep, ReflectionLoopIteration } from '@/core/types';
-import { CheckCircle2, AlertTriangle, XCircle, Clock, ChevronDown, ChevronUp, Bot, RefreshCw, BrainCircuit, Shield, Sparkles } from 'lucide-react';
+import { AGENT_GOVERNANCE_POLICIES } from '@/core/agent-policies';
+import {
+  CheckCircle2,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  ChevronDown,
+  ChevronUp,
+  Bot,
+  RefreshCw,
+  BrainCircuit,
+  Shield,
+  Sparkles,
+  FileText,
+  ShieldCheck,
+  ShieldAlert,
+} from 'lucide-react';
 
 interface AgentStepperProps {
   steps: AgentExecutionStep[];
@@ -9,13 +25,13 @@ interface AgentStepperProps {
 }
 
 const POLICY_CODE_MAP: { [key: string]: { code: string; color: string } } = {
-  context: { code: 'CCAP-2026', color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  objective: { code: 'ORAP-2026', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  policy_tree: { code: 'PTGAP-2026', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  policy: { code: 'EPAP-2026', color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  strategy: { code: 'CSAP-2026', color: 'bg-purple-50 text-purple-700 border-purple-200' },
-  message: { code: 'CMGAP-2026', color: 'bg-sky-50 text-sky-700 border-sky-200' },
-  guardrail: { code: 'CSGAP-2026', color: 'bg-teal-50 text-teal-700 border-teal-200' },
+  context: { code: 'CCAP-2026-v2.4', color: 'bg-blue-50 text-blue-700 border-blue-200' },
+  objective: { code: 'ORAP-2026-v2.1', color: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  policy_tree: { code: 'PTGAP-2026-v1.8', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  policy: { code: 'EPAP-2026-v3.0', color: 'bg-amber-50 text-amber-700 border-amber-200' },
+  strategy: { code: 'CSAP-2026-v2.5', color: 'bg-purple-50 text-purple-700 border-purple-200' },
+  message: { code: 'CMGAP-2026-v4.2', color: 'bg-sky-50 text-sky-700 border-sky-200' },
+  guardrail: { code: 'CSGAP-2026-v3.3', color: 'bg-teal-50 text-teal-700 border-teal-200' },
 };
 
 export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunningIndex, reflectionLoops }) => {
@@ -96,6 +112,8 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
         {steps.map((step, idx) => {
           const isExpanded = expandedIndex === idx;
           const policyMeta = POLICY_CODE_MAP[step.agentId] || { code: 'GOV-2026', color: 'bg-gray-50 text-gray-700 border-gray-200' };
+          const policyDoc = AGENT_GOVERNANCE_POLICIES.find((p) => p.agentId === step.agentId);
+          const isEscalated = step.status === 'escalated' || step.details.some(d => d.toLowerCase().includes('escalat') || d.toLowerCase().includes('approval'));
 
           return (
             <div
@@ -104,9 +122,9 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
                 step.status === 'completed'
                   ? 'border-aurora-neutral-200 bg-aurora-neutral-0 hover:border-aurora-neutral-300'
                   : step.status === 'escalated'
-                  ? 'border-aurora-warning/30 bg-aurora-warning-light/30'
+                  ? 'border-aurora-warning/40 bg-aurora-warning-light/30'
                   : step.status === 'suppressed'
-                  ? 'border-aurora-error/30 bg-aurora-error-light/30'
+                  ? 'border-aurora-error/40 bg-aurora-error-light/30'
                   : 'border-aurora-neutral-200 bg-aurora-neutral-100'
               }`}
             >
@@ -141,10 +159,65 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
               </div>
 
               {isExpanded && (
-                <div className="p-3.5 border-t border-aurora-neutral-200 bg-aurora-neutral-100 text-xs space-y-3 rounded-b-lg">
-                  {/* Chain-of-Thought Trace */}
+                <div className="p-4 border-t border-aurora-neutral-200 bg-aurora-neutral-100 text-xs space-y-3.5 rounded-b-lg">
+                  {/* 1. Human Approval Gate Rationale & Policy Reference (if escalated or requires human sign-off) */}
+                  {isEscalated && (
+                    <div className="p-3.5 rounded-lg bg-amber-50 border border-amber-300 text-amber-950 space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <AlertTriangle strokeWidth={1.5} className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                        <span className="font-bold text-xs uppercase tracking-wider text-amber-900">
+                          Human Supervisor Approval Gate Activated
+                        </span>
+                      </div>
+                      <div className="space-y-1.5 text-xs">
+                        <div>
+                          <strong className="text-amber-900">Decision Rationale:</strong>{' '}
+                          <span>
+                            Human review is required before dispatch because this decision triggers a financial concession, goodwill compensation, or complaint escalation threshold.
+                          </span>
+                        </div>
+                        <div className="p-2 rounded bg-white/80 border border-amber-200 font-mono text-[11px] text-amber-900 space-y-1">
+                          <div className="font-bold flex items-center space-x-1">
+                            <FileText strokeWidth={1.5} className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Governing Policy Citation: POL-FIN-001 (Section 3: Financial Commitments & Compensation)</span>
+                          </div>
+                          <p className="font-sans text-[11px] text-amber-950 leading-relaxed">
+                            "Agents must never grant goodwill compensation, fee waivers, or discount vouchers above $0 without Human Supervisor Approval. Any compensation request must be escalated to supervisor review."
+                          </p>
+                        </div>
+                        <div className="text-[11px] text-amber-800">
+                          <strong>Required Supervisor Action:</strong> Review customer interaction history, verify credit authorization in CRM, and click <strong>Approve & Send</strong> on the banner above.
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Governing Policy Documentation & Objectives */}
+                  {policyDoc && (
+                    <div className="p-3 rounded-lg bg-white border border-aurora-neutral-200 space-y-2">
+                      <div className="flex items-center justify-between pb-1 border-b border-aurora-neutral-100">
+                        <div className="flex items-center space-x-1.5 text-aurora-primary font-bold text-[11px]">
+                          <Shield strokeWidth={1.5} className="w-3.5 h-3.5" />
+                          <span>Governing Policy Documentation ({policyDoc.policyCode})</span>
+                        </div>
+                        <span className="text-[10px] font-mono text-aurora-neutral-500">{policyDoc.department}</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="font-bold text-aurora-neutral-800 text-[11px] block">Policy Objective:</span>
+                          <p className="text-aurora-neutral-600 leading-snug text-[11px]">{policyDoc.governanceObjective}</p>
+                        </div>
+                        <div>
+                          <span className="font-bold text-aurora-neutral-800 text-[11px] block">Transformation Role:</span>
+                          <p className="text-aurora-neutral-600 leading-snug text-[11px]">{policyDoc.transformationRole}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 3. Chain-of-Thought Reasoning Trace */}
                   {step.chainOfThought && step.chainOfThought.length > 0 && (
-                    <div className="space-y-1.5 p-2.5 rounded bg-white border border-aurora-neutral-200">
+                    <div className="space-y-1.5 p-3 rounded-lg bg-white border border-aurora-neutral-200">
                       <div className="flex items-center space-x-1.5 text-aurora-primary font-bold text-[11px]">
                         <BrainCircuit strokeWidth={1.5} className="w-3.5 h-3.5" />
                         <span>Policy-Governed Chain-of-Thought Reasoning Trace ({policyMeta.code}):</span>
@@ -159,9 +232,9 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
                     </div>
                   )}
 
-                  {/* Evidence & Action details */}
-                  <div>
-                    <span className="font-semibold text-aurora-neutral-900 block mb-1">
+                  {/* 4. Evidence & Action details */}
+                  <div className="p-3 rounded-lg bg-white border border-aurora-neutral-200 space-y-1.5">
+                    <span className="font-bold text-aurora-neutral-900 block text-[11px] uppercase tracking-wider">
                       Structured Directives & Railguard Evidence:
                     </span>
                     <ul className="space-y-1 text-aurora-neutral-700">
@@ -182,3 +255,4 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
     </div>
   );
 };
+
