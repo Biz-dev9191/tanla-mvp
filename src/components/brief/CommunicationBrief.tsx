@@ -226,9 +226,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
               Communication Brief
             </span>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded border border-purple-200">
-              5×5×5 Test Case Matrix Active
-            </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
             AI Customer Communication Orchestrator
@@ -239,16 +236,16 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         </div>
       </div>
 
-      {/* 5x5x5 TEST CASE MATRIX SELECTOR BAR */}
-      <div className="bg-gradient-to-r from-aurora-primary-light/40 via-white to-purple-50 p-5 rounded-xl border border-aurora-primary/30 shadow-sm space-y-3">
+      {/* TEST CASE MATRIX SELECTOR BAR */}
+      <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Layers strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
             <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
-              Test Case Matrix (5×5×5 Combinations)
+              Test Case Matrix
             </h3>
           </div>
-          <span className="text-[11px] font-mono font-bold text-aurora-primary bg-white px-2.5 py-0.5 rounded border border-aurora-primary/30 shadow-2xs">
+          <span className="text-[11px] font-mono text-aurora-neutral-600 bg-aurora-neutral-100 px-2.5 py-0.5 rounded border border-aurora-neutral-200">
             125 Dynamic Permutations
           </span>
         </div>
@@ -325,8 +322,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           {/* COLUMN 1: CUSTOMER PROFILE */}
           <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
             <div>
-              {/* Card Header & Tabs (Structured on LEFT as Default) */}
-              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex items-center justify-between">
+              {/* Card Header & Tabs (Header followed by Tab in hierarchy) */}
+              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 space-y-3">
                 <div className="flex items-center space-x-2">
                   <User strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">1. Customer Profile</h3>
@@ -335,25 +332,25 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   <button
                     type="button"
                     onClick={() => setCustomerTab('structured')}
-                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                    className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
                       customerTab === 'structured'
                         ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
                         : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <SlidersHorizontal strokeWidth={1.5} className="w-3 h-3" />
-                    <span>Structured (Default)</span>
+                    <SlidersHorizontal strokeWidth={1.5} className="w-3.5 h-3.5" />
+                    <span>Structured Form</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setCustomerTab('text')}
-                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                    className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
                       customerTab === 'text'
                         ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
                         : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <AlignLeft strokeWidth={1.5} className="w-3 h-3" />
+                    <AlignLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
                     <span>Text & Pills</span>
                   </button>
                 </div>
@@ -500,8 +497,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           {/* COLUMN 2: BUSINESS EVENT */}
           <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
             <div>
-              {/* Card Header & Tabs */}
-              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex items-center justify-between">
+              {/* Card Header & Tabs (Header followed by Tab in hierarchy) */}
+              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 space-y-3">
                 <div className="flex items-center space-x-2">
                   <AlertCircle strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">2. Business Event</h3>
@@ -510,25 +507,25 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   <button
                     type="button"
                     onClick={() => setEventTab('structured')}
-                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                    className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
                       eventTab === 'structured'
                         ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
                         : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <SlidersHorizontal strokeWidth={1.5} className="w-3 h-3" />
-                    <span>Structured (Default)</span>
+                    <SlidersHorizontal strokeWidth={1.5} className="w-3.5 h-3.5" />
+                    <span>Structured Form</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setEventTab('text')}
-                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                    className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
                       eventTab === 'text'
                         ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
                         : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <AlignLeft strokeWidth={1.5} className="w-3 h-3" />
+                    <AlignLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
                     <span>Text & Pills</span>
                   </button>
                 </div>
@@ -668,8 +665,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           {/* COLUMN 3: BUSINESS OBJECTIVE */}
           <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
             <div>
-              {/* Card Header & Tabs */}
-              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex items-center justify-between">
+              {/* Card Header & Tabs (Header followed by Tab in hierarchy) */}
+              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 space-y-3">
                 <div className="flex items-center space-x-2">
                   <Target strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
                   <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">3. Business Objective</h3>
@@ -678,25 +675,25 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   <button
                     type="button"
                     onClick={() => setObjectiveTab('structured')}
-                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                    className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
                       objectiveTab === 'structured'
                         ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
                         : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <SlidersHorizontal strokeWidth={1.5} className="w-3 h-3" />
-                    <span>Structured (Default)</span>
+                    <SlidersHorizontal strokeWidth={1.5} className="w-3.5 h-3.5" />
+                    <span>Structured Form</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => setObjectiveTab('text')}
-                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                    className={`flex-1 flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition ${
                       objectiveTab === 'text'
                         ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
                         : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <AlignLeft strokeWidth={1.5} className="w-3 h-3" />
+                    <AlignLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
                     <span>Text & Pills</span>
                   </button>
                 </div>
