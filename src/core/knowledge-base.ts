@@ -87,6 +87,138 @@ export const CHANNEL_GUIDELINES = {
   },
 };
 
+export interface GovernedPolicyDocument {
+  id: string;
+  title: string;
+  code: string;
+  version: string;
+  lastUpdated: string;
+  summary: string;
+  clauses: {
+    clauseId: string;
+    section: string;
+    title: string;
+    text: string;
+    directiveType: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE';
+    complianceRequirement: string;
+    keywords: string[];
+    escalationRequired: boolean;
+  }[];
+}
+
+export const POLICY_DOCUMENTS_INDEX: GovernedPolicyDocument[] = [
+  {
+    id: "DOC-PAY-01",
+    title: "Payment, Refund & Financial Liability Standards",
+    code: "PRL-2026-v4",
+    version: "4.2",
+    lastUpdated: "September 2026",
+    summary: "Mandatory corporate guidelines governing automated refunds, payment capture failures, banking settlement SLAs, and goodwill credit caps.",
+    clauses: [
+      {
+        clauseId: "PRL-SEC-3.1",
+        section: "Section 3.1",
+        title: "Automated Refund Notification & Card Masking",
+        text: "In all instances where transaction capture succeeds but downstream order provisioning fails, the automated orchestrator must immediately generate an unambiguous refund confirmation. The communication must state the exact captured amount and payment gateway reference ID. Payment instruments must be masked to display only the last 4 digits (e.g. Card ending in 4012).",
+        directiveType: "MANDATORY",
+        complianceRequirement: "Must confirm payment reference, exact amount, card mask, and automated refund initiation without demanding customer intervention.",
+        keywords: ["refund", "payment", "capture", "order failed", "masking", "card", "4012", "provisioning"],
+        escalationRequired: false,
+      },
+      {
+        clauseId: "PRL-SEC-3.4",
+        section: "Section 3.4",
+        title: "Settlement Timeline Standard",
+        text: "Agents must cite standard banking settlement cycles (3 to 5 business days) as an estimate subject to the receiving financial institution. Agents are strictly prohibited from guaranteeing same-day settlement or immediate credit unless explicit real-time rails (IMPS/FedNow/SEPA Instant) have been confirmed by gateway telemetry.",
+        directiveType: "PROHIBITIVE",
+        complianceRequirement: "Cite 3-5 business days banking cycle; prohibit same-day guarantees without telemetry verification.",
+        keywords: ["settlement", "timeline", "banking cycle", "business days", "guarantee", "same-day"],
+        escalationRequired: false,
+      },
+      {
+        clauseId: "PRL-SEC-5.2",
+        section: "Section 5.2",
+        title: "Goodwill Credit and Compensation Authority",
+        text: "Automated communication systems possess $0 independent financial authorization for discretionary compensation, apology credits, or promotional vouchers. Any message offering monetary goodwill above $0 must be held in ESCALATION status and routed to an authorized Operations Supervisor for cryptographic sign-off under POL-FIN-001.",
+        directiveType: "MANDATORY",
+        complianceRequirement: "Hold discretionary credits in ESCALATION queue for supervisor sign-off before dispatch.",
+        keywords: ["compensation", "goodwill", "voucher", "credit", "discount", "supervisor", "escalation", "authorization"],
+        escalationRequired: true,
+      },
+    ],
+  },
+  {
+    id: "DOC-PRV-02",
+    title: "Data Protection, PII & Consent Protocol",
+    code: "DPP-GDPR-CCPA-2026",
+    version: "3.1",
+    lastUpdated: "August 2026",
+    summary: "Enterprise privacy safeguards covering personal identifiable information (PII) masking, channel consent enforcement, and unencrypted transmission prohibitions.",
+    clauses: [
+      {
+        clauseId: "DPP-SEC-2.1",
+        section: "Section 2.1",
+        title: "PII Scrubbing and Redaction in Multi-Channel Outbound",
+        text: "Plaintext transmission of primary account numbers (PAN), CVVs, passwords, full Aadhaar/SSN numbers, or unencrypted session tokens across WhatsApp, SMS, Email, or Voice synthesis is strictly prohibited. Only non-sensitive verified identifiers (First Name, truncated Order ID, masked card ending) may appear in outbound payloads.",
+        directiveType: "PROHIBITIVE",
+        complianceRequirement: "Strict redaction of all sensitive payment and identity tokens.",
+        keywords: ["pii", "privacy", "pan", "card", "redaction", "masking", "security", "token", "password"],
+        escalationRequired: false,
+      },
+      {
+        clauseId: "DPP-SEC-4.3",
+        section: "Section 4.3",
+        title: "Channel Consent Hierarchy and Opt-In Enforcement",
+        text: "Communications classified as promotional require verified opt-in consent recorded within the last 180 days. Transactional communications are permitted for active account holders but must respect channel-specific opt-outs unless classified as Critical Security Alerts.",
+        directiveType: "MANDATORY",
+        complianceRequirement: "Enforce consent verification prior to message dispatch.",
+        keywords: ["consent", "opt-in", "promotional", "transactional", "compliance", "channel"],
+        escalationRequired: false,
+      },
+    ],
+  },
+  {
+    id: "DOC-GOV-03",
+    title: "Customer Attention, Tone & Fatigue Mitigation Directive",
+    code: "CAF-2026-v2",
+    version: "2.4",
+    lastUpdated: "July 2026",
+    summary: "Governance limits for frequency capping, multi-channel suppression, brand tone adherence, and zero-friction customer reassurance.",
+    clauses: [
+      {
+        clauseId: "CAF-SEC-1.2",
+        section: "Section 1.2",
+        title: "24-Hour Velocity Threshold & Autonomous Suppression",
+        text: "If an individual customer profile has received 2 or more promotional messages, or 3 or more transactional messages within a rolling 24-hour window, subsequent non-critical communications must be SUPPRESSED autonomously by the orchestrator. The suppression event must be logged with an immutable audit trace.",
+        directiveType: "MANDATORY",
+        complianceRequirement: "Suppress outbound dispatch when rolling 24h frequency exceeds threshold.",
+        keywords: ["fatigue", "frequency", "suppression", "velocity", "24-hour", "limits", "cap"],
+        escalationRequired: false,
+      },
+      {
+        clauseId: "CAF-SEC-2.5",
+        section: "Section 2.5",
+        title: "Aurora Brand Voice & Zero Exclamation Mandate",
+        text: "All customer-facing text across all channels must embody the Aurora Brand Voice: Direct, Calm, Competent. Exclamation marks (!) are strictly prohibited in all transactional and support communications. Language must avoid alarmism, false excitement, bureaucratic jargon, or blaming third-party partners.",
+        directiveType: "PROHIBITIVE",
+        complianceRequirement: "Zero exclamation marks, calm sentence-case phrasing, second-person direct clarity.",
+        keywords: ["brand", "voice", "tone", "exclamation", "calm", "direct", "competent", "formatting"],
+        escalationRequired: false,
+      },
+      {
+        clauseId: "CAF-SEC-3.1",
+        section: "Section 3.1",
+        title: "Customer Friction Minimization and Action Clarity",
+        text: "Whenever a business event has been resolved automatically (e.g. auto-refund initiated, system failure remediated), the communication must explicitly declare 'No action is required from you' to prevent unnecessary support ticket creation.",
+        directiveType: "MANDATORY",
+        complianceRequirement: "Explicit zero-friction declaration on automated resolutions.",
+        keywords: ["friction", "no action", "reassurance", "support ticket", "resolution", "clarity"],
+        escalationRequired: false,
+      },
+    ],
+  },
+];
+
 export const COMPANY_POLICIES: PolicyRule[] = [
   {
     id: "POL-TX-001",
@@ -182,3 +314,88 @@ export const COMPANY_POLICIES: PolicyRule[] = [
     priority: "critical",
   },
 ];
+
+/**
+ * Clause-Level Semantic & Keyword RAG Retrieval Engine
+ */
+export function retrieveClauseCitations(
+  eventType: string,
+  eventDescription: string,
+  objectivePrimary: string,
+  customRules?: PolicyRule[],
+  query?: string
+): import('./types').ClauseCitation[] {
+  const citations: import('./types').ClauseCitation[] = [];
+  const queryTokens = [
+    eventType,
+    eventDescription,
+    objectivePrimary,
+    query || '',
+  ]
+    .join(' ')
+    .toLowerCase()
+    .split(/[\s,._\-:;]+/)
+    .filter((w) => w.length > 2);
+
+  // 1. Search Core Policy Documents
+  for (const doc of POLICY_DOCUMENTS_INDEX) {
+    for (const clause of doc.clauses) {
+      let matchCount = 0;
+      for (const kw of clause.keywords) {
+        if (queryTokens.some((t) => t.includes(kw.toLowerCase()) || kw.toLowerCase().includes(t))) {
+          matchCount += 1.5;
+        }
+      }
+      // Check clause text matches
+      const textLower = clause.text.toLowerCase();
+      for (const token of queryTokens) {
+        if (textLower.includes(token)) {
+          matchCount += 0.4;
+        }
+      }
+
+      if (matchCount > 0.8) {
+        const relevanceScore = Math.min(0.99, Math.round((0.75 + matchCount * 0.05) * 100) / 100);
+        citations.push({
+          clauseId: clause.clauseId,
+          sourceDocument: doc.title,
+          section: clause.section,
+          title: clause.title,
+          excerpt: clause.text,
+          relevanceScore,
+          directiveType: clause.directiveType,
+          complianceRequirement: clause.complianceRequirement,
+        });
+      }
+    }
+  }
+
+  // 2. Search Custom Uploaded Rules (if provided)
+  if (customRules && customRules.length > 0) {
+    for (const rule of customRules) {
+      let matchCount = 0;
+      const ruleLower = `${rule.title} ${rule.rule} ${rule.allowedActions.join(' ')} ${rule.prohibitedActions.join(' ')}`.toLowerCase();
+      for (const token of queryTokens) {
+        if (ruleLower.includes(token)) {
+          matchCount += 0.8;
+        }
+      }
+      if (matchCount > 0.5) {
+        citations.push({
+          clauseId: rule.id,
+          sourceDocument: 'Custom Uploaded Policy Document',
+          section: rule.nodePath.split(' > ').pop() || 'Section 1.0',
+          title: rule.title,
+          excerpt: rule.rule,
+          relevanceScore: Math.min(0.98, Math.round((0.8 + matchCount * 0.04) * 100) / 100),
+          directiveType: rule.prohibitedActions.length > 0 ? 'PROHIBITIVE' : 'MANDATORY',
+          complianceRequirement: rule.allowedActions.join('; ') || 'Strict compliance with uploaded policy.',
+        });
+      }
+    }
+  }
+
+  // Sort by highest relevance score and return top matches
+  return citations.sort((a, b) => b.relevanceScore - a.relevanceScore).slice(0, 4);
+}
+

@@ -31,6 +31,7 @@ export default function Home() {
   const [history, setHistory] = useState<OrchestrationResult[]>([]);
   const [selectedPolicyNode, setSelectedPolicyNode] = useState<PolicyTreeNode | null>(null);
   const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
+  const [customPolicyRules, setCustomPolicyRules] = useState<any[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Load history from localStorage on mount
@@ -72,6 +73,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
+          customRules: customPolicyRules.length > 0 ? customPolicyRules : undefined,
           geminiKey,
           openaiKey,
         }),
@@ -118,6 +120,7 @@ export default function Home() {
   // Dynamic policy applied
   const handleApplyDynamicPolicy = (result: DynamicPolicyParseResult) => {
     setCustomPolicyTree(result.tree);
+    setCustomPolicyRules(result.rules);
     if (currentResult) {
       setCurrentResult({
         ...currentResult,
@@ -125,6 +128,7 @@ export default function Home() {
       });
     }
   };
+
 
   // Human approval handlers
   const handleApprove = () => {
@@ -286,8 +290,11 @@ export default function Home() {
                   onSuppress={handleSuppress}
                 />
 
-                {/* Agent Stepper Pipeline */}
-                <AgentStepper steps={currentResult.agentSteps} />
+                {/* Agent Stepper Pipeline with Reflection Loops */}
+                <AgentStepper
+                  steps={currentResult.agentSteps}
+                  reflectionLoops={currentResult.reflectionLoops}
+                />
 
                 {/* Grid: Decision Trace + Strategy Card */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -301,11 +308,13 @@ export default function Home() {
                   />
                 </div>
 
-                {/* Applied Policy Path */}
+                {/* Applied Policy Path & Clause Citations */}
                 <PolicyPathViewer
                   policyPath={currentResult.appliedPolicyPath}
                   appliedPolicies={currentResult.appliedPolicies}
+                  clauseCitations={currentResult.clauseCitations}
                 />
+
 
                 {/* Multi-Channel Previews (WhatsApp, SMS, Email, Voice) */}
                 <ChannelPreviewTabs

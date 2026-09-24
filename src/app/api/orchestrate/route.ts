@@ -9,10 +9,11 @@ export async function POST(req: NextRequest) {
     const geminiKey = body.geminiKey || req.headers.get('x-gemini-key') || undefined;
     const openaiKey = body.openaiKey || req.headers.get('x-openai-key') || undefined;
     const apiKeys = { geminiKey, openaiKey };
+    const customRules = body.customRules;
 
     // Check if streamlined 3-column payload
     if ('customerProfileText' in body) {
-      const result = await orchestrateCommunication(body, undefined, undefined, apiKeys);
+      const result = await orchestrateCommunication(body, undefined, undefined, apiKeys, customRules);
       return NextResponse.json(result);
     }
 
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await orchestrateCommunication(customer, event, objective, apiKeys);
+    const result = await orchestrateCommunication(customer, event, objective, apiKeys, customRules);
     return NextResponse.json(result);
   } catch (error: any) {
     console.error('Orchestration API error:', error);
@@ -35,3 +36,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

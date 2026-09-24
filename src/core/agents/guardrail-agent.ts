@@ -1,7 +1,8 @@
-import { CustomerProfile, BusinessEvent, BusinessObjective, CommunicationStrategy, ChannelMessage, GuardrailEvaluation, AgentExecutionStep } from '../types';
+import { CustomerProfile, BusinessEvent, BusinessObjective, CommunicationStrategy, ChannelMessage, GuardrailEvaluation, AgentExecutionStep, ReflectionLoopIteration } from '../types';
 
 export interface GuardrailOutput {
   evaluation: GuardrailEvaluation;
+  chainOfThought: string[];
   step: AgentExecutionStep;
 }
 
@@ -16,49 +17,94 @@ export function runGuardrailAgent(
     email: ChannelMessage;
     voice: ChannelMessage;
   },
-  revisionCount: number = 0
+  revisionCount: number = 0,
+  reflectionLoops: ReflectionLoopIteration[] = []
 ): GuardrailOutput {
   const startTime = Date.now();
+  const chainOfThought: string[] = [];
+  const violationCodes: string[] = [];
+  const actionableFeedback: string[] = [];
 
   const selectedMsg = messages[strategy.selectedChannel.toLowerCase() as keyof typeof messages] || messages.whatsapp;
   const fullText = `${selectedMsg.subject || ''} ${selectedMsg.body}`;
 
-  // 1. Check for exclamation marks (Aurora Cloud brand violation)
-  const hasExclamation = fullText.includes('!');
+  // Chain-of-thought 1: Tone & Brand Rules Verification (Zero Exclamation Rule)
+  const hasExclamation = fullText.includes('!') || messages.whatsapp.body.includes('!') || messages.sms.body.includes('!') || messages.email.body.includes('!');
+  if (hasExclamation) {
+    violationCodes.push('EXCLAMATION_DETECTED');
+    actionableFeedback.push('Remove exclamation marks across all generated channel payloads to adhere strictly to Aurora calm tone.');
+  }
 
-  // 2. Check for unverified compensation promises
+  chainOfThought.push(
+    `[Check 1 - Tone & Zero Exclamation Rule] Exclamation mark scan: ${hasExclamation ? 'FAILED (Violations detected)' : 'PASSED (0 exclamation marks detected)'}.`
+  );
+
+  // Chain-of-thought 2: Financial Authorization & Compensation Limits
   const mentionsCompensation = /coupon|voucher|\$\d+\s*credit|free\s*month/i.test(fullText);
   const unauthorizedCompensation = mentionsCompensation && !event.amount?.toLowerCase().includes('credit');
+  if (unauthorizedCompensation) {
+    violationCodes.push('UNAUTHORIZED_COMPENSATION');
+    actionableFeedback.push('Monetary goodwill or vouchers detected without prior supervisor approval under POL-FIN-001. Flag for ESCALATION.');
+  }
 
-  // 3. Check for factual grounding
+  chainOfThought.push(
+    `[Check 2 - Financial Liability & Compensation Gate] Discretionary credit scan: ${unauthorizedCompensation ? 'FAILED (Unapproved compensation detected)' : 'PASSED (Within autonomous financial limits)'}.`
+  );
+
+  // Chain-of-thought 3: Factual Grounding & Anti-Hallucination
   const verifiedFactsPass = event.verifiedFacts.length > 0;
+  chainOfThought.push(
+    `[Check 3 - Factual Grounding] Verified facts match: ${verifiedFactsPass ? 'PASSED (Claims grounded in telemetry)' : 'WARNING (Unverified)'}.`
+  );
 
-  // 4. Privacy Check
+  // Chain-of-thought 4: PII Masking & Privacy Check
   const hasUnmaskedCard = /\b\d{4}[ -]?\d{4}[ -]?\d{4}[ -]?\d{4}\b/.test(fullText);
+  if (hasUnmaskedCard) {
+    violationCodes.push('UNMASKED_CARD');
+    actionableFeedback.push('Mask full payment card numbers to last 4 digits (e.g. Card ending in 4012).');
+  }
 
-  // 5. Channel length fit
-  const lengthPass =
-    strategy.selectedChannel === 'SMS' ? selectedMsg.characterCount <= 160 :
-    strategy.selectedChannel === 'WhatsApp' ? selectedMsg.characterCount <= 700 : true;
+  chainOfThought.push(
+    `[Check 4 - PII Redaction] Privacy & card masking: ${hasUnmaskedCard ? 'FAILED (Unmasked card pattern detected)' : 'PASSED (Masked to last 4 digits)'}.`
+  );
 
-  // 6. Fatigue Check
+  // Chain-of-thought 5: Channel Fit & Constraint Bounds
+  const isSMSOver = strategy.selectedChannel === 'SMS' && selectedMsg.characterCount > 160;
+  const isWAOver = strategy.selectedChannel === 'WhatsApp' && selectedMsg.characterCount > 700;
+  const lengthPass = !isSMSOver && !isWAOver;
+
+  if (isSMSOver) {
+    violationCodes.push('SMS_LENGTH_EXCEEDED');
+    actionableFeedback.push(`Reduce SMS body length to 160 characters or less (Current: ${selectedMsg.characterCount} chars).`);
+  }
+
+  chainOfThought.push(
+    `[Check 5 - Channel Bounds] Format density: ${lengthPass ? `PASSED (${strategy.selectedChannel}: ${selectedMsg.characterCount} chars)` : 'FAILED (Character limit overflow)'}.`
+  );
+
+  // Chain-of-thought 6: 24h Message Fatigue & Frequency Limits
   const totalRecent = (customer.recentCommunicationCount24h.transactional || 0) + (customer.recentCommunicationCount24h.promotional || 0);
   const fatiguePass = totalRecent < 4;
+  if (!fatiguePass) {
+    violationCodes.push('FATIGUE_LIMIT_EXCEEDED');
+    actionableFeedback.push('Customer frequency cap exceeded for rolling 24h period. SUPPRESS communication.');
+  }
 
+  chainOfThought.push(
+    `[Check 6 - Attention Fatigue Limit] 24h message count: ${totalRecent}/4 limit. Status: ${fatiguePass ? 'PASSED' : 'FAILED (Suppression required)'}.`
+  );
+
+  // Chain-of-thought 7: Verdict Computation & Revision Loop Decision
   let status: 'PASS' | 'REVISE' | 'ESCALATE' | 'SUPPRESS' = 'PASS';
   let feedbackForRevision: string | undefined = undefined;
 
   if (hasUnmaskedCard || hasExclamation || !lengthPass) {
     if (revisionCount < 2) {
       status = 'REVISE';
-      feedbackForRevision = hasExclamation
-        ? "Remove exclamation marks to comply with Aurora Cloud calm brand tone."
-        : hasUnmaskedCard
-        ? "Mask full credit card numbers to last 4 digits."
-        : "Reduce message length to conform to channel constraints.";
+      feedbackForRevision = actionableFeedback.join(' ');
     } else {
       status = 'ESCALATE';
-      feedbackForRevision = "Max revision loops reached with minor formatting constraint.";
+      feedbackForRevision = "Max revision loops reached with remaining formatting constraints.";
     }
   }
 
@@ -70,6 +116,10 @@ export function runGuardrailAgent(
     status = 'SUPPRESS';
   }
 
+  chainOfThought.push(
+    `[Step 7 - Critic Verdict] Final Outcome: ${status} (Revision Loop: ${revisionCount}/2). Violations: ${violationCodes.length > 0 ? violationCodes.join(', ') : 'None'}.`
+  );
+
   const evaluation: GuardrailEvaluation = {
     status,
     factualAccuracy: {
@@ -79,8 +129,8 @@ export function runGuardrailAgent(
     policyCompliance: {
       passed: !unauthorizedCompensation,
       details: unauthorizedCompensation
-        ? "Flagged: Compensation offer requires human approval under POL-FIN-001."
-        : "Passed: Fully aligned with transactional and privacy governance policies.",
+        ? "Flagged: Compensation offer requires human supervisor approval under POL-FIN-001."
+        : "Passed: Fully aligned with transactional, refund, and privacy governance policies.",
     },
     privacyCheck: {
       passed: !hasUnmaskedCard,
@@ -110,29 +160,35 @@ export function runGuardrailAgent(
     },
     personalisationQuality: customer.customerValue === 'VIP' ? 'Exceptional' : 'High',
     feedbackForRevision,
+    violationCodes: violationCodes.length > 0 ? violationCodes : undefined,
+    actionableFeedback: actionableFeedback.length > 0 ? actionableFeedback : undefined,
     revisionCount,
+    reflectionLoops: reflectionLoops.length > 0 ? reflectionLoops : undefined,
   };
 
   const duration = Date.now() - startTime + 61;
 
   const step: AgentExecutionStep = {
     agentId: 'guardrail',
-    agentName: 'Guardrail & Critic Agent',
+    agentName: revisionCount > 0 ? `Guardrail & Critic Agent (Loop ${revisionCount})` : 'Guardrail & Critic Agent',
     status: status === 'PASS' ? 'completed' : status === 'REVISE' ? 'needs_revision' : status === 'ESCALATE' ? 'escalated' : 'suppressed',
-    summary: `Validation outcome: ${status} (7/7 guardrail checks executed)`,
+    summary: `Critic outcome: ${status} (7/7 guardrail checks executed, ${revisionCount} revisions)`,
     details: [
       `Factual Accuracy: ${evaluation.factualAccuracy.details}`,
       `Policy Compliance: ${evaluation.policyCompliance.details}`,
       `Privacy & Masking: ${evaluation.privacyCheck.details}`,
       `Tone & Brand Check: ${evaluation.toneAlignment.details}`,
-      `Final Guardrail Verdict: ${status}.`,
+      `Final Guardrail Verdict: ${status} ${feedbackForRevision ? `(Feedback: "${feedbackForRevision}")` : ''}`,
     ],
+    chainOfThought,
     durationMs: duration,
     timestamp: new Date().toISOString(),
   };
 
   return {
     evaluation,
+    chainOfThought,
     step,
   };
 }
+

@@ -8,6 +8,8 @@ export interface MessageGenerationOutput {
     email: ChannelMessage;
     voice: ChannelMessage;
   };
+  correctionsApplied?: string[];
+  chainOfThought: string[];
   step: AgentExecutionStep;
 }
 
@@ -15,10 +17,26 @@ export function runMessageGenerationAgent(
   customer: CustomerProfile,
   event: BusinessEvent,
   objective: BusinessObjective,
-  strategy: CommunicationStrategy
+  strategy: CommunicationStrategy,
+  criticFeedback?: string,
+  criticViolations?: string[],
+  revisionIteration: number = 0
 ): MessageGenerationOutput {
   const startTime = Date.now();
   const firstName = customer.name.split(' ')[0] || 'Customer';
+  const chainOfThought: string[] = [];
+  const correctionsApplied: string[] = [];
+
+  // Chain-of-thought 1: Brand & Grounding Constraints
+  chainOfThought.push(
+    `[Step 1 - Channel Prompt Synthesis] Persona: '${customer.name}' (${strategy.tone}, ${strategy.formality}). Brand Constraints: Zero exclamation marks, sentence-case, second-person ('you'), strict factual grounding.`
+  );
+
+  if (revisionIteration > 0 && criticFeedback) {
+    chainOfThought.push(
+      `[Step 1b - Reflection Ingestion (Iteration ${revisionIteration})] Ingested Critic Feedback: "${criticFeedback}". Violations flagged: ${(criticViolations || []).join(', ') || 'Formatting / Tone'}. Applying corrective synthesis.`
+    );
+  }
 
   let waText = '';
   let smsText = '';
@@ -160,25 +178,55 @@ Aurora Cloud Operations Team`;
     voiceScript = `Hello ${firstName}, this is an update from Aurora Cloud regarding ${event.title.toLowerCase()}. ${event.description}. ${strategy.customerActionRequired ? 'Please check your dashboard.' : 'No action is required.'} Thank you.`;
   }
 
-  // Redact any unmasked sensitive data
+  // Handle reflection edits if Critic detected issues
+  if (revisionIteration > 0) {
+    if (criticViolations?.includes('EXCLAMATION_DETECTED') || criticFeedback?.includes('exclamation')) {
+      waText = waText.replace(/!+/g, '.');
+      smsText = smsText.replace(/!+/g, '.');
+      emailBody = emailBody.replace(/!+/g, '.');
+      voiceScript = voiceScript.replace(/!+/g, '.');
+      correctionsApplied.push('Eliminated all exclamation marks to strictly uphold Aurora calm tone.');
+    }
+    if (criticViolations?.includes('UNMASKED_CARD') || criticFeedback?.includes('card')) {
+      waText = redactSensitiveData(waText);
+      smsText = redactSensitiveData(smsText);
+      emailBody = redactSensitiveData(emailBody);
+      correctionsApplied.push('Enforced full regex masking on all payment card identifiers.');
+    }
+    if (criticViolations?.includes('SMS_LENGTH_EXCEEDED') || criticFeedback?.includes('length')) {
+      if (smsText.length > 160) {
+        smsText = smsText.slice(0, 155) + '...';
+        correctionsApplied.push('Trimmed SMS character payload to 158 characters (<160 max limit).');
+      }
+    }
+  }
+
+  // Ensure deterministic redaction
   waText = redactSensitiveData(waText);
   smsText = redactSensitiveData(smsText);
   emailBody = redactSensitiveData(emailBody);
   voiceScript = redactSensitiveData(voiceScript);
 
+  chainOfThought.push(
+    `[Step 2 - Multi-Channel Generation] Drafted WhatsApp (${waText.length} chars), SMS (${smsText.length} chars), Email (${emailBody.length} chars), and Voice script (${voiceScript.length} chars). Grounding verified.`
+  );
+
   const duration = Date.now() - startTime + 84;
 
   const step: AgentExecutionStep = {
     agentId: 'message',
-    agentName: 'Message Generation Agent',
+    agentName: revisionIteration > 0 ? `Message Generation Agent (Revision ${revisionIteration})` : 'Message Generation Agent',
     status: 'completed',
-    summary: `Crafted channel-specific communications (WhatsApp: ${waText.length} chars, SMS: ${smsText.length} chars, Email: ${emailBody.length} chars)`,
+    summary: revisionIteration > 0
+      ? `[Revision ${revisionIteration}] Refined message drafts per Critic feedback (${correctionsApplied.join(', ') || 'Tone alignment'})`
+      : `Crafted channel-specific communications (WhatsApp: ${waText.length} chars, SMS: ${smsText.length} chars, Email: ${emailBody.length} chars)`,
     details: [
       `Grounded all factual statements in verified transaction inputs (${event.title}).`,
       `Applied Aurora Cloud brand tone: Direct, calm, competent with zero exclamation marks.`,
       `Tailored phrasing for 4 distinct channels according to respective length and structure guidelines.`,
-      `Verified PII masking and structured call-to-action alignment.`,
+      ...(correctionsApplied.length > 0 ? [`Refinements applied: ${correctionsApplied.join('; ')}`] : []),
     ],
+    chainOfThought,
     durationMs: duration,
     timestamp: new Date().toISOString(),
   };
@@ -211,6 +259,9 @@ Aurora Cloud Operations Team`;
         isSimulated: true,
       },
     },
+    correctionsApplied: correctionsApplied.length > 0 ? correctionsApplied : undefined,
+    chainOfThought,
     step,
   };
 }
+

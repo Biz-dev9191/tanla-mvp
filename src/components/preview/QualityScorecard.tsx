@@ -1,6 +1,6 @@
 import React from 'react';
 import { GuardrailEvaluation } from '@/core/types';
-import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, Award } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, AlertTriangle, XCircle, Award, RefreshCw, Sparkles, Check } from 'lucide-react';
 
 interface QualityScorecardProps {
   guardrails: GuardrailEvaluation;
@@ -53,15 +53,60 @@ export const QualityScorecard: React.FC<QualityScorecardProps> = ({ guardrails }
   ];
 
   return (
-    <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora">
-      <div className="flex items-center justify-between pb-3 border-b border-aurora-neutral-200 mb-4">
+    <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-3 border-b border-aurora-neutral-200">
         <div className="flex items-center space-x-2">
           <Award strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
-          <h3 className="text-sm font-bold text-aurora-neutral-900">Message Governance & Quality Scorecard</h3>
+          <div>
+            <h3 className="text-sm font-bold text-aurora-neutral-900">Message Governance & Quality Scorecard</h3>
+            <p className="text-[11px] text-aurora-neutral-500">Autonomous Critic Verification & Reflection Metrics</p>
+          </div>
         </div>
-        <span className="text-xs text-aurora-neutral-500 font-medium">Deterministic & AI Validated</span>
+        <span className="text-xs text-aurora-neutral-500 font-mono">
+          {guardrails.status === 'PASS' ? '7/7 Checks Passed' : `Verdict: ${guardrails.status}`}
+        </span>
       </div>
 
+      {/* Autonomous Reflection Loops Card */}
+      {guardrails.reflectionLoops && guardrails.reflectionLoops.length > 0 && (
+        <div className="p-3.5 bg-aurora-accent-light/40 border border-aurora-accent/30 rounded-lg space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-xs font-bold text-aurora-accent">
+              <RefreshCw strokeWidth={1.5} className="w-4 h-4 text-aurora-accent" />
+              <span>Autonomous Multi-Agent Reflection Loops ({guardrails.reflectionLoops.length})</span>
+            </div>
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-white text-aurora-accent border border-aurora-accent/30">
+              Autonomous Self-Correction
+            </span>
+          </div>
+
+          <div className="space-y-2 text-xs">
+            {guardrails.reflectionLoops.map((loop, lIdx) => (
+              <div key={lIdx} className="p-2.5 bg-white rounded border border-aurora-neutral-200 space-y-1.5">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-bold text-aurora-neutral-900">Loop #{loop.iteration} Critic Feedback:</span>
+                  <span className="text-aurora-neutral-400 font-mono">{new Date(loop.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                </div>
+                <p className="text-aurora-neutral-700 italic text-[11px]">"{loop.criticFeedback}"</p>
+                <div className="pt-1 border-t border-aurora-neutral-200 flex flex-wrap items-center gap-1.5 text-[10px]">
+                  <span className="font-semibold text-aurora-success flex items-center space-x-1">
+                    <Check strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Applied Repairs:</span>
+                  </span>
+                  {loop.correctionsApplied.map((corr, cIdx) => (
+                    <span key={cIdx} className="px-1.5 py-0.5 rounded bg-aurora-success-light text-aurora-success font-medium">
+                      {corr}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Grid of scorecard checks */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {items.map((item, idx) => (
           <div
@@ -95,3 +140,4 @@ export const QualityScorecard: React.FC<QualityScorecardProps> = ({ guardrails }
     </div>
   );
 };
+

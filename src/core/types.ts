@@ -131,6 +131,58 @@ export interface ChannelMessage {
   isSimulated: boolean;
 }
 
+export interface ClauseCitation {
+  clauseId: string;
+  sourceDocument: string;
+  section: string;
+  title: string;
+  excerpt: string;
+  relevanceScore: number;
+  directiveType: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE';
+  complianceRequirement: string;
+}
+
+export interface ReflectionLoopIteration {
+  iteration: number;
+  criticFeedback: string;
+  violationsDetected: string[];
+  previousDraftSummary: string;
+  revisedDraftSummary: string;
+  correctionsApplied: string[];
+  timestamp: string;
+}
+
+export interface SimulationTurn {
+  turnIndex: number;
+  speaker: 'customer' | 'agent';
+  channel: PreferredChannel;
+  message: string;
+  sentiment?: 'Relieved' | 'Frustrated' | 'Satisfied' | 'Anxious' | 'Skeptical' | 'Neutral' | 'Delighted' | 'Cooperative';
+  sentimentScore?: number; // 0 to 100 (100 = highly positive)
+  escalationRisk?: 'Low' | 'Moderate' | 'High';
+  intent?: string;
+  timestamp: string;
+}
+
+export interface SimulationPersona {
+  id: string;
+  name: string;
+  category: 'High Value VIP' | 'Frustrated Senior' | 'Tech-Savvy Digital' | 'Cautious First-Timer' | 'Urgent Escalator';
+  description: string;
+  temperament: string;
+  initialSentiment: 'Anxious' | 'Frustrated' | 'Neutral' | 'Satisfied';
+}
+
+export interface SimulationSession {
+  id: string;
+  persona: SimulationPersona;
+  turns: SimulationTurn[];
+  resolutionStatus: 'Resolved' | 'Escalated to Human' | 'Follow-up Scheduled' | 'Pending Customer Action';
+  customerSatisfactionScore: number; // 1 to 5
+  supportTicketDeflected: boolean;
+  summary: string;
+}
+
 export interface GuardrailEvaluation {
   status: 'PASS' | 'REVISE' | 'ESCALATE' | 'SUPPRESS';
   factualAccuracy: { passed: boolean; details: string };
@@ -142,7 +194,10 @@ export interface GuardrailEvaluation {
   unsupportedPromises: { detected: boolean; details: string };
   personalisationQuality: 'Standard' | 'High' | 'Exceptional';
   feedbackForRevision?: string;
+  violationCodes?: string[];
+  actionableFeedback?: string[];
   revisionCount: number;
+  reflectionLoops?: ReflectionLoopIteration[];
 }
 
 export interface AgentExecutionStep {
@@ -151,6 +206,7 @@ export interface AgentExecutionStep {
   status: 'waiting' | 'processing' | 'completed' | 'needs_revision' | 'escalated' | 'suppressed' | 'failed';
   summary: string;
   details: string[];
+  chainOfThought?: string[];
   durationMs: number;
   timestamp: string;
 }
@@ -165,6 +221,8 @@ export interface OrchestrationResult {
   decisionTrace: string[];
   appliedPolicyPath: string[];
   appliedPolicies: PolicyRule[];
+  clauseCitations?: ClauseCitation[];
+  reflectionLoops?: ReflectionLoopIteration[];
   strategy: CommunicationStrategy;
   messages: {
     whatsapp: ChannelMessage;
@@ -179,3 +237,4 @@ export interface OrchestrationResult {
   };
   humanApprovalStatus?: 'Pending' | 'Approved' | 'Rejected' | 'Not Required';
 }
+

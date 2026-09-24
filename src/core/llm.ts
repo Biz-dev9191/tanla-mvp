@@ -1,4 +1,4 @@
-import { BRAND_VOICE_GUIDELINES, COMPANY_POLICIES, CHANNEL_GUIDELINES } from './knowledge-base';
+import { ClauseCitation, ReflectionLoopIteration } from './types';
 
 export interface LLMOrchestrationInput {
   customerProfileText: string;
@@ -7,6 +7,7 @@ export interface LLMOrchestrationInput {
   eventPills: string[];
   objectiveText: string;
   objectivePills: string[];
+  customRulesText?: string;
 }
 
 export interface LLMAgentDecision {
@@ -16,20 +17,26 @@ export interface LLMAgentDecision {
     digitalProfile: string;
     sensitivities: string[];
     fatigueRisk: 'Low' | 'Moderate' | 'High';
+    fatigueScore: number;
+    chainOfThought: string[];
   };
   objectiveDecision: {
     primaryGoal: string;
     resolutionStatus: string;
     customerActionRequired: boolean;
     recommendedAction: 'None' | 'Upload Document' | 'Retry Payment' | 'Contact Support';
+    actionFriction: 'Zero Friction' | 'Low (1-Click)' | 'Moderate (Doc Upload)' | 'High (Manual Intervention)';
+    chainOfThought: string[];
   };
   policyDecision: {
     appliedPath: string[];
     policyRuleCodes: string[];
+    clauseCitations: ClauseCitation[];
     allowedActions: string[];
     prohibitedActions: string[];
     humanApprovalRequired: boolean;
     approvalReason?: string;
+    chainOfThought: string[];
   };
   strategyDecision: {
     decision: 'SEND' | 'SUPPRESS' | 'ESCALATE';
@@ -39,12 +46,14 @@ export interface LLMAgentDecision {
     formality: 'Conversational' | 'Professional' | 'Reassuring' | 'Direct';
     ctaType: 'None' | 'Click Link' | 'Upload Document' | 'Contact Support' | 'Retry Payment';
     suppressionReason?: string;
+    chainOfThought: string[];
   };
   messages: {
     whatsapp: { body: string; characterCount: number };
     sms: { body: string; characterCount: number };
     email: { subject: string; body: string; characterCount: number };
     voice: { script: string; characterCount: number };
+    chainOfThought: string[];
   };
   guardrails: {
     status: 'PASS' | 'REVISE' | 'ESCALATE' | 'SUPPRESS';
@@ -55,7 +64,10 @@ export interface LLMAgentDecision {
     channelFitPass: boolean;
     fatiguePass: boolean;
     feedback?: string;
+    violationCodes?: string[];
+    chainOfThought: string[];
   };
+  reflectionLoops?: ReflectionLoopIteration[];
   decisionTrace: string[];
 }
 
@@ -68,13 +80,20 @@ export async function callLiveLLM(
   const openrouterKey = process.env.OPENROUTER_API_KEY;
   const openaiKey = customOpenaiKey?.trim() || process.env.OPENAI_API_KEY;
 
-  const systemPrompt = `You are the Aurora Cloud AI Customer Communication Orchestrator.
-You govern and orchestrate enterprise outbound communications according to the Aurora Cloud Brand & Governance Guidelines:
-- Voice & Tone: Direct, Calm, Competent.
-- Formatting Rules: ZERO exclamation marks in product/customer messages. Sentence case throughout. Second person ('you').
-- Policy Rules: Ground all claims in verified facts. Never invent refund dates or compensation. Enforce opt-in consent and fatigue suppression.
+  const systemPrompt = `You are the Aurora Cloud AI Customer Communication Orchestrator—an enterprise multi-agent engine powering governed customer communications across WhatsApp, SMS, Email, and Voice.
 
-Analyze the input, determine whether to communicate, what to communicate, through which channel, what tone, and generate 4 channel-specific messages. Return a valid JSON object matching the requested schema.`;
+You execute 6 specialized collaborative AI agents in an autonomous chain-of-thought pipeline:
+1. Customer Context Agent: Ingests profile, demographic, digital maturity, 24h message velocity, prior support friction, and emotional sentiment.
+2. Objective & Resolution Agent: Performs root-cause analysis on verified telemetry, formulating the primary business objective, friction-minimizing pathway, and support deflection strategy.
+3. Policy Agent (RAG): Traverses enterprise governance rules, retrieves clause-level citations with exact excerpts (e.g., Section 3.1: Automated Refund Notification, Section 5.2: Goodwill Credit Gate), evaluates $0 unauthorized financial promises (POL-FIN-001), opt-in consent, and PII masking.
+4. Communication Strategy Agent: Synthesizes channel suitability (WhatsApp vs SMS vs Email vs Voice), tone matrix (Direct, Calm, Competent), formality, CTA friction, and dispatch verdict (SEND | SUPPRESS | ESCALATE).
+5. Message Generation Agent: Crafts 4 hyper-tailored channel messages complying strictly with the Aurora Brand Voice:
+   - ZERO exclamation marks (!) anywhere in customer communications.
+   - Sentence case throughout, second person ('you').
+   - Grounded solely in verified telemetry (never hallucinate settlement dates or unverified compensation).
+6. Critic & Guardrail Agent: Executes rigorous 7-point validation. If any violation occurs (exclamation marks, unmasked cards, length limit overflows), it initiates an autonomous reflection loop to refine the draft before final sign-off.
+
+Return a strictly valid JSON object matching the requested schema.`;
 
   const userPrompt = `
 CUSTOMER PROFILE:
@@ -89,7 +108,9 @@ BUSINESS OBJECTIVE:
 Description: ${input.objectiveText || 'N/A'}
 Filter Pills: ${input.objectivePills.join(', ') || 'Resolve issue'}
 
-Determine the customer context, business objective, policy path, communication strategy, multi-channel messages (WhatsApp, SMS, Email, Voice), guardrail verification, and decision trace.`;
+${input.customRulesText ? `CUSTOM POLICY DOCUMENT:\n${input.customRulesText}` : ''}
+
+Execute the 6 specialized agents with step-by-step chain of thought, retrieve clause citations with excerpts, synthesize channel strategies, generate 4 compliant messages (NO exclamation marks), run Critic verification, and produce the final decision trace.`;
 
   // 1. Try Google Gemini API if key is present
   if (geminiKey) {
@@ -193,3 +214,4 @@ Determine the customer context, business objective, policy path, communication s
   // Return null if no external keys configured (orchestrator will use built-in engine)
   return null;
 }
+
