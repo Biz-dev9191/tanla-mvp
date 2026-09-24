@@ -1,5 +1,4 @@
 import { CustomerProfile, BusinessEvent, BusinessObjective, PolicyRule, ClauseCitation, AgentExecutionStep } from '../types';
-import { COMPANY_POLICIES, retrieveClauseCitations } from '../knowledge-base';
 
 export interface PolicyAnalysisOutput {
   appliedPolicyPath: string[];
@@ -22,88 +21,71 @@ export function runPolicyAgent(
   const startTime = Date.now();
   const chainOfThought: string[] = [];
   const appliedPolicies: PolicyRule[] = [];
-  const appliedPolicyPath: string[] = ["Communication"];
+  const appliedPolicyPath: string[] = [];
+  const clauseCitations: ClauseCitation[] = [];
 
-  // Chain-of-thought 1: Hierarchical Policy Traversal
-  chainOfThought.push(
-    `[Step 1 - Hierarchy Traversal] Traversing governance tree for event type '${event.eventType}' and category '${event.eventType.startsWith('payment') ? 'Payment' : event.eventType.startsWith('app') ? 'Application' : 'Support'}'.`
-  );
+  const hasCustomPolicy = Boolean(customRules && customRules.length > 0);
 
-  // 1. Traverse to event-specific policy
-  if (event.eventType === 'payment_successful_order_failed') {
-    appliedPolicyPath.push("Transactional", "Payment", "Payment Successful", "Order Failed");
-    const pol = COMPANY_POLICIES.find(p => p.id === 'POL-TX-001');
-    if (pol) appliedPolicies.push(pol);
-  } else if (event.eventType === 'payment_failed') {
-    appliedPolicyPath.push("Transactional", "Payment", "Payment Failed");
-    const pol = COMPANY_POLICIES.find(p => p.id === 'POL-TX-002');
-    if (pol) appliedPolicies.push(pol);
-  } else if (event.eventType === 'application_incomplete') {
-    appliedPolicyPath.push("Transactional", "Application", "Incomplete Application");
-    const pol = COMPANY_POLICIES.find(p => p.id === 'POL-TX-003');
-    if (pol) appliedPolicies.push(pol);
-  } else if (event.eventType === 'customer_complaint') {
-    appliedPolicyPath.push("Governance", "Financial Commitment Control");
-    const pol = COMPANY_POLICIES.find(p => p.id === 'POL-FIN-001');
-    if (pol) appliedPolicies.push(pol);
-  } else {
-    appliedPolicyPath.push("Transactional", "Service Outage & Updates");
+  if (hasCustomPolicy) {
+    appliedPolicyPath.push("Custom Enterprise Policy", event.eventType);
+    appliedPolicies.push(...(customRules || []));
+
+    chainOfThought.push(
+      `[Step 1 - Custom Policy Ingestion] Evaluated ${customRules!.length} custom compliance rules provided by user.`
+    );
+
+    const allowedActions: string[] = Array.from(new Set(appliedPolicies.flatMap(p => p.allowedActions || [])));
+    const prohibitedActions: string[] = Array.from(new Set(appliedPolicies.flatMap(p => p.prohibitedActions || [])));
+    const humanApprovalRequired = appliedPolicies.some(p => p.escalationRequired);
+    const approvalReason = humanApprovalRequired
+      ? "Requires supervisor review due to custom policy escalation condition."
+      : undefined;
+
+    const duration = Date.now() - startTime + 45;
+
+    const step: AgentExecutionStep = {
+      agentId: 'policy',
+      agentName: 'Enterprise Policy & Compliance Agent',
+      status: humanApprovalRequired ? 'escalated' : 'completed',
+      summary: `Applied ${appliedPolicies.length} custom policy rules`,
+      details: [
+        `Custom policy rules evaluated against event '${event.title}'.`,
+        `Enforced ${allowedActions.length} permitted actions and ${prohibitedActions.length} prohibited constraints.`,
+        ...(humanApprovalRequired && approvalReason ? [`FLAGGED ESCALATION: ${approvalReason}`] : []),
+      ],
+      chainOfThought,
+      durationMs: duration,
+      timestamp: new Date().toISOString(),
+    };
+
+    return {
+      appliedPolicyPath,
+      appliedPolicies,
+      clauseCitations,
+      allowedActions,
+      prohibitedActions,
+      humanApprovalRequired,
+      approvalReason,
+      chainOfThought,
+      step,
+    };
   }
 
-  // 2. Add Universal Governance & Privacy policies
-  const privacyPol = COMPANY_POLICIES.find(p => p.id === 'POL-PRV-001');
-  if (privacyPol) appliedPolicies.push(privacyPol);
-
-  // 3. Add Fatigue policy if communication count > 1
-  if ((customer.recentCommunicationCount24h.transactional || 0) + (customer.recentCommunicationCount24h.promotional || 0) >= 2) {
-    const fatPol = COMPANY_POLICIES.find(p => p.id === 'POL-FAT-001');
-    if (fatPol) appliedPolicies.push(fatPol);
-  }
-
-  // 4. Incorporate any custom uploaded rules
-  if (customRules && customRules.length > 0) {
-    appliedPolicies.push(...customRules);
-  }
-
-  // Chain-of-thought 2: Clause-Level Semantic RAG Retrieval
-  const clauseCitations = retrieveClauseCitations(
-    event.eventType,
-    event.description + ' ' + (event.verifiedFacts || []).join(' '),
-    objective.primary,
-    customRules
-  );
-
+  // When no policy document or custom rules are provided:
   chainOfThought.push(
-    `[Step 2 - Clause-Level RAG Retrieval] Retrieved ${clauseCitations.length} authoritative policy clauses (${clauseCitations.map(c => `${c.clauseId} [${c.sourceDocument} ${c.section}]`).join(', ')}). Top match score: ${clauseCitations[0]?.relevanceScore || 0.95}.`
+    `[Step 1 - Policy Document Check] No custom policy document or rules uploaded. Relying on core brand voice & deterministic safety guardrails.`
   );
 
-  const allowedActions: string[] = Array.from(new Set(appliedPolicies.flatMap(p => p.allowedActions)));
-  const prohibitedActions: string[] = Array.from(new Set(appliedPolicies.flatMap(p => p.prohibitedActions)));
-
-  // Chain-of-thought 3: Financial Authority & Escalation Gate
-  const humanApprovalRequired = appliedPolicies.some(p => p.escalationRequired) || clauseCitations.some(c => c.directiveType === 'MANDATORY' && c.clauseId.includes('PRL-SEC-5.2'));
-  const approvalReason = humanApprovalRequired
-    ? "Requires supervisor review due to financial compensation or exceptional policy conditions under POL-FIN-001."
-    : undefined;
-
-  chainOfThought.push(
-    `[Step 3 - Governance Gate] Escalation status: ${humanApprovalRequired ? 'ESCALATION TRIGGERED' : 'Autonomous Pass'}. Reason: ${approvalReason || 'All directives within autonomous agent thresholds'}.`
-  );
-
-  const duration = Date.now() - startTime + 65;
+  const duration = Date.now() - startTime + 20;
 
   const step: AgentExecutionStep = {
     agentId: 'policy',
-    agentName: 'Policy Agent',
-    status: humanApprovalRequired ? 'escalated' : 'completed',
-    summary: `Mapped to path: ${appliedPolicyPath.join(' → ')} (${clauseCitations.length} clause citations verified)`,
+    agentName: 'Enterprise Policy & Compliance Agent',
+    status: 'completed',
+    summary: 'Standard safety guardrails active (No custom policy document uploaded)',
     details: [
-      `Traversed enterprise policy hierarchy to: '${appliedPolicyPath.join(' > ')}'.`,
-      `Verified ${clauseCitations.length} clause-level citations with verbatim excerpts from corporate governance.`,
-      `Applied ${appliedPolicies.length} policy rules (${allowedActions.length} permitted, ${prohibitedActions.length} strictly prohibited).`,
-      humanApprovalRequired
-        ? `FLAGGED ESCALATION: ${approvalReason}`
-        : `Policy compliance verified autonomously without requiring escalation.`,
+      'No custom enterprise policy document provided in brief.',
+      'Applying standard communication guardrails (zero exclamation marks, PII masking, channel constraints).',
     ],
     chainOfThought,
     durationMs: duration,
@@ -111,15 +93,13 @@ export function runPolicyAgent(
   };
 
   return {
-    appliedPolicyPath,
-    appliedPolicies,
-    clauseCitations,
-    allowedActions,
-    prohibitedActions,
-    humanApprovalRequired,
-    approvalReason,
+    appliedPolicyPath: [],
+    appliedPolicies: [],
+    clauseCitations: [],
+    allowedActions: [],
+    prohibitedActions: [],
+    humanApprovalRequired: false,
     chainOfThought,
     step,
   };
 }
-

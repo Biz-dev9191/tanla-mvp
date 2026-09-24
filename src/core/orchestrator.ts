@@ -227,10 +227,9 @@ export async function orchestrateCommunication(
           agentId: 'policy_tree',
           agentName: 'Policy Tree Generator Agent',
           status: 'completed',
-          summary: liveLLMResult.policyTreeDecision?.summary || (useSamplePolicyTree ? 'Policy Tree: Loaded Sample Enterprise Hierarchy' : 'Policy Tree: Skipped (No Document Uploaded)'),
+          summary: liveLLMResult.policyTreeDecision?.summary || (useSamplePolicyTree ? 'Policy Tree: Sample Hierarchy Loaded' : 'Policy Tree: Skipped (No Document Uploaded)'),
           details: [
-            'Evaluated policy tree requirements for orchestration session.',
-            'Enforced mandatory $0 unauthorized financial compensation gate (POL-FIN-001).',
+            useSamplePolicyTree ? 'Sample policy hierarchy loaded.' : 'No custom policy document provided in brief.',
           ],
           chainOfThought: liveLLMResult.policyTreeDecision?.chainOfThought || [
             '[Step 1 - Policy Tree Check] Configured policy tree state per brief.',
@@ -242,10 +241,13 @@ export async function orchestrateCommunication(
           agentId: 'policy',
           agentName: 'Enterprise Policy & Compliance Agent',
           status: liveLLMResult.policyDecision.humanApprovalRequired ? 'escalated' : 'completed',
-          summary: `Mapped to path: ${liveLLMResult.policyDecision.appliedPath.join(' → ')} (${liveLLMResult.policyDecision.clauseCitations?.length || 2} clause citations verified)`,
+          summary: liveLLMResult.policyDecision.appliedPath && liveLLMResult.policyDecision.appliedPath.length > 0
+            ? `Mapped to path: ${liveLLMResult.policyDecision.appliedPath.join(' → ')}`
+            : 'Standard safety guardrails active (No custom policy document uploaded)',
           details: [
-            `Policy path: '${liveLLMResult.policyDecision.appliedPath.join(' > ')}'.`,
-            `Applied rules: ${liveLLMResult.policyDecision.policyRuleCodes.join(', ')}.`,
+            liveLLMResult.policyDecision.appliedPath && liveLLMResult.policyDecision.appliedPath.length > 0
+              ? `Policy path: '${liveLLMResult.policyDecision.appliedPath.join(' > ')}'.`
+              : 'Standard communication guardrails applied (zero exclamation marks, PII masking).',
             ...(liveLLMResult.policyDecision.approvalReason ? [`FLAGGED: ${liveLLMResult.policyDecision.approvalReason}`] : []),
           ],
           chainOfThought: liveLLMResult.policyDecision.chainOfThought,
@@ -453,9 +455,11 @@ export async function orchestrateCommunication(
   // Step 4: Enterprise Policy & Compliance Agent
   const policyOutput = runPolicyAgent(customer, event, objective, customRules);
   steps.push(policyOutput.step);
-  decisionTrace.push(`Traversed policy tree to '${policyOutput.appliedPolicyPath.join(' → ')}' with ${policyOutput.clauseCitations.length} clause citations verified.`);
+  if (policyOutput.appliedPolicyPath.length > 0) {
+    decisionTrace.push(`Traversed policy tree to '${policyOutput.appliedPolicyPath.join(' → ')}'.`);
+  }
   if (policyOutput.clauseCitations.length > 0) {
-    decisionTrace.push(`RAG Clause Citation: ${policyOutput.clauseCitations[0].sourceDocument} - ${policyOutput.clauseCitations[0].section} ("${policyOutput.clauseCitations[0].title}")`);
+    decisionTrace.push(`Policy Citation: ${policyOutput.clauseCitations[0].sourceDocument} - ${policyOutput.clauseCitations[0].section} ("${policyOutput.clauseCitations[0].title}")`);
   }
 
   // Step 5: Communication Strategy Agent (Persona-calibrated)
@@ -537,7 +541,7 @@ export async function orchestrateCommunication(
   const comparisonDifferences = [
     `Persona Alignment: Tailored to ${customer.name} via '${contextOutput.matchedPersona.name}' (${contextOutput.matchedPersona.cohort}) tone rather than generic blast.`,
     `Grounded Resolution: Explicitly cites payment reference (${event.transactionId}) and confirms automated refund without forcing customer to contact support.`,
-    `Clause-Level Governance: Verified against ${policyOutput.clauseCitations.length > 0 ? policyOutput.clauseCitations[0].sourceDocument : 'PRL-2026'} with $0 unauthorized compensation controls (POL-FIN-001).`,
+    `Governance Railguards: Enforced brand tone, verified telemetry facts, PII masking, and zero unauthorized compensation.`,
     `Channel Optimised: Formatted specifically for ${stratOutput.strategy.selectedChannel} rather than copy-pasting across all channels.`,
     `Autonomous Reflection: Verified across ${revisionLoop + 1} validation cycles with ZERO exclamation marks and zero customer friction.`,
   ];
