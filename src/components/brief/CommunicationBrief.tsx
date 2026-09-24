@@ -34,55 +34,66 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onRunOrchestration,
   isLoading,
 }) => {
-  // Scenario Presets Selection State (Minimized by default)
+  // Scenario Presets Selection State (Unselected and Minimized by default)
   const [isMatrixExpanded, setIsMatrixExpanded] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(MATRIX_CUSTOMERS[0].id);
-  const [selectedEventId, setSelectedEventId] = useState<string>(MATRIX_EVENTS[0].id);
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(MATRIX_OBJECTIVES[0].id);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>('');
 
   // Column Tabs: Default to 'structured' on the LEFT
   const [customerTab, setCustomerTab] = useState<'structured' | 'text'>('structured');
   const [eventTab, setEventTab] = useState<'structured' | 'text'>('structured');
   const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>('structured');
 
-  // Column 1 Structured & Text State
-  const [structCustomerName, setStructCustomerName] = useState(MATRIX_CUSTOMERS[0].name);
-  const [structAgeGroup, setStructAgeGroup] = useState<any>(MATRIX_CUSTOMERS[0].ageGroup);
-  const [structSegment, setStructSegment] = useState<any>(MATRIX_CUSTOMERS[0].segment);
-  const [structDigitalProfile, setStructDigitalProfile] = useState<any>(MATRIX_CUSTOMERS[0].digitalProfile);
+  // Column 1 Structured & Text State (Default Empty)
+  const [structCustomerName, setStructCustomerName] = useState('');
+  const [structAgeGroup, setStructAgeGroup] = useState<any>('25–34');
+  const [structSegment, setStructSegment] = useState<any>('Standard');
+  const [structDigitalProfile, setStructDigitalProfile] = useState<any>('Digital-first');
   const [structConsentTx, setStructConsentTx] = useState(true);
   const [structConsentPromo, setStructConsentPromo] = useState(true);
-  const [structSentiment, setStructSentiment] = useState<any>(MATRIX_CUSTOMERS[0].sentiment);
-  const [structSupportContacts, setStructSupportContacts] = useState(MATRIX_CUSTOMERS[0].previousSupportContacts);
-  const [customerText, setCustomerText] = useState(MATRIX_CUSTOMERS[0].descriptionText);
-  const [customerPills, setCustomerPills] = useState<string[]>(MATRIX_CUSTOMERS[0].pills);
+  const [structSentiment, setStructSentiment] = useState<any>('Neutral');
+  const [structSupportContacts, setStructSupportContacts] = useState(0);
+  const [customerText, setCustomerText] = useState('');
+  const [customerPills, setCustomerPills] = useState<string[]>([]);
   const [customCustomerPillInput, setCustomCustomerPillInput] = useState('');
   const [isAddingCustomerPill, setIsAddingCustomerPill] = useState(false);
 
-  // Column 2 Structured & Text State
-  const [structEventType, setStructEventType] = useState<any>(MATRIX_EVENTS[0].eventType);
-  const [structEventTitle, setStructEventTitle] = useState(MATRIX_EVENTS[0].title);
-  const [structTransactionId, setStructTransactionId] = useState(MATRIX_EVENTS[0].transactionId);
-  const [structOrderId, setStructOrderId] = useState(MATRIX_EVENTS[0].orderId);
-  const [structAmount, setStructAmount] = useState(MATRIX_EVENTS[0].amount);
-  const [structVerifiedFacts, setStructVerifiedFacts] = useState(MATRIX_EVENTS[0].verifiedFacts);
-  const [structResolutionStatus, setStructResolutionStatus] = useState<any>(MATRIX_EVENTS[0].resolutionStatus);
-  const [eventText, setEventText] = useState(MATRIX_EVENTS[0].descriptionText);
-  const [eventPills, setEventPills] = useState<string[]>(MATRIX_EVENTS[0].pills);
+  // Column 2 Structured & Text State (Default Empty)
+  const [structEventType, setStructEventType] = useState<any>('payment_successful_order_failed');
+  const [structEventTitle, setStructEventTitle] = useState('');
+  const [structTransactionId, setStructTransactionId] = useState('');
+  const [structOrderId, setStructOrderId] = useState('');
+  const [structAmount, setStructAmount] = useState('');
+  const [structVerifiedFacts, setStructVerifiedFacts] = useState('');
+  const [structResolutionStatus, setStructResolutionStatus] = useState<any>('Refund Initiated');
+  const [eventText, setEventText] = useState('');
+  const [eventPills, setEventPills] = useState<string[]>([]);
   const [customEventPillInput, setCustomEventPillInput] = useState('');
   const [isAddingEventPill, setIsAddingEventPill] = useState(false);
 
-  // Column 3 Structured & Text State
-  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>(MATRIX_OBJECTIVES[0].primary);
-  const [structSecondaryObjective, setStructSecondaryObjective] = useState(MATRIX_OBJECTIVES[0].secondary);
-  const [objectiveText, setObjectiveText] = useState(MATRIX_OBJECTIVES[0].descriptionText);
-  const [objectivePills, setObjectivePills] = useState<string[]>(MATRIX_OBJECTIVES[0].pills);
+  // Column 3 Structured & Text State (Default Empty)
+  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>('resolve_issue');
+  const [structSecondaryObjective, setStructSecondaryObjective] = useState('');
+  const [objectiveText, setObjectiveText] = useState('');
+  const [objectivePills, setObjectivePills] = useState<string[]>([]);
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
 
   // Synchronize fields when Customer dropdown changes
   const handleCustomerChange = (custId: string) => {
     setSelectedCustomerId(custId);
+    if (!custId) {
+      setStructCustomerName('');
+      setStructAgeGroup('25–34');
+      setStructSegment('Standard');
+      setStructDigitalProfile('Digital-first');
+      setStructSentiment('Neutral');
+      setStructSupportContacts(0);
+      setCustomerText('');
+      setCustomerPills([]);
+      return;
+    }
     const cust = MATRIX_CUSTOMERS.find((c) => c.id === custId);
     if (cust) {
       setStructCustomerName(cust.name);
@@ -99,6 +110,18 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   // Synchronize fields when Event dropdown changes
   const handleEventChange = (evtId: string) => {
     setSelectedEventId(evtId);
+    if (!evtId) {
+      setStructEventType('payment_successful_order_failed');
+      setStructEventTitle('');
+      setStructTransactionId('');
+      setStructOrderId('');
+      setStructAmount('');
+      setStructVerifiedFacts('');
+      setStructResolutionStatus('Refund Initiated');
+      setEventText('');
+      setEventPills([]);
+      return;
+    }
     const evt = MATRIX_EVENTS.find((e) => e.id === evtId);
     if (evt) {
       setStructEventType(evt.eventType);
@@ -116,6 +139,13 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   // Synchronize fields when Objective dropdown changes
   const handleObjectiveChange = (objId: string) => {
     setSelectedObjectiveId(objId);
+    if (!objId) {
+      setStructPrimaryObjective('resolve_issue');
+      setStructSecondaryObjective('');
+      setObjectiveText('');
+      setObjectivePills([]);
+      return;
+    }
     const obj = MATRIX_OBJECTIVES.find((o) => o.id === objId);
     if (obj) {
       setStructPrimaryObjective(obj.primary);
@@ -162,9 +192,18 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const finalCustomerName = structCustomerName.trim() || 'Valued Customer';
+    const finalEventTitle = structEventTitle.trim() || structEventType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const finalTxId = structTransactionId.trim() || 'PAY_99482';
+    const finalOrderId = structOrderId.trim() || 'ORD-7721';
+    const finalAmount = structAmount.trim() || '$49.50';
+    const finalVerifiedFacts = structVerifiedFacts.trim().length > 0
+      ? structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean)
+      : [`Transaction ID: ${finalTxId}`, `Order: ${finalOrderId}`, `Amount: ${finalAmount}`];
+
     const customerPayload: CustomerProfile = {
       id: `CUST-${Date.now()}`,
-      name: structCustomerName,
+      name: finalCustomerName,
       age: structAgeGroup === '18–24' ? 22 : structAgeGroup === '55+' ? 66 : structAgeGroup === '45–54' ? 48 : structAgeGroup === '35–44' ? 38 : 34,
       ageGroup: structAgeGroup,
       segment: structSegment,
@@ -177,26 +216,26 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       recentCommunicationCount24h: { transactional: 1, promotional: 0 },
       previousSupportContacts: structSupportContacts,
       sentiment: structSentiment,
-      email: `${structCustomerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      email: `${finalCustomerName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`,
       phone: '+91 98765 43210',
     };
 
     const eventPayload: BusinessEvent = {
       id: `EVT-${Date.now()}`,
       eventType: structEventType,
-      title: structEventTitle,
-      description: eventText,
+      title: finalEventTitle,
+      description: eventText.trim() || `${finalEventTitle} requiring proactive automated communication.`,
       timestamp: 'Just now',
-      verifiedFacts: structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean),
+      verifiedFacts: finalVerifiedFacts,
       resolutionStatus: structResolutionStatus,
-      transactionId: structTransactionId,
-      orderId: structOrderId,
-      amount: structAmount,
+      transactionId: finalTxId,
+      orderId: finalOrderId,
+      amount: finalAmount,
     };
 
     const objectivePayload: BusinessObjective = {
       primary: structPrimaryObjective,
-      secondary: structSecondaryObjective,
+      secondary: structSecondaryObjective.trim() || structPrimaryObjective.replace(/_/g, ' '),
       customNote: objectiveText,
     };
 
@@ -255,12 +294,24 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                 <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
                   Scenario Presets
                 </h3>
-                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
-                  Active
-                </span>
+                {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
+                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
+                    Preset Loaded
+                  </span>
+                ) : (
+                  <span className="text-[10px] text-aurora-neutral-600 bg-aurora-neutral-100 border border-aurora-neutral-200 px-2 py-0.2 rounded font-semibold">
+                    Unset (Manual)
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
-                Loaded: <strong className="text-aurora-neutral-900">{structCustomerName}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
+                {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
+                  <>
+                    Loaded: <strong className="text-aurora-neutral-900">{structCustomerName || 'Custom'}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
+                  </>
+                ) : (
+                  'No preset selected · Enter scenario details manually below or choose a quick preset'
+                )}
               </p>
             </div>
           </div>
@@ -297,6 +348,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   onChange={(e) => handleCustomerChange(e.target.value)}
                   className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
                 >
+                  <option value="">-- Choose Customer Cohort Preset --</option>
                   {MATRIX_CUSTOMERS.map((cust) => (
                     <option key={cust.id} value={cust.id}>
                       {cust.label}
@@ -315,6 +367,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   onChange={(e) => handleEventChange(e.target.value)}
                   className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
                 >
+                  <option value="">-- Choose Event & Telemetry Preset --</option>
                   {MATRIX_EVENTS.map((evt) => (
                     <option key={evt.id} value={evt.id}>
                       {evt.label}
@@ -333,6 +386,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   onChange={(e) => handleObjectiveChange(e.target.value)}
                   className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
                 >
+                  <option value="">-- Choose Business Objective Preset --</option>
                   {MATRIX_OBJECTIVES.map((obj) => (
                     <option key={obj.id} value={obj.id}>
                       {obj.label}

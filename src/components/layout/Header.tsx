@@ -12,14 +12,14 @@ import {
   Home as HomeIcon,
 } from 'lucide-react';
 
-export type TabType = 'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
+export type TabType = 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history' | 'home';
 
 interface HeaderProps {
   activeTab?: TabType;
   onTabChange?: (tab: TabType) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Close menu on ESC key
@@ -32,12 +32,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
   }, []);
 
   const navItems = [
-    {
-      id: 'home' as const,
-      label: 'Home Overview',
-      description: 'System overview & agentic orchestrator landing',
-      icon: HomeIcon,
-    },
     {
       id: 'brief' as const,
       label: 'Communication Brief',
@@ -84,7 +78,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             
-            {/* Left: Left-Hand Menu Trigger + Brand Logo */}
+            {/* Left: Navigation Menu Trigger + Brand Logo */}
             <div className="flex items-center space-x-3">
               <button
                 type="button"
@@ -98,25 +92,14 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange 
 
               <div
                 className="cursor-pointer flex items-center"
-                onClick={() => handleSelectTab('home')}
+                onClick={() => handleSelectTab('brief')}
               >
-                <BrandBadge subtitle="AI Customer Communication Orchestrator" />
+                <BrandBadge />
               </div>
             </div>
 
-            {/* Right: Active View Badge + Status Indicator */}
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              {/* Current Active Tab Pill */}
-              <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs font-semibold text-aurora-neutral-700">
-                <CurrentIcon strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-                <span className="hidden sm:inline">{currentActiveItem.label}</span>
-              </div>
-
-              {/* Status Indicator */}
-              <div className="hidden md:flex items-center space-x-1.5 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-300 px-3 py-1.5 rounded-md">
-                <span className="w-2 h-2 rounded-full bg-aurora-success"></span>
-                <span className="font-semibold">Backend Engine Online</span>
-              </div>
+            {/* Right: Clean Top Bar */}
+            <div className="flex items-center space-x-2">
             </div>
           </div>
         </div>

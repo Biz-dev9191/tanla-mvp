@@ -26,13 +26,7 @@ export const BrandBadge: React.FC<{ subtitle?: string }> = ({
       </div>
 
       <div>
-        <div className="flex items-center space-x-2">
-          <span className="font-bold text-sm tracking-tight text-aurora-neutral-900">Aurora Cloud</span>
-          <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-aurora-primary-light text-aurora-primary font-semibold border border-aurora-primary/10">
-            Work Tracker
-          </span>
-        </div>
-        <p className="text-[11px] text-aurora-neutral-500 font-normal">{subtitle}</p>
+        <span className="font-bold text-base tracking-tight text-aurora-neutral-900">Aurora Cloud</span>
       </div>
     </div>
   );
