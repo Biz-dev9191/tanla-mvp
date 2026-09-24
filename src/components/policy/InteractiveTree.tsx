@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { POLICY_TREE_DATA, PolicyTreeNode } from '@/core/policy-tree-data';
-import { ChevronRight, ChevronDown, Shield, FileCode, CheckCircle2, AlertCircle, Info, GitBranch, UploadCloud, Sparkles } from 'lucide-react';
+import { ChevronRight, ChevronDown, Shield, FileCode, CheckCircle2, AlertCircle, Info, GitBranch, UploadCloud, Sparkles, Filter } from 'lucide-react';
 
 interface InteractiveTreeProps {
   tree?: PolicyTreeNode | null;
@@ -29,16 +29,75 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
     'custom-fin': true,
   });
 
+  const [filterAppliedOnly, setFilterAppliedOnly] = useState<boolean>(false);
+
+  // Helper to check if a node matches the highlighted path
+  const isNodeHighlighted = (node: PolicyTreeNode): boolean => {
+    if (!highlightedPath || highlightedPath.length === 0) return false;
+    return highlightedPath.some(
+      (p) =>
+        node.name.toLowerCase().includes(p.toLowerCase()) ||
+        p.toLowerCase().includes(node.name.toLowerCase()) ||
+        (node.ruleCode && p.toLowerCase().includes(node.ruleCode.toLowerCase()))
+    );
+  };
+
+  // Helper to check if a node or any of its descendants are highlighted
+  const hasHighlightedDescendant = (node: PolicyTreeNode): boolean => {
+    if (isNodeHighlighted(node)) return true;
+    if (node.children && node.children.length > 0) {
+      return node.children.some((child) => hasHighlightedDescendant(child));
+    }
+    return false;
+  };
+
+  // Expand all nodes on the active path when tree or highlightedPath updates
+  useEffect(() => {
+    if (!activeTreeData) return;
+    const newExpanded: Record<string, boolean> = { ...expandedNodes };
+    const expandActive = (node: PolicyTreeNode) => {
+      if (hasHighlightedDescendant(node)) {
+        newExpanded[node.id] = true;
+      }
+      if (node.children) {
+        node.children.forEach(expandActive);
+      }
+    };
+    expandActive(activeTreeData);
+    setExpandedNodes(newExpanded);
+  }, [activeTreeData, highlightedPath]);
+
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const isNodeHighlighted = (node: PolicyTreeNode): boolean => {
-    return highlightedPath.some((p) => node.name.toLowerCase().includes(p.toLowerCase()));
+  const handleToggleFilterApplied = () => {
+    const nextState = !filterAppliedOnly;
+    setFilterAppliedOnly(nextState);
+
+    // Auto-expand all matching nodes when filter is toggled on
+    if (nextState && activeTreeData) {
+      const newExpanded: Record<string, boolean> = {};
+      const expandMatching = (node: PolicyTreeNode) => {
+        if (hasHighlightedDescendant(node)) {
+          newExpanded[node.id] = true;
+        }
+        if (node.children) {
+          node.children.forEach(expandMatching);
+        }
+      };
+      expandMatching(activeTreeData);
+      setExpandedNodes(newExpanded);
+    }
   };
 
   const renderNode = (node: PolicyTreeNode, depth = 0) => {
+    // If filtering to applied path only, hide nodes with no highlighted descendants
+    if (filterAppliedOnly && !hasHighlightedDescendant(node)) {
+      return null;
+    }
+
     const isExpanded = expandedNodes[node.id] !== undefined ? expandedNodes[node.id] : true;
     const hasChildren = node.children && node.children.length > 0;
     const isHighlighted = isNodeHighlighted(node);
@@ -117,10 +176,26 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
           </p>
         </div>
         {activeTreeData && (
-          <div className="flex items-center space-x-2 text-xs">
-            <span className="w-3 h-3 rounded bg-aurora-primary-light border border-aurora-primary"></span>
-            <span className="text-aurora-neutral-700 font-medium">Applied in Current Run</span>
-          </div>
+          <button
+            type="button"
+            onClick={handleToggleFilterApplied}
+            className={`flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
+              filterAppliedOnly
+                ? 'bg-aurora-primary text-white border-aurora-primary shadow-xs font-bold'
+                : 'bg-aurora-neutral-50 hover:bg-aurora-neutral-100 border-aurora-neutral-300 text-aurora-neutral-800'
+            }`}
+          >
+            <span
+              className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
+                filterAppliedOnly
+                  ? 'bg-white border-white text-aurora-primary font-bold text-[10px]'
+                  : 'bg-white border-aurora-neutral-400'
+              }`}
+            >
+              {filterAppliedOnly && '✓'}
+            </span>
+            <span>Applied in Current Run</span>
+          </button>
         )}
       </div>
 
