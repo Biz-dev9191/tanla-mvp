@@ -1,8 +1,6 @@
 import React from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
 import { BrandBadge } from './BrandBadge';
-import { Activity, BookOpen, GitBranch, History, PlusCircle, ShieldCheck } from 'lucide-react';
+import { Activity, BookOpen, GitBranch, History, PlusCircle } from 'lucide-react';
 
 interface HeaderProps {
   activeTab?: 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
@@ -22,7 +20,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
     <header className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 sticky top-0 z-30 shadow-aurora">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
+          {/* Logo Lockup */}
           <div className="cursor-pointer" onClick={() => onTabChange?.('brief')}>
             <BrandBadge subtitle="AI Customer Communication Orchestrator" />
           </div>
@@ -36,10 +34,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                 <button
                   key={item.id}
                   onClick={() => onTabChange?.(item.id)}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors ${
+                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs sm:text-sm transition-colors ${
                     isActive
-                      ? 'bg-aurora-primary-light text-aurora-primary font-semibold border-b-2 border-aurora-primary'
-                      : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100'
+                      ? 'bg-aurora-primary-light text-aurora-primary font-bold border-b-2 border-aurora-primary'
+                      : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 font-medium'
                   }`}
                 >
                   <Icon strokeWidth={1.5} className="w-4 h-4" />
@@ -50,10 +48,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
             })}
           </nav>
 
-          {/* System Status Pill */}
-          <div className="hidden lg:flex items-center space-x-2 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-200 px-2.5 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-aurora-success animate-pulse"></span>
-            <span className="font-medium">Governance Engine Active</span>
+          {/* Aurora Cloud Single-Accent Status Pill */}
+          <div className="hidden lg:flex items-center space-x-2 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-300 px-3 py-1 rounded-full">
+            <span className="w-2 h-2 rounded-full bg-aurora-success"></span>
+            <span className="font-medium">Governance Engine Online</span>
           </div>
         </div>
       </div>
