@@ -1,7 +1,27 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StreamlinedBriefPayload, CustomerProfile, BusinessEvent, BusinessObjective } from '@/core/types';
-import { PRESET_SCENARIOS, PresetScenario } from '@/core/presets';
-import { User, AlertCircle, Target, ArrowRight, Sparkles, Plus, Check, SlidersHorizontal, AlignLeft, ShieldCheck } from 'lucide-react';
+import {
+  MATRIX_CUSTOMERS,
+  MATRIX_EVENTS,
+  MATRIX_OBJECTIVES,
+  MatrixCustomerProfile,
+  MatrixBusinessEvent,
+  MatrixBusinessObjective,
+} from '@/core/test-matrix';
+import {
+  User,
+  AlertCircle,
+  Target,
+  ArrowRight,
+  Sparkles,
+  Plus,
+  Check,
+  SlidersHorizontal,
+  AlignLeft,
+  ShieldCheck,
+  Layers,
+  RotateCcw,
+} from 'lucide-react';
 
 interface CommunicationBriefProps {
   onRunOrchestration: (payload: any) => void;
@@ -12,98 +32,101 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onRunOrchestration,
   isLoading,
 }) => {
-  // Column 1 Tab State
-  const [customerTab, setCustomerTab] = useState<'text' | 'structured'>('text');
-  const [customerText, setCustomerText] = useState(
-    "Customer: Rahul Sharma, 24 years old. High-value account with 18 months tenure. Customer is currently flagged with anxious sentiment and has contacted support twice regarding payment inquiries."
-  );
-  const [customerPills, setCustomerPills] = useState<string[]>([
-    "18–24",
-    "Premium",
-    "Digital-first",
-    "High LTV",
-  ]);
-  const [customCustomerPillInput, setCustomCustomerPillInput] = useState("");
-  const [isAddingCustomerPill, setIsAddingCustomerPill] = useState(false);
+  // Test Matrix 5x5x5 Selection State
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(MATRIX_CUSTOMERS[0].id);
+  const [selectedEventId, setSelectedEventId] = useState<string>(MATRIX_EVENTS[0].id);
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(MATRIX_OBJECTIVES[0].id);
 
-  // Column 1 Structured Fields State
-  const [structCustomerName, setStructCustomerName] = useState("Rahul Sharma");
-  const [structAgeGroup, setStructAgeGroup] = useState<any>("18–24");
-  const [structSegment, setStructSegment] = useState<any>("Premium");
-  const [structDigitalProfile, setStructDigitalProfile] = useState<any>("Digital-first");
+  // Column Tabs: Default to 'structured' on the LEFT
+  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>('structured');
+  const [eventTab, setEventTab] = useState<'structured' | 'text'>('structured');
+  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>('structured');
+
+  // Column 1 Structured & Text State
+  const [structCustomerName, setStructCustomerName] = useState(MATRIX_CUSTOMERS[0].name);
+  const [structAgeGroup, setStructAgeGroup] = useState<any>(MATRIX_CUSTOMERS[0].ageGroup);
+  const [structSegment, setStructSegment] = useState<any>(MATRIX_CUSTOMERS[0].segment);
+  const [structDigitalProfile, setStructDigitalProfile] = useState<any>(MATRIX_CUSTOMERS[0].digitalProfile);
   const [structConsentTx, setStructConsentTx] = useState(true);
   const [structConsentPromo, setStructConsentPromo] = useState(true);
-  const [structSentiment, setStructSentiment] = useState<any>("Anxious");
-  const [structSupportContacts, setStructSupportContacts] = useState(2);
+  const [structSentiment, setStructSentiment] = useState<any>(MATRIX_CUSTOMERS[0].sentiment);
+  const [structSupportContacts, setStructSupportContacts] = useState(MATRIX_CUSTOMERS[0].previousSupportContacts);
+  const [customerText, setCustomerText] = useState(MATRIX_CUSTOMERS[0].descriptionText);
+  const [customerPills, setCustomerPills] = useState<string[]>(MATRIX_CUSTOMERS[0].pills);
+  const [customCustomerPillInput, setCustomCustomerPillInput] = useState('');
+  const [isAddingCustomerPill, setIsAddingCustomerPill] = useState(false);
 
-  // Column 2 Tab State
-  const [eventTab, setEventTab] = useState<'text' | 'structured'>('text');
-  const [eventText, setEventText] = useState(
-    "Payment of $49.50 (Payment ID: PAY_99482) succeeded, but the order creation for #ORD-7721 failed due to an inventory provisioning timeout. An automated refund has been initiated to the original card ending in 4012 (Ref: REF_882103)."
-  );
-  const [eventPills, setEventPills] = useState<string[]>([
-    "Payment Ok / Order Failed",
-  ]);
-  const [customEventPillInput, setCustomEventPillInput] = useState("");
+  // Column 2 Structured & Text State
+  const [structEventType, setStructEventType] = useState<any>(MATRIX_EVENTS[0].eventType);
+  const [structEventTitle, setStructEventTitle] = useState(MATRIX_EVENTS[0].title);
+  const [structTransactionId, setStructTransactionId] = useState(MATRIX_EVENTS[0].transactionId);
+  const [structOrderId, setStructOrderId] = useState(MATRIX_EVENTS[0].orderId);
+  const [structAmount, setStructAmount] = useState(MATRIX_EVENTS[0].amount);
+  const [structVerifiedFacts, setStructVerifiedFacts] = useState(MATRIX_EVENTS[0].verifiedFacts);
+  const [structResolutionStatus, setStructResolutionStatus] = useState<any>(MATRIX_EVENTS[0].resolutionStatus);
+  const [eventText, setEventText] = useState(MATRIX_EVENTS[0].descriptionText);
+  const [eventPills, setEventPills] = useState<string[]>(MATRIX_EVENTS[0].pills);
+  const [customEventPillInput, setCustomEventPillInput] = useState('');
   const [isAddingEventPill, setIsAddingEventPill] = useState(false);
 
-  // Column 2 Structured Fields State
-  const [structEventType, setStructEventType] = useState<any>("payment_successful_order_failed");
-  const [structEventTitle, setStructEventTitle] = useState("Payment captured but order creation failed");
-  const [structTransactionId, setStructTransactionId] = useState("PAY_99482");
-  const [structOrderId, setStructOrderId] = useState("ORD-7721");
-  const [structAmount, setStructAmount] = useState("$49.50");
-  const [structVerifiedFacts, setStructVerifiedFacts] = useState("Payment ID: PAY_99482 ($49.50), Order #ORD-7721 failed inventory allocation, Auto-refund initiated to card ending 4012");
-  const [structResolutionStatus, setStructResolutionStatus] = useState<any>("Refund Initiated");
-
-  // Column 3 Tab State
-  const [objectiveTab, setObjectiveTab] = useState<'text' | 'structured'>('text');
-  const [objectiveText, setObjectiveText] = useState(
-    "Resolve the issue proactively, confirm the automated refund, reassure the customer that their funds are completely safe, and minimise incoming support contacts."
-  );
-  const [objectivePills, setObjectivePills] = useState<string[]>([
-    "Resolve Issue Proactively",
-    "Minimise Support Contacts",
-    "Reassure Customer",
-  ]);
-  const [customObjectivePillInput, setCustomObjectivePillInput] = useState("");
+  // Column 3 Structured & Text State
+  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>(MATRIX_OBJECTIVES[0].primary);
+  const [structSecondaryObjective, setStructSecondaryObjective] = useState(MATRIX_OBJECTIVES[0].secondary);
+  const [objectiveText, setObjectiveText] = useState(MATRIX_OBJECTIVES[0].descriptionText);
+  const [objectivePills, setObjectivePills] = useState<string[]>(MATRIX_OBJECTIVES[0].pills);
+  const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
-
-  // Column 3 Structured Fields State
-  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>("resolve_issue");
-  const [structSecondaryObjective, setStructSecondaryObjective] = useState("Minimise support contacts and reassure customer");
 
   // Policy Tree Mode State (PTGAP-2026)
   const [policyOption, setPolicyOption] = useState<'none' | 'sample' | 'custom'>('none');
   const [customPolicyDocText, setCustomPolicyDocText] = useState<string>('');
 
-  // Filter Pill Library
-  const availableCustomerPills = [
-    "18–24", "25–34", "35–44", "45–54", "55+",
-    "Standard", "Premium", "High Value", "VIP",
-    "Digital-first", "Mixed", "Assisted-service",
-    "New Customer", "Long-term", "High LTV",
-  ];
+  // Synchronize fields when Customer dropdown changes
+  const handleCustomerChange = (custId: string) => {
+    setSelectedCustomerId(custId);
+    const cust = MATRIX_CUSTOMERS.find((c) => c.id === custId);
+    if (cust) {
+      setStructCustomerName(cust.name);
+      setStructAgeGroup(cust.ageGroup);
+      setStructSegment(cust.segment);
+      setStructDigitalProfile(cust.digitalProfile);
+      setStructSentiment(cust.sentiment);
+      setStructSupportContacts(cust.previousSupportContacts);
+      setCustomerText(cust.descriptionText);
+      setCustomerPills(cust.pills);
+    }
+  };
 
-  const availableEventPills = [
-    "Payment Ok / Order Failed",
-    "Payment Failed",
-    "Incomplete Application / Pending KYC",
-    "Shipment Delayed",
-    "Service Disruption / Maintenance",
-    "Billing Dispute / Escalation",
-  ];
+  // Synchronize fields when Event dropdown changes
+  const handleEventChange = (evtId: string) => {
+    setSelectedEventId(evtId);
+    const evt = MATRIX_EVENTS.find((e) => e.id === evtId);
+    if (evt) {
+      setStructEventType(evt.eventType);
+      setStructEventTitle(evt.title);
+      setStructTransactionId(evt.transactionId);
+      setStructOrderId(evt.orderId);
+      setStructAmount(evt.amount);
+      setStructVerifiedFacts(evt.verifiedFacts);
+      setStructResolutionStatus(evt.resolutionStatus);
+      setEventText(evt.descriptionText);
+      setEventPills(evt.pills);
+    }
+  };
 
-  const availableObjectivePills = [
-    "Resolve Issue Proactively",
-    "Minimise Support Contacts",
-    "Reassure Customer",
-    "Retain High-Value Customer",
-    "Complete Onboarding",
-    "Recover Revenue",
-  ];
+  // Synchronize fields when Objective dropdown changes
+  const handleObjectiveChange = (objId: string) => {
+    setSelectedObjectiveId(objId);
+    const obj = MATRIX_OBJECTIVES.find((o) => o.id === objId);
+    if (obj) {
+      setStructPrimaryObjective(obj.primary);
+      setStructSecondaryObjective(obj.secondary);
+      setObjectiveText(obj.descriptionText);
+      setObjectivePills(obj.pills);
+    }
+  };
 
-  // Helper: Toggle pill selection
+  // Toggle filter pills
   const togglePill = (pill: string, list: string[], setList: (l: string[]) => void) => {
     if (list.includes(pill)) {
       setList(list.filter((p) => p !== pill));
@@ -112,143 +135,71 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     }
   };
 
-  // Helper: Word count
-  const getWordCount = (text: string) => {
-    return text.trim().split(/\s+/).filter(Boolean).length;
-  };
+  const availableCustomerPills = [
+    '18–24', '25–34', '35–44', '45–54', '55+',
+    'Standard', 'Premium', 'High Value', 'VIP',
+    'Digital-first', 'Mixed', 'Assisted-service',
+    'New Customer', 'Long-term', 'High LTV',
+  ];
 
-  // Preset loader
-  const handleLoadPreset = (scenario: PresetScenario) => {
-    // Sync Text & Pills
-    if (scenario.id === "hero-rahul") {
-      setCustomerText(`Customer: ${scenario.customer.name}, ${scenario.customer.age} years old. ${scenario.customer.segment} tier account with ${scenario.customer.tenureMonths} months tenure. Customer has contacted support ${scenario.customer.previousSupportContacts} times previously with ${scenario.customer.sentiment} sentiment.`);
-      setCustomerPills(["18–24", "Premium", "Digital-first", "High LTV"]);
-      setEventText(scenario.event.description + " Verified facts: " + scenario.event.verifiedFacts.join(", "));
-      setEventPills(["Payment Ok / Order Failed"]);
-      setObjectiveText(scenario.objective.customNote || "Resolve issue proactively and reassure customer.");
-      setObjectivePills(["Resolve Issue Proactively", "Minimise Support Contacts", "Reassure Customer"]);
+  const availableEventPills = [
+    'Payment Ok / Order Failed',
+    'Payment Failed',
+    'Incomplete Application / Pending KYC',
+    'Shipment Delayed',
+    'Service Disruption / Maintenance',
+    'Billing Dispute / Escalation',
+  ];
 
-      // Sync Structured
-      setStructCustomerName(scenario.customer.name);
-      setStructAgeGroup(scenario.customer.ageGroup);
-      setStructSegment(scenario.customer.segment);
-      setStructDigitalProfile(scenario.customer.digitalProfile);
-      setStructSentiment(scenario.customer.sentiment);
-      setStructSupportContacts(scenario.customer.previousSupportContacts);
-      setStructEventType(scenario.event.eventType);
-      setStructEventTitle(scenario.event.title);
-      setStructTransactionId(scenario.event.transactionId || "PAY_99482");
-      setStructOrderId(scenario.event.orderId || "ORD-7721");
-      setStructAmount(scenario.event.amount || "$49.50");
-      setStructVerifiedFacts(scenario.event.verifiedFacts.join(", "));
-      setStructResolutionStatus(scenario.event.resolutionStatus);
-      setStructPrimaryObjective(scenario.objective.primary);
-      setStructSecondaryObjective(scenario.objective.secondary || "");
-    } else if (scenario.id === "contrasting-meera") {
-      setCustomerText(`Customer: ${scenario.customer.name}, ${scenario.customer.age} years old. Standard account with ${scenario.customer.tenureMonths} months tenure. Prefers structured assisted communication.`);
-      setCustomerPills(["55+", "Standard", "Assisted-service", "Long-term"]);
-      setEventText(scenario.event.description + " Verified facts: " + scenario.event.verifiedFacts.join(", "));
-      setEventPills(["Incomplete Application / Pending KYC"]);
-      setObjectiveText("Provide clear, step-by-step guidance without technical jargon to complete application.");
-      setObjectivePills(["Complete Onboarding", "Reassure Customer"]);
-
-      setStructCustomerName(scenario.customer.name);
-      setStructAgeGroup(scenario.customer.ageGroup);
-      setStructSegment(scenario.customer.segment);
-      setStructDigitalProfile(scenario.customer.digitalProfile);
-      setStructSentiment(scenario.customer.sentiment);
-      setStructSupportContacts(scenario.customer.previousSupportContacts);
-      setStructEventType(scenario.event.eventType);
-      setStructEventTitle(scenario.event.title);
-      setStructOrderId(scenario.event.orderId || "APP-9921");
-      setStructVerifiedFacts(scenario.event.verifiedFacts.join(", "));
-      setStructResolutionStatus(scenario.event.resolutionStatus);
-      setStructPrimaryObjective(scenario.objective.primary);
-    } else if (scenario.id === "fatigue-suppression") {
-      setCustomerText(`Customer: ${scenario.customer.name}, ${scenario.customer.age} years old. Standard account. Customer has already received 3 transactional messages and 1 promotional message today.`);
-      setCustomerPills(["25–34", "Standard", "Digital-first"]);
-      setEventText(scenario.event.description + " (Fatigue threshold test scenario)");
-      setEventPills(["Service Disruption / Maintenance"]);
-      setObjectiveText("Inform customer of routine update while respecting communication frequency limits.");
-      setObjectivePills(["Resolve Issue Proactively"]);
-
-      setStructCustomerName(scenario.customer.name);
-      setStructAgeGroup(scenario.customer.ageGroup);
-      setStructSegment(scenario.customer.segment);
-      setStructDigitalProfile(scenario.customer.digitalProfile);
-      setStructEventType(scenario.event.eventType);
-      setStructEventTitle(scenario.event.title);
-      setStructResolutionStatus(scenario.event.resolutionStatus);
-      setStructPrimaryObjective(scenario.objective.primary);
-    } else if (scenario.id === "escalation-david") {
-      setCustomerText(`Customer: ${scenario.customer.name}, ${scenario.customer.age} years old. VIP High-Value enterprise account. Customer is frustrated and has 4 prior support tickets.`);
-      setCustomerPills(["35–44", "VIP", "High Value", "Long-term"]);
-      setEventText(scenario.event.description + " Customer requests $150 credit voucher in addition to delivery waiver.");
-      setEventPills(["Billing Dispute / Escalation"]);
-      setObjectiveText("Retain high-value customer and route $150 compensation request to human supervisor approval.");
-      setObjectivePills(["Retain High-Value Customer", "Resolve Issue Proactively"]);
-
-      setStructCustomerName(scenario.customer.name);
-      setStructAgeGroup(scenario.customer.ageGroup);
-      setStructSegment(scenario.customer.segment);
-      setStructDigitalProfile(scenario.customer.digitalProfile);
-      setStructSentiment(scenario.customer.sentiment);
-      setStructSupportContacts(scenario.customer.previousSupportContacts);
-      setStructEventType(scenario.event.eventType);
-      setStructEventTitle(scenario.event.title);
-      setStructAmount(scenario.event.amount || "$150.00 Credit Request");
-      setStructResolutionStatus(scenario.event.resolutionStatus);
-      setStructPrimaryObjective(scenario.objective.primary);
-    }
-  };
+  const availableObjectivePills = [
+    'Resolve Issue Proactively',
+    'Minimise Support Contacts',
+    'Reassure Customer',
+    'Retain High-Value Customer',
+    'Complete Onboarding',
+    'Recover Revenue',
+  ];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Prepare combined payload reflecting active tabs
-    const customerPayload = customerTab === 'structured'
-      ? {
-          id: `CUST-${Date.now()}`,
-          name: structCustomerName,
-          age: structAgeGroup === '18–24' ? 24 : structAgeGroup === '55+' ? 58 : 34,
-          ageGroup: structAgeGroup,
-          segment: structSegment,
-          digitalProfile: structDigitalProfile,
-          preferredLanguage: 'English' as const,
-          preferredChannel: structDigitalProfile === 'Assisted' ? 'Email' as const : 'WhatsApp' as const,
-          consent: { transactional: structConsentTx, promotional: structConsentPromo, voice: structDigitalProfile === 'Assisted' },
-          customerValue: structSegment === 'VIP' ? 'VIP' as const : structSegment === 'High Value' ? 'High' as const : 'Standard' as const,
-          tenureMonths: 18,
-          recentCommunicationCount24h: { transactional: 1, promotional: 0 },
-          previousSupportContacts: structSupportContacts,
-          sentiment: structSentiment,
-          email: 'customer@example.com',
-          phone: '+91 98765 43210',
-        }
-      : undefined;
+    const customerPayload: CustomerProfile = {
+      id: `CUST-${Date.now()}`,
+      name: structCustomerName,
+      age: structAgeGroup === '18–24' ? 22 : structAgeGroup === '55+' ? 66 : structAgeGroup === '45–54' ? 48 : structAgeGroup === '35–44' ? 38 : 34,
+      ageGroup: structAgeGroup,
+      segment: structSegment,
+      digitalProfile: structDigitalProfile,
+      preferredLanguage: 'English' as const,
+      preferredChannel: structDigitalProfile === 'Assisted' ? 'Email' as const : 'WhatsApp' as const,
+      consent: { transactional: structConsentTx, promotional: structConsentPromo, voice: structDigitalProfile === 'Assisted' },
+      customerValue: structSegment === 'VIP' ? 'VIP' as const : structSegment === 'High Value' ? 'High' as const : structSegment === 'Premium' ? 'High' as const : 'Standard' as const,
+      tenureMonths: 18,
+      recentCommunicationCount24h: { transactional: 1, promotional: 0 },
+      previousSupportContacts: structSupportContacts,
+      sentiment: structSentiment,
+      email: `${structCustomerName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      phone: '+91 98765 43210',
+    };
 
-    const eventPayload = eventTab === 'structured'
-      ? {
-          id: `EVT-${Date.now()}`,
-          eventType: structEventType,
-          title: structEventTitle,
-          description: eventText,
-          timestamp: 'Just now',
-          verifiedFacts: structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean),
-          resolutionStatus: structResolutionStatus,
-          transactionId: structTransactionId,
-          orderId: structOrderId,
-          amount: structAmount,
-        }
-      : undefined;
+    const eventPayload: BusinessEvent = {
+      id: `EVT-${Date.now()}`,
+      eventType: structEventType,
+      title: structEventTitle,
+      description: eventText,
+      timestamp: 'Just now',
+      verifiedFacts: structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean),
+      resolutionStatus: structResolutionStatus,
+      transactionId: structTransactionId,
+      orderId: structOrderId,
+      amount: structAmount,
+    };
 
-    const objectivePayload = objectiveTab === 'structured'
-      ? {
-          primary: structPrimaryObjective,
-          secondary: structSecondaryObjective,
-          customNote: objectiveText,
-        }
-      : undefined;
+    const objectivePayload: BusinessObjective = {
+      primary: structPrimaryObjective,
+      secondary: structSecondaryObjective,
+      customNote: objectiveText,
+    };
 
     if (customerTab === 'structured' && eventTab === 'structured' && objectiveTab === 'structured') {
       onRunOrchestration({
@@ -259,7 +210,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         customPolicyDocText: policyOption === 'custom' ? customPolicyDocText : undefined,
       });
     } else {
-      // Build streamlined payload with structured fallbacks
       onRunOrchestration({
         customerProfileText: customerTab === 'structured' ? `Customer: ${structCustomerName}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}, Sentiment: ${structSentiment}` : customerText,
         customerPills: customerTab === 'structured' ? [structAgeGroup, structSegment, structDigitalProfile] : customerPills,
@@ -278,179 +228,144 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       {/* Title & Eyebrow */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-            Communication Brief
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+              Communication Brief
+            </span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded border border-purple-200">
+              5×5×5 Test Case Matrix Active
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
             AI Customer Communication Orchestrator
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-            Configure each section using either <strong>Text & Filter Pills</strong> or <strong>Structured Dropdowns</strong>. The connected LLM multi-agent backend adapts its strategy, channel, tone, and policy path dynamically based on your inputs.
+            Select any test matrix combination or configure structured fields and text pills below. The multi-agent engine dynamically adapts its persona voice, channel routing, and policy tree for all 125 scenarios.
           </p>
         </div>
       </div>
 
-      {/* Quick 1-Click Preset Bar */}
-      <div className="bg-aurora-neutral-0 rounded-lg p-3.5 border border-aurora-neutral-200 shadow-aurora flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center space-x-2 text-xs font-bold text-aurora-neutral-900">
-          <Sparkles strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-          <span>Quick Enterprise Presets:</span>
+      {/* 5x5x5 TEST CASE MATRIX SELECTOR BAR */}
+      <div className="bg-gradient-to-r from-aurora-primary-light/40 via-white to-purple-50 p-5 rounded-xl border border-aurora-primary/30 shadow-sm space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Layers strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
+              Test Case Matrix (5×5×5 Combinations)
+            </h3>
+          </div>
+          <span className="text-[11px] font-mono font-bold text-aurora-primary bg-white px-2.5 py-0.5 rounded border border-aurora-primary/30 shadow-2xs">
+            125 Dynamic Permutations
+          </span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {PRESET_SCENARIOS.map((preset) => (
-            <button
-              key={preset.id}
-              type="button"
-              onClick={() => handleLoadPreset(preset)}
-              className="px-3 py-1.5 rounded-md text-xs font-semibold bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 transition text-aurora-neutral-900 shadow-sm"
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Dropdown 1: Customer Profile */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+              1. Customer Profile (5 Archetypes)
+            </label>
+            <select
+              value={selectedCustomerId}
+              onChange={(e) => handleCustomerChange(e.target.value)}
+              className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
             >
-              {preset.name.split(":")[1] || preset.name}
-            </button>
-          ))}
+              {MATRIX_CUSTOMERS.map((cust) => (
+                <option key={cust.id} value={cust.id}>
+                  {cust.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dropdown 2: Business Event */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+              2. Event & Telemetry (5 Scenarios)
+            </label>
+            <select
+              value={selectedEventId}
+              onChange={(e) => handleEventChange(e.target.value)}
+              className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+            >
+              {MATRIX_EVENTS.map((evt) => (
+                <option key={evt.id} value={evt.id}>
+                  {evt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Dropdown 3: Business Objective */}
+          <div className="space-y-1">
+            <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+              3. Business Objective (5 Goals)
+            </label>
+            <select
+              value={selectedObjectiveId}
+              onChange={(e) => handleObjectiveChange(e.target.value)}
+              className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+            >
+              {MATRIX_OBJECTIVES.map((obj) => (
+                <option key={obj.id} value={obj.id}>
+                  {obj.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between pt-2 border-t border-aurora-neutral-200/80 text-[11px] text-aurora-neutral-600">
+          <span>
+            Selected Combination: <strong className="text-aurora-neutral-900">{structCustomerName}</strong> (Cohort: <span className="font-mono text-aurora-primary">{structAgeGroup}</span>) • <strong className="text-aurora-neutral-900">{structEventType.replace(/_/g, ' ')}</strong> • <strong className="text-aurora-neutral-900">{structPrimaryObjective.replace(/_/g, ' ')}</strong>
+          </span>
+          <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+            Live Synced Below
+          </span>
         </div>
       </div>
 
-      {/* Main 3-Column Form with Sub-Tabs */}
+      {/* 3-COLUMN BRIEF FORM */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          
-          {/* COLUMN 1: Customer Profile */}
-          <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
+          {/* COLUMN 1: CUSTOMER PROFILE */}
+          <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
             <div>
-              {/* Column Header & Mode Tabs */}
-              <div className="p-4 border-b border-aurora-neutral-200 bg-aurora-neutral-100/50">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center space-x-2">
-                    <User strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-                    <h2 className="text-sm font-bold text-aurora-neutral-900">1. Customer Profile</h2>
-                  </div>
+              {/* Card Header & Tabs (Structured on LEFT as Default) */}
+              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <User strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">1. Customer Profile</h3>
                 </div>
-
-                {/* Sub-Tabs */}
-                <div className="flex bg-aurora-neutral-200 p-0.5 rounded-md text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setCustomerTab('text')}
-                    className={`flex-1 py-1 px-2 rounded font-semibold transition flex items-center justify-center space-x-1 ${
-                      customerTab === 'text'
-                        ? 'bg-aurora-neutral-0 text-aurora-primary shadow-sm'
-                        : 'text-aurora-neutral-700 hover:text-aurora-neutral-900'
-                    }`}
-                  >
-                    <AlignLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
-                    <span>Text & Pills</span>
-                  </button>
+                <div className="flex bg-aurora-neutral-200/70 p-0.5 rounded-lg text-[11px] font-semibold">
                   <button
                     type="button"
                     onClick={() => setCustomerTab('structured')}
-                    className={`flex-1 py-1 px-2 rounded font-semibold transition flex items-center justify-center space-x-1 ${
+                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
                       customerTab === 'structured'
-                        ? 'bg-aurora-neutral-0 text-aurora-primary shadow-sm'
-                        : 'text-aurora-neutral-700 hover:text-aurora-neutral-900'
+                        ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
+                        : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <SlidersHorizontal strokeWidth={1.5} className="w-3.5 h-3.5" />
-                    <span>Structured Form</span>
+                    <SlidersHorizontal strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Structured (Default)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCustomerTab('text')}
+                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                      customerTab === 'text'
+                        ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
+                        : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
+                    }`}
+                  >
+                    <AlignLeft strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Text & Pills</span>
                   </button>
                 </div>
               </div>
 
-              {/* Tab 1: Text & Pills */}
-              {customerTab === 'text' && (
-                <div className="p-4 space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center text-[11px] text-aurora-neutral-500 mb-1">
-                      <span>Description / Pasted Details:</span>
-                      <span className="font-mono">{getWordCount(customerText)} / 1000 words</span>
-                    </div>
-                    <textarea
-                      rows={5}
-                      value={customerText}
-                      onChange={(e) => setCustomerText(e.target.value)}
-                      placeholder="Type or paste customer details (e.g. name, age, tenure, sentiment, support interaction history)..."
-                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-2 focus:ring-aurora-primary leading-relaxed resize-none"
-                    />
-                  </div>
-
-                  {/* Filter Pills */}
-                  <div>
-                    <span className="text-[11px] font-semibold text-aurora-neutral-500 uppercase tracking-wider block mb-2">
-                      Profile Filter Pills (Age, Segment, Habits):
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {availableCustomerPills.map((pill) => {
-                        const isSelected = customerPills.includes(pill);
-                        return (
-                          <button
-                            key={pill}
-                            type="button"
-                            onClick={() => togglePill(pill, customerPills, setCustomerPills)}
-                            className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition ${
-                              isSelected
-                                ? "bg-aurora-primary text-white border-aurora-primary shadow-sm font-semibold"
-                                : "bg-aurora-neutral-100 text-aurora-neutral-700 border-aurora-neutral-300 hover:bg-aurora-neutral-200"
-                            }`}
-                          >
-                            {pill}
-                          </button>
-                        );
-                      })}
-
-                      {/* Custom user pills */}
-                      {customerPills
-                        .filter((p) => !availableCustomerPills.includes(p))
-                        .map((customPill) => (
-                          <button
-                            key={customPill}
-                            type="button"
-                            onClick={() => togglePill(customPill, customerPills, setCustomerPills)}
-                            className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-aurora-primary text-white border-aurora-primary shadow-sm"
-                          >
-                            {customPill} ✕
-                          </button>
-                        ))}
-
-                      {/* Add Custom Filter Pill Button */}
-                      {isAddingCustomerPill ? (
-                        <div className="inline-flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={customCustomerPillInput}
-                            onChange={(e) => setCustomCustomerPillInput(e.target.value)}
-                            placeholder="Filter name..."
-                            className="p-1 text-[11px] border border-aurora-neutral-300 rounded-md bg-white w-24 focus:ring-1 focus:ring-aurora-primary"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (customCustomerPillInput.trim()) {
-                                setCustomerPills([...customerPills, customCustomerPillInput.trim()]);
-                                setCustomCustomerPillInput("");
-                                setIsAddingCustomerPill(false);
-                              }
-                            }}
-                            className="p-1 bg-aurora-primary text-white rounded text-[10px] font-bold"
-                          >
-                            <Check strokeWidth={1.5} className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingCustomerPill(true)}
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-dashed border-aurora-neutral-300 text-aurora-primary hover:bg-aurora-primary-light transition flex items-center space-x-1"
-                        >
-                          <Plus strokeWidth={1.5} className="w-3 h-3" />
-                          <span>Custom Filter</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 2: Structured Dropdowns */}
+              {/* Tab 1 (Default / Left): Structured Form */}
               {customerTab === 'structured' && (
                 <div className="p-4 space-y-3 text-xs">
                   <div>
@@ -459,7 +374,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                       type="text"
                       value={structCustomerName}
                       onChange={(e) => setStructCustomerName(e.target.value)}
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-medium focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      placeholder="e.g. Rahul Sharma"
+                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                     />
                   </div>
 
@@ -471,43 +387,41 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         onChange={(e) => setStructAgeGroup(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
-                        <option value="18–24">18–24</option>
-                        <option value="25–34">25–34</option>
-                        <option value="35–44">35–44</option>
-                        <option value="45–54">45–54</option>
-                        <option value="55+">55+</option>
+                        <option value="18–24">18–24 (Gen Z)</option>
+                        <option value="25–34">25–34 (Millennial)</option>
+                        <option value="35–44">35–44 (Mid Millennial)</option>
+                        <option value="45–54">45–54 (Gen X)</option>
+                        <option value="55+">55+ (Senior / Boomer)</option>
                       </select>
                     </div>
-
                     <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Segment</label>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Account Tier</label>
                       <select
                         value={structSegment}
                         onChange={(e) => setStructSegment(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
-                        <option value="Standard">Standard</option>
-                        <option value="Premium">Premium</option>
-                        <option value="High Value">High Value</option>
-                        <option value="VIP">VIP</option>
+                        <option value="Standard">Standard Tier</option>
+                        <option value="Premium">Premium Tier</option>
+                        <option value="High Value">High Value VIP</option>
+                        <option value="New">New Customer</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Digital Profile</label>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Digital Maturity</label>
                       <select
                         value={structDigitalProfile}
                         onChange={(e) => setStructDigitalProfile(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
-                        <option value="Digital-first">Digital-first</option>
-                        <option value="Mixed">Mixed</option>
-                        <option value="Assisted">Assisted</option>
+                        <option value="Digital-first">Digital-first (App/WA)</option>
+                        <option value="Mixed">Mixed (Email/SMS)</option>
+                        <option value="Assisted">Assisted (Email/Voice)</option>
                       </select>
                     </div>
-
                     <div>
                       <label className="block text-aurora-neutral-700 font-medium mb-1">Sentiment</label>
                       <select
@@ -515,20 +429,21 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         onChange={(e) => setStructSentiment(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
-                        <option value="Anxious">Anxious</option>
                         <option value="Neutral">Neutral</option>
                         <option value="Frustrated">Frustrated</option>
+                        <option value="Anxious">Anxious</option>
                         <option value="Satisfied">Satisfied</option>
+                        <option value="Urgent">Urgent</option>
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-aurora-neutral-700 font-medium mb-1">Prior Support Contacts</label>
+                    <label className="block text-aurora-neutral-700 font-medium mb-1">Prior Support Contacts (30d)</label>
                     <input
                       type="number"
                       min={0}
-                      max={20}
+                      max={10}
                       value={structSupportContacts}
                       onChange={(e) => setStructSupportContacts(parseInt(e.target.value) || 0)}
                       className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
@@ -536,76 +451,196 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   </div>
                 </div>
               )}
+
+              {/* Tab 2: Text Area & Filter Pills */}
+              {customerTab === 'text' && (
+                <div className="p-4 space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs font-semibold text-aurora-neutral-700">Customer Description</label>
+                      <span className="text-[10px] text-aurora-neutral-500">{customerText.length} chars</span>
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={customerText}
+                      onChange={(e) => setCustomerText(e.target.value)}
+                      placeholder="Describe customer background, demographic, engagement history..."
+                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 mb-2">
+                      Filter Pills
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableCustomerPills.map((pill) => {
+                        const isSelected = customerPills.includes(pill);
+                        return (
+                          <button
+                            key={pill}
+                            type="button"
+                            onClick={() => togglePill(pill, customerPills, setCustomerPills)}
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition flex items-center space-x-1 ${
+                              isSelected
+                                ? 'bg-aurora-primary text-white border-aurora-primary shadow-2xs'
+                                : 'bg-aurora-neutral-100 text-aurora-neutral-700 border-aurora-neutral-300 hover:bg-aurora-neutral-200'
+                            }`}
+                          >
+                            <span>{pill}</span>
+                            {isSelected && <Check strokeWidth={2} className="w-3 h-3 ml-0.5" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-500">
-              Channel is decided autonomously by AI agents.
+              Evaluates generational persona (1 of 25) and 24h fatigue.
             </div>
           </div>
 
-          {/* COLUMN 2: Customer Event & History */}
-          <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
+          {/* COLUMN 2: BUSINESS EVENT */}
+          <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
             <div>
-              {/* Column Header & Mode Tabs */}
-              <div className="p-4 border-b border-aurora-neutral-200 bg-aurora-neutral-100/50">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center space-x-2">
-                    <AlertCircle strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-                    <h2 className="text-sm font-bold text-aurora-neutral-900">2. Event & History</h2>
-                  </div>
+              {/* Card Header & Tabs */}
+              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <AlertCircle strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">2. Business Event</h3>
                 </div>
-
-                {/* Sub-Tabs */}
-                <div className="flex bg-aurora-neutral-200 p-0.5 rounded-md text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setEventTab('text')}
-                    className={`flex-1 py-1 px-2 rounded font-semibold transition flex items-center justify-center space-x-1 ${
-                      eventTab === 'text'
-                        ? 'bg-aurora-neutral-0 text-aurora-primary shadow-sm'
-                        : 'text-aurora-neutral-700 hover:text-aurora-neutral-900'
-                    }`}
-                  >
-                    <AlignLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
-                    <span>Text & Pills</span>
-                  </button>
+                <div className="flex bg-aurora-neutral-200/70 p-0.5 rounded-lg text-[11px] font-semibold">
                   <button
                     type="button"
                     onClick={() => setEventTab('structured')}
-                    className={`flex-1 py-1 px-2 rounded font-semibold transition flex items-center justify-center space-x-1 ${
+                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
                       eventTab === 'structured'
-                        ? 'bg-aurora-neutral-0 text-aurora-primary shadow-sm'
-                        : 'text-aurora-neutral-700 hover:text-aurora-neutral-900'
+                        ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
+                        : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <SlidersHorizontal strokeWidth={1.5} className="w-3.5 h-3.5" />
-                    <span>Structured Form</span>
+                    <SlidersHorizontal strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Structured (Default)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEventTab('text')}
+                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                      eventTab === 'text'
+                        ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
+                        : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
+                    }`}
+                  >
+                    <AlignLeft strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Text & Pills</span>
                   </button>
                 </div>
               </div>
 
-              {/* Tab 1: Text & Pills */}
+              {/* Tab 1 (Default / Left): Structured Form */}
+              {eventTab === 'structured' && (
+                <div className="p-4 space-y-3 text-xs">
+                  <div>
+                    <label className="block text-aurora-neutral-700 font-medium mb-1">Event Type</label>
+                    <select
+                      value={structEventType}
+                      onChange={(e) => setStructEventType(e.target.value)}
+                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                    >
+                      <option value="payment_successful_order_failed">Payment Ok / Order Failed</option>
+                      <option value="payment_failed">Payment Failed (Card Decline)</option>
+                      <option value="application_incomplete">Pending KYC / Incomplete Application</option>
+                      <option value="customer_complaint">Delivery Dispute / Compensation Escalation</option>
+                      <option value="subscription_expiring">Subscription Renewal / Loyalty Perk</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Transaction Ref</label>
+                      <input
+                        type="text"
+                        value={structTransactionId}
+                        onChange={(e) => setStructTransactionId(e.target.value)}
+                        placeholder="e.g. PAY_99482"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Order / App ID</label>
+                      <input
+                        type="text"
+                        value={structOrderId}
+                        onChange={(e) => setStructOrderId(e.target.value)}
+                        placeholder="e.g. ORD-7721"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Amount</label>
+                      <input
+                        type="text"
+                        value={structAmount}
+                        onChange={(e) => setStructAmount(e.target.value)}
+                        placeholder="e.g. $49.50"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Resolution Status</label>
+                      <select
+                        value={structResolutionStatus}
+                        onChange={(e) => setStructResolutionStatus(e.target.value)}
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      >
+                        <option value="Refund Initiated">Refund Initiated</option>
+                        <option value="Requires Customer Action">Requires Customer Action</option>
+                        <option value="Pending Approval">Pending Approval (POL-FIN-001)</option>
+                        <option value="Resolved">Resolved</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-aurora-neutral-700 font-medium mb-1">Verified System Facts</label>
+                    <input
+                      type="text"
+                      value={structVerifiedFacts}
+                      onChange={(e) => setStructVerifiedFacts(e.target.value)}
+                      placeholder="e.g. Payment ID: PAY_99482, Refund to card 4012"
+                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 text-xs focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Text Area & Filter Pills */}
               {eventTab === 'text' && (
                 <div className="p-4 space-y-4">
                   <div>
-                    <div className="flex justify-between items-center text-[11px] text-aurora-neutral-500 mb-1">
-                      <span>Description / Pasted Situation:</span>
-                      <span className="font-mono">{getWordCount(eventText)} / 1000 words</span>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs font-semibold text-aurora-neutral-700">Event Description & Telemetry</label>
+                      <span className="text-[10px] text-aurora-neutral-500">{eventText.length} chars</span>
                     </div>
                     <textarea
-                      rows={5}
+                      rows={4}
                       value={eventText}
                       onChange={(e) => setEventText(e.target.value)}
-                      placeholder="Type or paste what happened (e.g. payment details, order ID, failure reason, support interaction history)..."
-                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-2 focus:ring-aurora-primary leading-relaxed resize-none"
+                      placeholder="Paste event telemetry, transaction details, and system state..."
+                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary leading-relaxed font-mono"
                     />
                   </div>
 
-                  {/* Event Filter Pills */}
                   <div>
-                    <span className="text-[11px] font-semibold text-aurora-neutral-500 uppercase tracking-wider block mb-2">
-                      Event Category Filter Pills:
-                    </span>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 mb-2">
+                      Event Category Pills
+                    </label>
                     <div className="flex flex-wrap gap-1.5">
                       {availableEventPills.map((pill) => {
                         const isSelected = eventPills.includes(pill);
@@ -614,276 +649,66 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                             key={pill}
                             type="button"
                             onClick={() => togglePill(pill, eventPills, setEventPills)}
-                            className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition ${
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition flex items-center space-x-1 ${
                               isSelected
-                                ? "bg-aurora-primary text-white border-aurora-primary shadow-sm font-semibold"
-                                : "bg-aurora-neutral-100 text-aurora-neutral-700 border-aurora-neutral-300 hover:bg-aurora-neutral-200"
+                                ? 'bg-aurora-primary text-white border-aurora-primary shadow-2xs'
+                                : 'bg-aurora-neutral-100 text-aurora-neutral-700 border-aurora-neutral-300 hover:bg-aurora-neutral-200'
                             }`}
                           >
-                            {pill}
+                            <span>{pill}</span>
+                            {isSelected && <Check strokeWidth={2} className="w-3 h-3 ml-0.5" />}
                           </button>
                         );
                       })}
-
-                      {/* Custom event pills */}
-                      {eventPills
-                        .filter((p) => !availableEventPills.includes(p))
-                        .map((customPill) => (
-                          <button
-                            key={customPill}
-                            type="button"
-                            onClick={() => togglePill(customPill, eventPills, setEventPills)}
-                            className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-aurora-primary text-white border-aurora-primary shadow-sm"
-                          >
-                            {customPill} ✕
-                          </button>
-                        ))}
-
-                      {/* Add Custom Event Pill Button */}
-                      {isAddingEventPill ? (
-                        <div className="inline-flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={customEventPillInput}
-                            onChange={(e) => setCustomEventPillInput(e.target.value)}
-                            placeholder="Event name..."
-                            className="p-1 text-[11px] border border-aurora-neutral-300 rounded-md bg-white w-24 focus:ring-1 focus:ring-aurora-primary"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (customEventPillInput.trim()) {
-                                setEventPills([...eventPills, customEventPillInput.trim()]);
-                                setCustomEventPillInput("");
-                                setIsAddingEventPill(false);
-                              }
-                            }}
-                            className="p-1 bg-aurora-primary text-white rounded text-[10px] font-bold"
-                          >
-                            <Check strokeWidth={1.5} className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingEventPill(true)}
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-dashed border-aurora-neutral-300 text-aurora-primary hover:bg-aurora-primary-light transition flex items-center space-x-1"
-                        >
-                          <Plus strokeWidth={1.5} className="w-3 h-3" />
-                          <span>Custom Event</span>
-                        </button>
-                      )}
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 2: Structured Dropdowns */}
-              {eventTab === 'structured' && (
-                <div className="p-4 space-y-3 text-xs">
-                  <div>
-                    <label className="block text-aurora-neutral-700 font-medium mb-1">Event Category</label>
-                    <select
-                      value={structEventType}
-                      onChange={(e) => setStructEventType(e.target.value)}
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-medium focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                    >
-                      <option value="payment_successful_order_failed">Payment Successful but Order Failed</option>
-                      <option value="payment_failed">Payment Failed</option>
-                      <option value="application_incomplete">Application Incomplete / Pending KYC</option>
-                      <option value="order_delayed">Order / Shipment Delayed</option>
-                      <option value="service_disruption">Service Disruption / Maintenance</option>
-                      <option value="customer_complaint">Customer Complaint / Escalation</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-aurora-neutral-700 font-medium mb-1">Event Title</label>
-                    <input
-                      type="text"
-                      value={structEventTitle}
-                      onChange={(e) => setStructEventTitle(e.target.value)}
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Transaction ID</label>
-                      <input
-                        type="text"
-                        value={structTransactionId}
-                        onChange={(e) => setStructTransactionId(e.target.value)}
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono text-[11px] focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Amount</label>
-                      <input
-                        type="text"
-                        value={structAmount}
-                        onChange={(e) => setStructAmount(e.target.value)}
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono text-[11px] focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-aurora-neutral-700 font-medium mb-1">Verified Facts</label>
-                    <input
-                      type="text"
-                      value={structVerifiedFacts}
-                      onChange={(e) => setStructVerifiedFacts(e.target.value)}
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 text-[11px] focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                    />
                   </div>
                 </div>
               )}
             </div>
 
             <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-500">
-              Verified facts extracted dynamically by agents.
+              Triggers root-cause isolation and compliance rules.
             </div>
           </div>
 
-          {/* COLUMN 3: Business Objective */}
-          <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
+          {/* COLUMN 3: BUSINESS OBJECTIVE */}
+          <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora flex flex-col justify-between overflow-hidden">
             <div>
-              {/* Column Header & Mode Tabs */}
-              <div className="p-4 border-b border-aurora-neutral-200 bg-aurora-neutral-100/50">
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center space-x-2">
-                    <Target strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-                    <h2 className="text-sm font-bold text-aurora-neutral-900">3. Business Objective</h2>
-                  </div>
+              {/* Card Header & Tabs */}
+              <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Target strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">3. Business Objective</h3>
                 </div>
-
-                {/* Sub-Tabs */}
-                <div className="flex bg-aurora-neutral-200 p-0.5 rounded-md text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setObjectiveTab('text')}
-                    className={`flex-1 py-1 px-2 rounded font-semibold transition flex items-center justify-center space-x-1 ${
-                      objectiveTab === 'text'
-                        ? 'bg-aurora-neutral-0 text-aurora-primary shadow-sm'
-                        : 'text-aurora-neutral-700 hover:text-aurora-neutral-900'
-                    }`}
-                  >
-                    <AlignLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
-                    <span>Text & Pills</span>
-                  </button>
+                <div className="flex bg-aurora-neutral-200/70 p-0.5 rounded-lg text-[11px] font-semibold">
                   <button
                     type="button"
                     onClick={() => setObjectiveTab('structured')}
-                    className={`flex-1 py-1 px-2 rounded font-semibold transition flex items-center justify-center space-x-1 ${
+                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
                       objectiveTab === 'structured'
-                        ? 'bg-aurora-neutral-0 text-aurora-primary shadow-sm'
-                        : 'text-aurora-neutral-700 hover:text-aurora-neutral-900'
+                        ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
+                        : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
                     }`}
                   >
-                    <SlidersHorizontal strokeWidth={1.5} className="w-3.5 h-3.5" />
-                    <span>Structured Form</span>
+                    <SlidersHorizontal strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Structured (Default)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setObjectiveTab('text')}
+                    className={`flex items-center space-x-1 px-2.5 py-1 rounded-md transition ${
+                      objectiveTab === 'text'
+                        ? 'bg-white text-aurora-neutral-900 shadow-2xs font-bold'
+                        : 'text-aurora-neutral-600 hover:text-aurora-neutral-900'
+                    }`}
+                  >
+                    <AlignLeft strokeWidth={1.5} className="w-3 h-3" />
+                    <span>Text & Pills</span>
                   </button>
                 </div>
               </div>
 
-              {/* Tab 1: Text & Pills */}
-              {objectiveTab === 'text' && (
-                <div className="p-4 space-y-4">
-                  <div>
-                    <div className="flex justify-between items-center text-[11px] text-aurora-neutral-500 mb-1">
-                      <span>Description / Goal Guidance:</span>
-                      <span className="font-mono">{getWordCount(objectiveText)} / 1000 words</span>
-                    </div>
-                    <textarea
-                      rows={5}
-                      value={objectiveText}
-                      onChange={(e) => setObjectiveText(e.target.value)}
-                      placeholder="Type or paste what the business wants to accomplish (e.g. resolve issue, reassure customer, minimize tickets, retain account)..."
-                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-2 focus:ring-aurora-primary leading-relaxed resize-none"
-                    />
-                  </div>
-
-                  {/* Objective Filter Pills */}
-                  <div>
-                    <span className="text-[11px] font-semibold text-aurora-neutral-500 uppercase tracking-wider block mb-2">
-                      Goal & Priority Filter Pills:
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {availableObjectivePills.map((pill) => {
-                        const isSelected = objectivePills.includes(pill);
-                        return (
-                          <button
-                            key={pill}
-                            type="button"
-                            onClick={() => togglePill(pill, objectivePills, setObjectivePills)}
-                            className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition ${
-                              isSelected
-                                ? "bg-aurora-primary text-white border-aurora-primary shadow-sm font-semibold"
-                                : "bg-aurora-neutral-100 text-aurora-neutral-700 border-aurora-neutral-300 hover:bg-aurora-neutral-200"
-                            }`}
-                          >
-                            {pill}
-                          </button>
-                        );
-                      })}
-
-                      {/* Custom objective pills */}
-                      {objectivePills
-                        .filter((p) => !availableObjectivePills.includes(p))
-                        .map((customPill) => (
-                          <button
-                            key={customPill}
-                            type="button"
-                            onClick={() => togglePill(customPill, objectivePills, setObjectivePills)}
-                            className="text-[11px] font-semibold px-2.5 py-1 rounded-full border bg-aurora-primary text-white border-aurora-primary shadow-sm"
-                          >
-                            {customPill} ✕
-                          </button>
-                        ))}
-
-                      {/* Add Custom Objective Pill Button */}
-                      {isAddingObjectivePill ? (
-                        <div className="inline-flex items-center space-x-1">
-                          <input
-                            type="text"
-                            value={customObjectivePillInput}
-                            onChange={(e) => setCustomObjectivePillInput(e.target.value)}
-                            placeholder="Goal name..."
-                            className="p-1 text-[11px] border border-aurora-neutral-300 rounded-md bg-white w-24 focus:ring-1 focus:ring-aurora-primary"
-                            autoFocus
-                          />
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (customObjectivePillInput.trim()) {
-                                setObjectivePills([...objectivePills, customObjectivePillInput.trim()]);
-                                setCustomObjectivePillInput("");
-                                setIsAddingObjectivePill(false);
-                              }
-                            }}
-                            className="p-1 bg-aurora-primary text-white rounded text-[10px] font-bold"
-                          >
-                            <Check strokeWidth={1.5} className="w-3 h-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => setIsAddingObjectivePill(true)}
-                          className="text-[11px] font-semibold px-2.5 py-1 rounded-full border border-dashed border-aurora-neutral-300 text-aurora-primary hover:bg-aurora-primary-light transition flex items-center space-x-1"
-                        >
-                          <Plus strokeWidth={1.5} className="w-3 h-3" />
-                          <span>Custom Objective</span>
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Tab 2: Structured Dropdowns */}
+              {/* Tab 1 (Default / Left): Structured Form */}
               {objectiveTab === 'structured' && (
                 <div className="p-4 space-y-3 text-xs">
                   <div>
@@ -894,10 +719,10 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                       className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                     >
                       <option value="resolve_issue">Resolve issue proactively</option>
-                      <option value="reduce_support_contacts">Minimise incoming support contacts</option>
+                      <option value="reduce_support_contacts">Minimise incoming support contacts (Deflection)</option>
                       <option value="reassure_customer">Reassure customer / Calm anxiety</option>
                       <option value="retain_customer">Retain high-value customer</option>
-                      <option value="complete_application">Complete onboarding / application</option>
+                      <option value="complete_application">Complete onboarding / KYC upload</option>
                       <option value="recover_payment">Recover failed payment</option>
                     </select>
                   </div>
@@ -905,12 +730,57 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   <div>
                     <label className="block text-aurora-neutral-700 font-medium mb-1">Secondary Guidance Note</label>
                     <textarea
-                      rows={4}
+                      rows={5}
                       value={structSecondaryObjective}
                       onChange={(e) => setStructSecondaryObjective(e.target.value)}
                       placeholder="Specific priorities or constraints..."
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary leading-relaxed"
+                      className="w-full p-2.5 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary leading-relaxed"
                     />
+                  </div>
+                </div>
+              )}
+
+              {/* Tab 2: Text Area & Filter Pills */}
+              {objectiveTab === 'text' && (
+                <div className="p-4 space-y-4">
+                  <div>
+                    <div className="flex justify-between items-center mb-1">
+                      <label className="text-xs font-semibold text-aurora-neutral-700">Objective Statement</label>
+                      <span className="text-[10px] text-aurora-neutral-500">{objectiveText.length} chars</span>
+                    </div>
+                    <textarea
+                      rows={4}
+                      value={objectiveText}
+                      onChange={(e) => setObjectiveText(e.target.value)}
+                      placeholder="Specify business intent, deflection goals, and reassurance targets..."
+                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary leading-relaxed"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 mb-2">
+                      Objective Goal Pills
+                    </label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {availableObjectivePills.map((pill) => {
+                        const isSelected = objectivePills.includes(pill);
+                        return (
+                          <button
+                            key={pill}
+                            type="button"
+                            onClick={() => togglePill(pill, objectivePills, setObjectivePills)}
+                            className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition flex items-center space-x-1 ${
+                              isSelected
+                                ? 'bg-aurora-primary text-white border-aurora-primary shadow-2xs'
+                                : 'bg-aurora-neutral-100 text-aurora-neutral-700 border-aurora-neutral-300 hover:bg-aurora-neutral-200'
+                            }`}
+                          >
+                            <span>{pill}</span>
+                            {isSelected && <Check strokeWidth={2} className="w-3 h-3 ml-0.5" />}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
@@ -922,7 +792,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           </div>
         </div>
 
-        {/* Policy Tree Generator Agent Configuration Card (PTGAP-2026) */}
+        {/* POLICY TREE GENERATOR AGENT CONFIGURATION CARD (PTGAP-2026) */}
         <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora overflow-hidden">
           <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
             <div className="flex items-center space-x-2">
@@ -1025,7 +895,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           </div>
         </div>
 
-        {/* Primary CTA */}
+        {/* PRIMARY SUBMIT CTA */}
         <div className="pt-2 flex justify-end">
           <button
             type="submit"
@@ -1035,11 +905,11 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             {isLoading ? (
               <span className="flex items-center space-x-2">
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Agents Orchestrating Live...</span>
+                <span>Agents Orchestrating Live ({structCustomerName})...</span>
               </span>
             ) : (
               <span className="flex items-center space-x-2">
-                <span>Analyse & Create Communication</span>
+                <span>Analyse & Create Governed Communication</span>
                 <ArrowRight strokeWidth={1.75} className="w-4 h-4" />
               </span>
             )}
