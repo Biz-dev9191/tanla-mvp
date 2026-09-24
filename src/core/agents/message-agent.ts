@@ -18,14 +18,17 @@ export function runMessageGenerationAgent(
   strategy: CommunicationStrategy
 ): MessageGenerationOutput {
   const startTime = Date.now();
-  const firstName = customer.name.split(' ')[0];
+  const firstName = customer.name.split(' ')[0] || 'Customer';
 
-  // Specific content crafting based on event scenario & objective
   let waText = '';
   let smsText = '';
   let emailSubject = '';
   let emailBody = '';
   let voiceScript = '';
+
+  const factsList = event.verifiedFacts.length > 0
+    ? event.verifiedFacts.join('\n- ')
+    : 'No additional details required.';
 
   if (event.eventType === 'payment_successful_order_failed') {
     const payId = event.transactionId || 'PAY_99482';
@@ -123,12 +126,38 @@ Aurora Cloud Enterprise Escalations`;
     voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent support inquiry on order ${orderId}. We have waived the delivery fee and our operations supervisor is reviewing your credit request. A manager will follow up shortly.`;
 
   } else {
-    // General fallback
-    waText = `Hello ${firstName}, this is a notification from Aurora Cloud regarding your recent account update. Please check your account dashboard for full details.`;
-    smsText = `Aurora Cloud: An update is available regarding your account. Visit your dashboard for details.`;
-    emailSubject = `Account update notification from Aurora Cloud`;
-    emailBody = `Dear ${customer.name},\n\nThis is an automated notification regarding your recent account activity with Aurora Cloud.\n\nWarm regards,\nAurora Cloud Team`;
-    voiceScript = `Hello ${firstName}, this is an automated notification from Aurora Cloud. Please review your dashboard for details.`;
+    // Custom / Dynamic Event phrasing
+    waText = `Hello ${firstName}, this is an update from Aurora Cloud regarding ${event.title.toLowerCase()}.
+
+${event.description}
+
+Next steps:
+${strategy.customerActionRequired ? 'Please review your account dashboard to take required action.' : 'No action is required from your side.'}
+
+Aurora Cloud Team`;
+
+    smsText = `Aurora Cloud: ${event.title}. ${strategy.customerActionRequired ? 'Action required: visit dashboard.' : 'No action needed.'}`;
+
+    emailSubject = `Important update: ${event.title}`;
+    emailBody = `Dear ${customer.name},
+
+We are writing to provide you with an update regarding your account with Aurora Cloud.
+
+Summary of update:
+${event.description}
+
+Verified details:
+- ${factsList}
+
+Resolution & next steps:
+${strategy.customerActionRequired ? 'Please log in to your account dashboard to review the required steps.' : 'This update is purely informational and no action is required on your part.'}
+
+If you have any questions, our operations team is available to assist you.
+
+Warm regards,
+Aurora Cloud Operations Team`;
+
+    voiceScript = `Hello ${firstName}, this is an update from Aurora Cloud regarding ${event.title.toLowerCase()}. ${event.description}. ${strategy.customerActionRequired ? 'Please check your dashboard.' : 'No action is required.'} Thank you.`;
   }
 
   // Redact any unmasked sensitive data
@@ -145,7 +174,7 @@ Aurora Cloud Enterprise Escalations`;
     status: 'completed',
     summary: `Crafted channel-specific communications (WhatsApp: ${waText.length} chars, SMS: ${smsText.length} chars, Email: ${emailBody.length} chars)`,
     details: [
-      `Grounded all factual statements in verified transaction inputs (Order ID, Payment Ref, Refund status).`,
+      `Grounded all factual statements in verified transaction inputs (${event.title}).`,
       `Applied Aurora Cloud brand tone: Direct, calm, competent with zero exclamation marks.`,
       `Tailored phrasing for 4 distinct channels according to respective length and structure guidelines.`,
       `Verified PII masking and structured call-to-action alignment.`,
@@ -173,7 +202,7 @@ Aurora Cloud Enterprise Escalations`;
         subject: emailSubject,
         body: emailBody,
         characterCount: emailBody.length,
-        isSimulated: false, // Live email provider capable
+        isSimulated: false,
       },
       voice: {
         channel: 'Voice',
