@@ -104,19 +104,13 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                       {run.objective.primary.replace(/_/g, ' ')}
                     </td>
                     <td className="py-3 px-4 font-semibold text-aurora-primary font-mono text-[11px]">
-                      {(run as any).dispatchedChannel ? (
-                        <span
-                          className={
-                            (run as any).dispatchedChannel.includes(',') || (run as any).dispatchedChannel.includes('All Channels')
-                              ? 'text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 inline-block font-sans font-bold'
-                              : ''
-                          }
-                        >
-                          {(run as any).dispatchedChannel}
-                        </span>
-                      ) : (
-                        run.strategy.selectedChannel
-                      )}
+                      {(() => {
+                        const raw = (run as any).dispatchedChannel || run.strategy.selectedChannel || 'WhatsApp';
+                        if (raw.toLowerCase().includes('all') || raw.includes(',')) {
+                          return 'WhatsApp, SMS, Email, Voice';
+                        }
+                        return raw;
+                      })()}
                     </td>
                     <td className="py-3 px-4">
                       <span

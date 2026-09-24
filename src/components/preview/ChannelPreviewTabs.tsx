@@ -4,7 +4,7 @@ import { WhatsAppBubble } from './WhatsAppBubble';
 import { SMSFrame } from './SMSFrame';
 import { EmailTemplateView } from './EmailTemplateView';
 import { VoiceSimulation } from './VoiceSimulation';
-import { MessageSquare, Smartphone, Mail, PhoneCall, Send, CheckCircle2, Loader2, SendHorizontal } from 'lucide-react';
+import { MessageSquare, Smartphone, Mail, PhoneCall, Send, CheckCircle2, Loader2, SendHorizontal, Lock } from 'lucide-react';
 
 interface ChannelPreviewTabsProps {
   messages: {
@@ -16,6 +16,8 @@ interface ChannelPreviewTabsProps {
   recommendedChannel: PreferredChannel;
   customer: CustomerProfile;
   onSendMessage?: (target: { channel: PreferredChannel | 'ALL'; channelName: string; timestamp: string }) => void;
+  humanApprovalRequired?: boolean;
+  humanApprovalStatus?: 'Pending' | 'Approved' | 'Rejected' | 'Not Required' | 'Revision Requested' | 'Suppressed';
 }
 
 export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
@@ -23,10 +25,14 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
   recommendedChannel,
   customer,
   onSendMessage,
+  humanApprovalRequired,
+  humanApprovalStatus,
 }) => {
   const [activeChannel, setActiveChannel] = useState<PreferredChannel>(recommendedChannel);
   const [isSending, setIsSending] = useState(false);
   const [sentStatus, setSentStatus] = useState<{ channel: string; timestamp: string } | null>(null);
+
+  const isApprovalPending = Boolean(humanApprovalRequired && humanApprovalStatus !== 'Approved');
 
   const channels = [
     { id: 'WhatsApp', label: 'WhatsApp', icon: MessageSquare, isLive: false },
@@ -162,6 +168,16 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
           </div>
         )}
 
+        {/* Pending Approval Notice */}
+        {isApprovalPending && (
+          <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs flex items-center space-x-2 text-amber-900 shadow-2xs">
+            <Lock strokeWidth={1.5} className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <span>
+              <strong>Supervisor Authorization Required:</strong> Dispatch buttons are locked until human approval is granted in the supervisor panel above.
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <span className="text-[11px] text-aurora-neutral-500 font-mono self-start sm:self-center">
             Recipient: {customer.name} ({customer.preferredChannel}) · Logged to Audit History on Send
@@ -172,13 +188,23 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
             <button
               type="button"
               onClick={() => handleDispatch(activeChannel)}
-              disabled={isSending}
-              className="w-full sm:w-auto px-4 py-2.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 text-aurora-neutral-900 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-xs disabled:opacity-50"
+              disabled={isSending || isApprovalPending}
+              title={isApprovalPending ? 'Human approval required before dispatching' : undefined}
+              className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-xs ${
+                isApprovalPending
+                  ? 'bg-aurora-neutral-100 text-aurora-neutral-400 border border-aurora-neutral-200 cursor-not-allowed opacity-60'
+                  : 'bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 text-aurora-neutral-900 disabled:opacity-50'
+              }`}
             >
               {isSending ? (
                 <>
                   <Loader2 strokeWidth={1.5} className="w-4 h-4 animate-spin text-aurora-primary" />
                   <span>Dispatching...</span>
+                </>
+              ) : isApprovalPending ? (
+                <>
+                  <Lock strokeWidth={1.5} className="w-4 h-4 text-aurora-neutral-400" />
+                  <span>Send on {activeChannel} (Locked)</span>
                 </>
               ) : (
                 <>
@@ -192,13 +218,23 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
             <button
               type="button"
               onClick={() => handleDispatch('ALL')}
-              disabled={isSending}
-              className="w-full sm:w-auto px-5 py-2.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-aurora-md disabled:opacity-50"
+              disabled={isSending || isApprovalPending}
+              title={isApprovalPending ? 'Human approval required before dispatching' : undefined}
+              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-aurora-md ${
+                isApprovalPending
+                  ? 'bg-aurora-neutral-300 text-aurora-neutral-500 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
+                  : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white disabled:opacity-50'
+              }`}
             >
               {isSending ? (
                 <>
                   <Loader2 strokeWidth={1.5} className="w-4 h-4 animate-spin text-white" />
                   <span>Dispatching Omnichannel...</span>
+                </>
+              ) : isApprovalPending ? (
+                <>
+                  <Lock strokeWidth={1.5} className="w-4 h-4 text-aurora-neutral-500" />
+                  <span>Send Across All Channels (Locked)</span>
                 </>
               ) : (
                 <>

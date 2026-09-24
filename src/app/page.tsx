@@ -109,7 +109,7 @@ export default function Home() {
     const chLower = target.channel.toLowerCase();
 
     if (chLower === 'all') {
-      dispatchedChannelName = 'All Channels (WhatsApp, SMS, Email, Voice)';
+      dispatchedChannelName = 'WhatsApp, SMS, Email, Voice';
       resolvedChannel = 'WhatsApp';
     } else if (chLower.includes('sms')) {
       resolvedChannel = 'SMS';
@@ -376,6 +376,8 @@ export default function Home() {
                   recommendedChannel={currentResult.strategy.selectedChannel}
                   customer={currentResult.customer}
                   onSendMessage={handleSendMessage}
+                  humanApprovalRequired={currentResult.strategy.humanApprovalRequired}
+                  humanApprovalStatus={currentResult.humanApprovalStatus}
                 />
 
                 {/* 2. Multi-Agent Execution Pipeline with Reflection Loops */}
