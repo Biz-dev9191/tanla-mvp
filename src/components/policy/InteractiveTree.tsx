@@ -35,8 +35,6 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
     'custom-fin': true,
   });
 
-  const [filterAppliedOnly, setFilterAppliedOnly] = useState<boolean>(false);
-
   // Helper to check if a node matches the highlighted path
   const isNodeHighlighted = (node: PolicyTreeNode): boolean => {
     if (!highlightedPath || highlightedPath.length === 0) return false;
@@ -78,32 +76,7 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
     setExpandedNodes((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const handleToggleFilterApplied = () => {
-    const nextState = !filterAppliedOnly;
-    setFilterAppliedOnly(nextState);
-
-    // Auto-expand all matching nodes when filter is toggled on
-    if (nextState && activeTreeData) {
-      const newExpanded: Record<string, boolean> = {};
-      const expandMatching = (node: PolicyTreeNode) => {
-        if (hasHighlightedDescendant(node)) {
-          newExpanded[node.id] = true;
-        }
-        if (node.children) {
-          node.children.forEach(expandMatching);
-        }
-      };
-      expandMatching(activeTreeData);
-      setExpandedNodes(newExpanded);
-    }
-  };
-
   const renderNode = (node: PolicyTreeNode, depth = 0) => {
-    // If filtering to applied path only, hide nodes with no highlighted descendants
-    if (filterAppliedOnly && !hasHighlightedDescendant(node)) {
-      return null;
-    }
-
     const isExpanded = expandedNodes[node.id] !== undefined ? expandedNodes[node.id] : true;
     const hasChildren = node.children && node.children.length > 0;
     const isHighlighted = isNodeHighlighted(node);
@@ -196,29 +169,6 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
             >
               <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
               <span>{isApplying ? 'Applying & Regenerating...' : 'Apply to Current Run'}</span>
-            </button>
-          )}
-
-          {activeTreeData && (
-            <button
-              type="button"
-              onClick={handleToggleFilterApplied}
-              className={`flex items-center space-x-2 text-xs px-3 py-1.5 rounded-lg border transition-all cursor-pointer ${
-                filterAppliedOnly
-                  ? 'bg-aurora-primary text-white border-aurora-primary shadow-xs font-bold'
-                  : 'bg-aurora-neutral-50 hover:bg-aurora-neutral-100 border-aurora-neutral-300 text-aurora-neutral-800'
-              }`}
-            >
-              <span
-                className={`w-4 h-4 rounded border flex items-center justify-center transition-all ${
-                  filterAppliedOnly
-                    ? 'bg-white border-white text-aurora-primary font-bold text-[10px]'
-                    : 'bg-white border-aurora-neutral-400'
-                }`}
-              >
-                {filterAppliedOnly && '✓'}
-              </span>
-              <span>Applied in Current Run</span>
             </button>
           )}
         </div>

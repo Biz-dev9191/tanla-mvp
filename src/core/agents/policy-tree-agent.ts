@@ -23,12 +23,12 @@ export function runPolicyTreeGeneratorAgent(
   const hasCustomRules = Boolean(customRules && customRules.length > 0);
 
   // Case 1: Custom Document Uploaded or Pasted
-  if (hasDocument) {
+  if (hasDocument && uploadedDocumentText) {
     chainOfThought.push(
-      `[Step 1 - Document Ingestion] Ingesting uploaded policy document (${uploadedDocumentText!.length} chars).`
+      `[Step 1 - Document Ingestion] Ingesting uploaded policy document (${uploadedDocumentText.length} chars).`
     );
 
-    const parseResult: DynamicPolicyParseResult = parsePolicyDocumentText(uploadedDocumentText!);
+    const parseResult: DynamicPolicyParseResult = parsePolicyDocumentText(uploadedDocumentText);
     chainOfThought.push(
       `[Step 2 - Hierarchical Parsing] Parsed ${parseResult.rules.length} compliance clauses into a dynamic Directed Acyclic Graph (DAG) decision tree.`
     );
@@ -61,9 +61,9 @@ export function runPolicyTreeGeneratorAgent(
   }
 
   // Case 2: Custom Structured Rules
-  if (hasCustomRules) {
+  if (hasCustomRules && customRules) {
     chainOfThought.push(
-      `[Step 1 - Rule Ingestion] Ingesting ${customRules!.length} user-defined policy overrides.`
+      `[Step 1 - Rule Ingestion] Ingesting ${customRules.length} user-defined policy overrides.`
     );
     chainOfThought.push(
       `[Step 2 - Custom Hierarchy Binding] Bound custom rules into active policy DAG.`
@@ -74,9 +74,9 @@ export function runPolicyTreeGeneratorAgent(
       agentId: 'policy_tree',
       agentName: 'Policy Tree Generator Agent',
       status: 'completed',
-      summary: `Policy Tree Generated: ${customRules!.length} Custom Rules Applied`,
+      summary: `Policy Tree Generated: ${customRules.length} Custom Rules Applied`,
       details: [
-        `Applied ${customRules!.length} user-defined policy rules.`,
+        `Applied ${customRules.length} user-defined policy rules.`,
         `Verified condition evaluation rules and escalation triggers.`,
       ],
       chainOfThought,
@@ -88,7 +88,7 @@ export function runPolicyTreeGeneratorAgent(
       status: 'EXECUTED_DYNAMIC',
       activeTree: defaultPolicyTree,
       extractedRules: customRules || [],
-      summary: `Applied ${customRules!.length} custom policy rules.`,
+      summary: `Applied ${customRules.length} custom policy rules.`,
       chainOfThought,
       step,
     };

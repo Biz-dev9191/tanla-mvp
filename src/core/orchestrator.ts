@@ -12,7 +12,7 @@ import {
   CustomerSegment,
   DigitalProfile
 } from './types';
-import { runDeterministicPreChecks } from './guardrails/deterministic';
+import { runDeterministicPreChecks, redactSensitiveData } from './guardrails/deterministic';
 import { runCustomerContextAgent } from './agents/context-agent';
 import { runObjectiveResolutionAgent } from './agents/objective-agent';
 import { runPolicyTreeGeneratorAgent } from './agents/policy-tree-agent';
@@ -124,7 +124,7 @@ export async function orchestrateCommunication(
       },
       previousSupportContacts: combinedHistory.includes('contacted support') ? 2 : 1,
       sentiment,
-      email: `${cleanName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
+      email: `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '.').replace(/^\.+|\.+$/g, '') || 'customer'}@example.com`,
       phone: '+91 98765 43210',
     };
 
@@ -336,10 +336,38 @@ export async function orchestrateCommunication(
           suppressionReason: liveLLMResult.strategyDecision.suppressionReason,
         },
         messages: {
-          whatsapp: { channel: 'WhatsApp', body: liveLLMResult.messages.whatsapp.body, characterCount: liveLLMResult.messages.whatsapp.characterCount, isSimulated: true },
-          sms: { channel: 'SMS', body: liveLLMResult.messages.sms.body, characterCount: liveLLMResult.messages.sms.characterCount, isSimulated: true },
-          email: { channel: 'Email', subject: liveLLMResult.messages.email.subject, body: liveLLMResult.messages.email.body, characterCount: liveLLMResult.messages.email.characterCount, isSimulated: false },
-          voice: { channel: 'Voice', body: liveLLMResult.messages.voice.script, characterCount: liveLLMResult.messages.voice.characterCount, isSimulated: true },
+          whatsapp: {
+            channel: 'WhatsApp',
+            body: (() => {
+              let b = redactSensitiveData((liveLLMResult.messages.whatsapp?.body || '').replace(/!+/g, '.'));
+              const custFirst = customer.name.split(/[\s,]+/)[0] || 'Customer';
+              if (!b.toLowerCase().startsWith('hi ') && !b.toLowerCase().startsWith('hello ') && !b.toLowerCase().startsWith('dear ')) {
+                b = `Hello ${custFirst},\n\n${b}`;
+              }
+              return b;
+            })(),
+            characterCount: liveLLMResult.messages.whatsapp?.characterCount || 0,
+            isSimulated: true
+          },
+          sms: {
+            channel: 'SMS',
+            body: redactSensitiveData((liveLLMResult.messages.sms?.body || '').replace(/!+/g, '.')),
+            characterCount: liveLLMResult.messages.sms?.characterCount || 0,
+            isSimulated: true
+          },
+          email: {
+            channel: 'Email',
+            subject: redactSensitiveData((liveLLMResult.messages.email?.subject || 'Update regarding your account').replace(/!+/g, '.')),
+            body: redactSensitiveData((liveLLMResult.messages.email?.body || '').replace(/!+/g, '.')),
+            characterCount: liveLLMResult.messages.email?.characterCount || 0,
+            isSimulated: false
+          },
+          voice: {
+            channel: 'Voice',
+            body: redactSensitiveData((liveLLMResult.messages.voice?.script || '').replace(/!+/g, '.')),
+            characterCount: liveLLMResult.messages.voice?.characterCount || 0,
+            isSimulated: true
+          },
         },
         guardrails: {
           status: liveLLMResult.guardrails.status,
@@ -360,7 +388,7 @@ export async function orchestrateCommunication(
           templateText: 'Dear Customer, An update regarding your account is available. Please log in.',
           differences: [
             `Personalisation: Grounded in ${customer.name}'s profile and history.`,
-            `Grounded Resolution: Explicitly cites payment reference (${event.transactionId}) and confirms automated refund.`,
+            `Grounded Resolution: ${event.transactionId ? `Explicitly cites payment reference (${event.transactionId}) and confirms automated refund.` : 'Confirms automated resolution and verified status without support contact friction.'}`,
             `Channel Optimised: Formatted specifically for ${liveLLMResult.strategyDecision.selectedChannel}.`,
           ],
         },
@@ -458,8 +486,15 @@ export async function orchestrateCommunication(
   steps.push(policyTreeOutput.step);
   decisionTrace.push(`Policy Tree Agent Status: ${policyTreeOutput.status} - ${policyTreeOutput.summary}`);
 
+  // Effective rules from either customRules argument or extracted from customPolicyDocText
+  const effectivePolicyRules = (customRules && customRules.length > 0)
+    ? customRules
+    : (policyTreeOutput.extractedRules && policyTreeOutput.extractedRules.length > 0)
+    ? policyTreeOutput.extractedRules
+    : undefined;
+
   // Step 4: Enterprise Policy & Compliance Agent
-  const policyOutput = runPolicyAgent(customer, event, objective, customRules);
+  const policyOutput = runPolicyAgent(customer, event, objective, effectivePolicyRules);
   steps.push(policyOutput.step);
   if (policyOutput.appliedPolicyPath.length > 0) {
     decisionTrace.push(`Traversed policy tree to '${policyOutput.appliedPolicyPath.join(' → ')}'.`);
@@ -546,7 +581,7 @@ export async function orchestrateCommunication(
 
   const comparisonDifferences = [
     `Persona Alignment: Tailored to ${customer.name} via '${contextOutput.matchedPersona.name}' (${contextOutput.matchedPersona.cohort}) tone rather than generic blast.`,
-    `Grounded Resolution: Explicitly cites payment reference (${event.transactionId}) and confirms automated refund without forcing customer to contact support.`,
+    `Grounded Resolution: ${event.transactionId ? `Explicitly cites payment reference (${event.transactionId}) and confirms automated refund without forcing customer to contact support.` : 'Confirms automated refund and provides clear status without forcing customer to contact support.'}`,
     `Governance Railguards: Enforced brand tone, verified telemetry facts, PII masking, and zero unauthorized compensation.`,
     `Channel Optimised: Formatted specifically for ${stratOutput.strategy.selectedChannel} rather than copy-pasting across all channels.`,
     `Autonomous Reflection: Verified across ${revisionLoop + 1} validation cycles with ZERO exclamation marks and zero customer friction.`,

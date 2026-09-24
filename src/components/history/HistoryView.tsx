@@ -106,7 +106,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     <td className="py-3 px-4 font-semibold text-aurora-primary font-mono text-[11px]">
                       {(() => {
                         const raw = (run as any).dispatchedChannel || run.strategy.selectedChannel || 'WhatsApp';
-                        if (raw.toLowerCase().includes('all') || raw.includes(',')) {
+                        if (raw.toLowerCase().trim() === 'all') {
                           return 'WhatsApp, SMS, Email, Voice';
                         }
                         return raw;

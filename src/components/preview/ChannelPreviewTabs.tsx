@@ -15,7 +15,7 @@ interface ChannelPreviewTabsProps {
   };
   recommendedChannel: PreferredChannel;
   customer: CustomerProfile;
-  onSendMessage?: (target: { channel: PreferredChannel | 'ALL'; channelName: string; timestamp: string }) => void;
+  onSendMessage?: (target: { channel: string; channelName: string; timestamp: string }) => void;
   humanApprovalRequired?: boolean;
   humanApprovalStatus?: 'Pending' | 'Approved' | 'Rejected' | 'Not Required' | 'Revision Requested' | 'Suppressed';
 }
@@ -29,6 +29,12 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
   humanApprovalStatus,
 }) => {
   const [activeChannel, setActiveChannel] = useState<PreferredChannel>(recommendedChannel);
+  const [selectedChannels, setSelectedChannels] = useState<PreferredChannel[]>([
+    'WhatsApp',
+    'SMS',
+    'Email',
+    'Voice',
+  ]);
   const [isSending, setIsSending] = useState(false);
   const [sentStatus, setSentStatus] = useState<{ channel: string; timestamp: string } | null>(null);
 
@@ -41,13 +47,22 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
     { id: 'Voice', label: 'Voice (Simulated)', icon: PhoneCall, isLive: false },
   ] as const;
 
-  const handleDispatch = async (target: PreferredChannel | 'ALL') => {
+  const toggleChannel = (chId: PreferredChannel) => {
+    setSelectedChannels((prev) =>
+      prev.includes(chId) ? prev.filter((id) => id !== chId) : [...prev, chId]
+    );
+  };
+
+  const handleDispatch = async (target: PreferredChannel | PreferredChannel[]) => {
     try {
       setIsSending(true);
       setSentStatus(null);
 
+      const targetList: PreferredChannel[] = Array.isArray(target) ? target : [target];
+      if (targetList.length === 0) return;
+
       // If email is targeted, trigger backend send-email endpoint
-      if ((target === 'Email' || target === 'ALL') && customer.email) {
+      if (targetList.includes('Email') && customer.email) {
         try {
           await fetch('/api/send-email', {
             method: 'POST',
@@ -66,7 +81,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
       // Simulate a realistic gateway response delay
       await new Promise((resolve) => setTimeout(resolve, 600));
 
-      const channelLabel = target === 'ALL' ? 'All Channels (WhatsApp, SMS, Email, Voice)' : target;
+      const channelLabel = targetList.join(', ');
       const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
       setSentStatus({
@@ -76,7 +91,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
 
       if (onSendMessage) {
         onSendMessage({
-          channel: target,
+          channel: channelLabel,
           channelName: channelLabel,
           timestamp,
         });
@@ -102,23 +117,37 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
         </span>
       </div>
 
-      {/* Channel Switcher Tabs */}
-      <div className="flex space-x-2 border-b border-aurora-neutral-200 pb-3 overflow-x-auto">
+      {/* Channel Switcher Tabs with Checkboxes */}
+      <div className="flex space-x-2 border-b border-aurora-neutral-200 pb-3 overflow-x-auto items-center">
         {channels.map((ch) => {
           const Icon = ch.icon;
           const isActive = activeChannel === ch.id;
           const isRecommended = recommendedChannel === ch.id;
+          const isChecked = selectedChannels.includes(ch.id as PreferredChannel);
 
           return (
-            <button
+            <div
               key={ch.id}
               onClick={() => setActiveChannel(ch.id as PreferredChannel)}
-              className={`flex items-center space-x-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg text-xs font-semibold transition-all whitespace-nowrap cursor-pointer select-none ${
                 isActive
                   ? 'bg-aurora-primary text-white shadow-sm'
                   : 'bg-aurora-neutral-100 text-aurora-neutral-700 hover:bg-aurora-neutral-200'
               }`}
             >
+              <input
+                type="checkbox"
+                checked={isChecked}
+                onChange={(e) => {
+                  e.stopPropagation();
+                  toggleChannel(ch.id as PreferredChannel);
+                }}
+                onClick={(e) => e.stopPropagation()}
+                title={`Select ${ch.label} for dispatch`}
+                className={`w-3.5 h-3.5 rounded cursor-pointer ${
+                  isActive ? 'accent-white bg-white text-aurora-primary' : 'accent-aurora-primary'
+                }`}
+              />
               <Icon strokeWidth={1.5} className="w-4 h-4" />
               <span>{ch.label}</span>
               {isRecommended && (
@@ -130,7 +159,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
                   Recommended
                 </span>
               )}
-            </button>
+            </div>
           );
         })}
       </div>
@@ -214,14 +243,20 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               )}
             </button>
 
-            {/* Button 2: Send Across All Channels */}
+            {/* Button 2: Send to Selected Channels */}
             <button
               type="button"
-              onClick={() => handleDispatch('ALL')}
-              disabled={isSending || isApprovalPending}
-              title={isApprovalPending ? 'Human approval required before dispatching' : undefined}
-              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-aurora-md ${
+              onClick={() => handleDispatch(selectedChannels)}
+              disabled={isSending || isApprovalPending || selectedChannels.length === 0}
+              title={
                 isApprovalPending
+                  ? 'Human approval required before dispatching'
+                  : selectedChannels.length === 0
+                  ? 'Please select at least one channel'
+                  : undefined
+              }
+              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-aurora-md ${
+                isApprovalPending || selectedChannels.length === 0
                   ? 'bg-aurora-neutral-300 text-aurora-neutral-500 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
                   : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white disabled:opacity-50'
               }`}
@@ -229,17 +264,20 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               {isSending ? (
                 <>
                   <Loader2 strokeWidth={1.5} className="w-4 h-4 animate-spin text-white" />
-                  <span>Dispatching Omnichannel...</span>
+                  <span>Dispatching Selected...</span>
                 </>
               ) : isApprovalPending ? (
                 <>
                   <Lock strokeWidth={1.5} className="w-4 h-4 text-aurora-neutral-500" />
-                  <span>Send Across All Channels (Locked)</span>
+                  <span>Send to Selected Channels (Locked)</span>
                 </>
               ) : (
                 <>
                   <SendHorizontal strokeWidth={1.5} className="w-4 h-4" />
-                  <span>Send Across All Channels</span>
+                  <span>
+                    Send to Selected {selectedChannels.length === 1 ? 'Channel' : 'Channels'}
+                    {selectedChannels.length > 0 ? ` (${selectedChannels.length})` : ''}
+                  </span>
                 </>
               )}
             </button>

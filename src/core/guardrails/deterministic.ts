@@ -60,17 +60,17 @@ export function runDeterministicPreChecks(
   }
 
   // Check 3: Human Approval Gate for Financial Commitments / Disputes
-  if (
-    event.eventType === 'customer_complaint' &&
-    event.resolutionStatus === 'Pending Approval' &&
-    event.amount &&
-    event.amount.toLowerCase().includes('credit')
-  ) {
+  const isPendingDisputeOrCredit =
+    event.resolutionStatus === 'Pending Approval' ||
+    event.eventType === 'customer_complaint' ||
+    (event.amount && /credit|voucher|waiver|\$\d+/i.test(event.amount) && (event.description.toLowerCase().includes('credit') || event.description.toLowerCase().includes('supervisor')));
+
+  if (isPendingDisputeOrCredit) {
     return {
       passed: true,
       action: 'REQUIRE_HUMAN_APPROVAL',
       ruleCode: 'POL-FIN-001',
-      reason: 'Human supervisor approval required by Policy POL-FIN-001 for monetary compensation/credit vouchers above $0.00.',
+      reason: 'Human supervisor approval required by Policy POL-FIN-001 for monetary compensation/credit vouchers above $0.00 or escalated disputes.',
     };
   }
 

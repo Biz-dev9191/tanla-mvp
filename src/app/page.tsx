@@ -105,24 +105,27 @@ export default function Home() {
     if (!currentResult) return;
     
     let resolvedChannel: PreferredChannel = 'WhatsApp';
-    let dispatchedChannelName = target.channelName;
-    const chLower = target.channel.toLowerCase();
+    let dispatchedChannelName = target.channelName || target.channel;
 
-    if (chLower === 'all') {
-      dispatchedChannelName = 'WhatsApp, SMS, Email, Voice';
-      resolvedChannel = 'WhatsApp';
-    } else if (chLower.includes('sms')) {
-      resolvedChannel = 'SMS';
-      dispatchedChannelName = 'SMS';
-    } else if (chLower.includes('email')) {
-      resolvedChannel = 'Email';
-      dispatchedChannelName = 'Email';
-    } else if (chLower.includes('voice')) {
-      resolvedChannel = 'Voice';
-      dispatchedChannelName = 'Voice';
+    if (dispatchedChannelName.includes(',')) {
+      // Multi-channel list (e.g., 'WhatsApp, Email' or 'WhatsApp, SMS, Email, Voice')
+      const first = dispatchedChannelName.split(',')[0].trim() as PreferredChannel;
+      resolvedChannel = first || 'WhatsApp';
     } else {
-      resolvedChannel = 'WhatsApp';
-      dispatchedChannelName = 'WhatsApp';
+      const chLower = dispatchedChannelName.toLowerCase();
+      if (chLower.includes('sms')) {
+        resolvedChannel = 'SMS';
+        dispatchedChannelName = 'SMS';
+      } else if (chLower.includes('email')) {
+        resolvedChannel = 'Email';
+        dispatchedChannelName = 'Email';
+      } else if (chLower.includes('voice')) {
+        resolvedChannel = 'Voice';
+        dispatchedChannelName = 'Voice';
+      } else {
+        resolvedChannel = 'WhatsApp';
+        dispatchedChannelName = 'WhatsApp';
+      }
     }
 
     const dispatchedRun: any = {
@@ -229,6 +232,9 @@ export default function Home() {
       customer: currentResult.customer,
       event: currentResult.event,
       objective: currentResult.objective,
+      customRules: customPolicyRules.length > 0 ? customPolicyRules : undefined,
+      customPolicyDocText: customPolicyDocText || undefined,
+      useSamplePolicyTree: true,
     });
   };
 

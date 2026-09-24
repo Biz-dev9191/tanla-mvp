@@ -20,7 +20,8 @@ export async function POST(req: NextRequest) {
         undefined,
         apiKeys,
         customRules,
-        customPolicyDocText
+        customPolicyDocText,
+        body.useSamplePolicyTree
       );
       return NextResponse.json(result);
     }
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest) {
       objective,
       apiKeys,
       customRules,
-      customPolicyDocText
+      customPolicyDocText,
+      body.useSamplePolicyTree
     );
     return NextResponse.json(result);
   } catch (error: any) {

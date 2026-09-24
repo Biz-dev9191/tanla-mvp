@@ -98,14 +98,14 @@ export function runMessageGenerationAgent(
     voiceScript = `Hello ${firstName}, this is an automated update from Aurora Cloud regarding your recent payment. Your payment was captured, but ${orderRef} could not be completed. We have already initiated a full refund to your original payment method. No action is required on your part. Thank you.`;
 
   } else if (event.eventType === 'application_incomplete') {
-    const appId = hasOrderId ? event.orderId : 'your application';
-    const appRef = hasOrderId ? ` (${event.orderId})` : '';
+    const appIdText = hasOrderId ? ` (${event.orderId})` : '';
+    const uploadUrl = hasOrderId ? `https://auroracloud.app/verify/${event.orderId}` : 'https://auroracloud.app/verify';
 
-    waText = `${waGreeting} we received your application (${appId}). To complete your verification, please upload your recent utility bill or bank statement by October 15, 2026.\n\nSecure upload link: https://auroracloud.app/verify/${appId}\n\nOur team is available if you need any guidance.`;
-    smsText = `Aurora Cloud: Hi ${firstName}, address proof needed for application ${appId}. Upload securely by Oct 15: https://auroracloud.app/verify/${appId}`;
+    waText = `${waGreeting} we received your application${appIdText}. To complete your verification, please upload your recent utility bill or bank statement by October 15, 2026.\n\nSecure upload link: ${uploadUrl}\n\nOur team is available if you need any guidance.`;
+    smsText = `Aurora Cloud: Hi ${firstName}, address proof needed for your application${appIdText}. Upload securely by Oct 15: ${uploadUrl}`;
 
-    emailSubject = `Action required: Submit address verification for application ${appId}`;
-    emailBody = `${emailGreeting}\n\nThank you for submitting your application (${appId}) with Aurora Cloud.\n\nYour identity verification has been reviewed and approved. To complete the final step of account activation, we require one additional document for address verification.\n\nRequired document details:\n- Acceptable documents: Recent utility bill (electricity, water, gas) or bank account statement.\n- Document date: Issued within the last 3 months.\n- Document format: Clear photo or PDF showing your full name and residential address.\n\nNext step:\nPlease upload your document through our secure verification portal by October 15, 2026:\nhttps://auroracloud.app/verify/${appId}\n\n${emailClosing}`;
+    emailSubject = hasOrderId ? `Action required: Submit address verification for application ${event.orderId}` : `Action required: Submit address verification for your application`;
+    emailBody = `${emailGreeting}\n\nThank you for submitting your application${appIdText} with Aurora Cloud.\n\nYour identity verification has been reviewed and approved. To complete the final step of account activation, we require one additional document for address verification.\n\nRequired document details:\n- Acceptable documents: Recent utility bill (electricity, water, gas) or bank account statement.\n- Document date: Issued within the last 3 months.\n- Document format: Clear photo or PDF showing your full name and residential address.\n\nNext step:\nPlease upload your document through our secure verification portal by October 15, 2026:\n${uploadUrl}\n\n${emailClosing}`;
 
     voiceScript = `Hello ${firstName}, this is Aurora Cloud with an update on your application. Your identity is verified, and we just need a copy of your recent address proof to finalize your account. Please check your email for the secure upload link. Thank you.`;
 
@@ -139,6 +139,7 @@ export function runMessageGenerationAgent(
     if (criticViolations?.includes('EXCLAMATION_DETECTED') || criticFeedback?.includes('exclamation')) {
       waText = waText.replace(/!+/g, '.');
       smsText = smsText.replace(/!+/g, '.');
+      emailSubject = emailSubject.replace(/!+/g, '.');
       emailBody = emailBody.replace(/!+/g, '.');
       voiceScript = voiceScript.replace(/!+/g, '.');
       correctionsApplied.push('Eliminated all exclamation marks to strictly uphold Aurora calm tone.');
@@ -146,6 +147,7 @@ export function runMessageGenerationAgent(
     if (criticViolations?.includes('UNMASKED_CARD') || criticFeedback?.includes('card')) {
       waText = redactSensitiveData(waText);
       smsText = redactSensitiveData(smsText);
+      emailSubject = redactSensitiveData(emailSubject);
       emailBody = redactSensitiveData(emailBody);
       correctionsApplied.push('Enforced full regex masking on all payment card identifiers.');
     }
@@ -160,6 +162,7 @@ export function runMessageGenerationAgent(
   // Strict railguards: Zero exclamation marks and sensitive redaction
   waText = redactSensitiveData(waText.replace(/!+/g, '.'));
   smsText = redactSensitiveData(smsText.replace(/!+/g, '.'));
+  emailSubject = redactSensitiveData(emailSubject.replace(/!+/g, '.'));
   emailBody = redactSensitiveData(emailBody.replace(/!+/g, '.'));
   voiceScript = redactSensitiveData(voiceScript.replace(/!+/g, '.'));
 

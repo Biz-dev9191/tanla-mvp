@@ -283,19 +283,6 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
               </React.Fragment>
             ))}
           </div>
-
-          <div className="flex items-center space-x-3 text-[11px]">
-            {overallSatisfaction && (
-              <div className="flex items-center space-x-1 text-aurora-accent font-bold">
-                <Star strokeWidth={1.5} className="w-3.5 h-3.5 fill-current" />
-                <span>{overallSatisfaction}/5 Satisfaction</span>
-              </div>
-            )}
-            <div className="flex items-center space-x-1 text-aurora-success font-medium">
-              <CheckCircle2 strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>Inbound Deflected</span>
-            </div>
-          </div>
         </div>
       )}
 
