@@ -1,6 +1,18 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrandBadge } from './BrandBadge';
-import { Activity, BookOpen, GitBranch, History, PlusCircle, Key } from 'lucide-react';
+import {
+  Activity,
+  BookOpen,
+  GitBranch,
+  History,
+  PlusCircle,
+  Key,
+  Menu,
+  X,
+  ChevronRight,
+  ShieldCheck,
+  Cpu,
+} from 'lucide-react';
 
 interface HeaderProps {
   activeTab?: 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
@@ -8,63 +20,244 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Close menu on ESC key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsMenuOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const navItems = [
-    { id: 'brief', label: 'Communication Brief', icon: PlusCircle },
-    { id: 'control-room', label: 'Agent Control Room', icon: Activity },
-    { id: 'policy-tree', label: 'Policy Tree', icon: GitBranch },
-    { id: 'knowledge-base', label: 'Knowledge Base', icon: BookOpen },
-    { id: 'history', label: 'Audit History', icon: History },
+    {
+      id: 'brief',
+      label: 'Communication Brief',
+      description: 'Configure customer profile, events & business objectives',
+      icon: PlusCircle,
+    },
+    {
+      id: 'control-room',
+      label: 'Agent Control Room',
+      description: 'Observe multi-agent reasoning, decision traces & previews',
+      icon: Activity,
+    },
+    {
+      id: 'policy-tree',
+      label: 'Policy Tree',
+      description: 'Inspect governance rules and upload dynamic policy docs',
+      icon: GitBranch,
+    },
+    {
+      id: 'knowledge-base',
+      label: 'Knowledge Base',
+      description: 'Enterprise brand guidelines, tone rules & templates',
+      icon: BookOpen,
+    },
+    {
+      id: 'history',
+      label: 'Audit History',
+      description: 'View previous orchestration runs and decision records',
+      icon: History,
+    },
   ] as const;
 
+  const currentActiveItem = navItems.find((item) => item.id === activeTab) || navItems[0];
+  const CurrentIcon = currentActiveItem.icon;
+
+  const handleSelectTab = (tabId: typeof activeTab) => {
+    onTabChange?.(tabId);
+    setIsMenuOpen(false);
+  };
+
+  const handleOpenSettings = () => {
+    setIsMenuOpen(false);
+    onTabChange?.('settings' as any);
+  };
+
   return (
-    <header className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 sticky top-0 z-30 shadow-aurora">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo Lockup */}
-          <div className="cursor-pointer" onClick={() => onTabChange?.('brief')}>
-            <BrandBadge subtitle="AI Customer Communication Orchestrator" />
-          </div>
-
-          {/* Nav Items */}
-          <nav className="flex space-x-1 sm:space-x-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onTabChange?.(item.id)}
-                  className={`flex items-center space-x-1.5 px-3 py-2 rounded-md text-xs sm:text-sm transition-colors ${
-                    isActive
-                      ? 'bg-aurora-primary-light text-aurora-primary font-bold border-b-2 border-aurora-primary'
-                      : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 font-medium'
-                  }`}
-                >
-                  <Icon strokeWidth={1.5} className="w-4 h-4" />
-                  <span className="hidden md:inline">{item.label}</span>
-                  <span className="md:hidden">{item.label.split(' ')[0]}</span>
-                </button>
-              );
-            })}
-          </nav>
-
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={() => onTabChange?.('settings' as any)}
-              className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 flex items-center space-x-1 transition"
+    <>
+      <header className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 sticky top-0 z-30 shadow-aurora">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Left: Brand Lockup */}
+            <div
+              className="cursor-pointer flex items-center"
+              onClick={() => handleSelectTab('brief')}
             >
-              <Key strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-              <span className="hidden sm:inline">API Keys & Settings</span>
-            </button>
+              <BrandBadge subtitle="AI Customer Communication Orchestrator" />
+            </div>
 
-            {/* Aurora Cloud Single-Accent Status Pill */}
-            <div className="hidden lg:flex items-center space-x-2 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-300 px-3 py-1 rounded-full">
-              <span className="w-2 h-2 rounded-full bg-aurora-success"></span>
-              <span className="font-medium">Governance Engine Online</span>
+            {/* Right: Active View Badge + Collapsible Menu Button */}
+            <div className="flex items-center space-x-3">
+              {/* Current Active Tab Pill */}
+              <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs font-semibold text-aurora-neutral-700">
+                <CurrentIcon strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                <span>{currentActiveItem.label}</span>
+              </div>
+
+              {/* Collapsible Menu Trigger Button */}
+              <button
+                type="button"
+                onClick={() => setIsMenuOpen(true)}
+                className="flex items-center space-x-2 px-3.5 py-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
+                aria-label="Open Navigation Menu"
+              >
+                <Menu strokeWidth={1.5} className="w-4 h-4" />
+                <span>Menu</span>
+              </button>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Right-Hand Collapsible Side Menu Drawer */}
+      {isMenuOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden">
+          {/* Backdrop Overlay */}
+          <div
+            className="fixed inset-0 bg-aurora-neutral-900/40 backdrop-blur-sm transition-opacity animate-fadeIn"
+            onClick={() => setIsMenuOpen(false)}
+          />
+
+          {/* Slide-over Drawer Panel */}
+          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
+            <div className="w-screen max-w-md bg-aurora-neutral-0 border-l border-aurora-neutral-200 shadow-2xl flex flex-col justify-between transform transition-transform ease-in-out duration-300">
+              
+              {/* Drawer Header */}
+              <div className="p-6 border-b border-aurora-neutral-200 flex items-center justify-between bg-aurora-neutral-100/50">
+                <div>
+                  <h2 className="text-base font-bold text-aurora-neutral-900">Navigation & System</h2>
+                  <p className="text-xs text-aurora-neutral-500 mt-0.5">
+                    Aurora Cloud Agent Orchestration Suite
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="p-1.5 rounded-md text-aurora-neutral-500 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-200 transition"
+                  aria-label="Close menu"
+                >
+                  <X strokeWidth={1.5} className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Drawer Body / Nav Links */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 block mb-3">
+                    System Views
+                  </span>
+                  <nav className="space-y-1.5">
+                    {navItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive = activeTab === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => handleSelectTab(item.id)}
+                          className={`w-full flex items-start space-x-3.5 p-3 rounded-lg text-left transition-all ${
+                            isActive
+                              ? 'bg-aurora-primary-light text-aurora-primary border border-aurora-primary/20 shadow-sm'
+                              : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-transparent'
+                          }`}
+                        >
+                          <div
+                            className={`p-2 rounded-md mt-0.5 flex-shrink-0 ${
+                              isActive
+                                ? 'bg-aurora-primary text-white'
+                                : 'bg-aurora-neutral-200 text-aurora-neutral-700'
+                            }`}
+                          >
+                            <Icon strokeWidth={1.5} className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <span className="text-sm font-bold text-aurora-neutral-900">
+                                {item.label}
+                              </span>
+                              {isActive && (
+                                <span className="text-[10px] font-bold uppercase tracking-wider bg-aurora-primary text-white px-2 py-0.5 rounded">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-aurora-neutral-500 mt-0.5 leading-snug">
+                              {item.description}
+                            </p>
+                          </div>
+                          <ChevronRight
+                            strokeWidth={1.5}
+                            className={`w-4 h-4 mt-2 flex-shrink-0 ${
+                              isActive ? 'text-aurora-primary' : 'text-aurora-neutral-400'
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </nav>
+                </div>
+
+                {/* Configuration & Keys */}
+                <div>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 block mb-3">
+                    Configuration
+                  </span>
+                  <button
+                    onClick={handleOpenSettings}
+                    className="w-full flex items-start space-x-3.5 p-3 rounded-lg text-left text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 transition shadow-sm bg-aurora-neutral-0"
+                  >
+                    <div className="p-2 rounded-md mt-0.5 bg-aurora-neutral-200 text-aurora-primary flex-shrink-0">
+                      <Key strokeWidth={1.5} className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="text-sm font-bold text-aurora-neutral-900">
+                        API Keys & Provider Settings
+                      </span>
+                      <p className="text-xs text-aurora-neutral-500 mt-0.5">
+                        Configure Resend API key for live emails and Google Gemini LLM
+                      </p>
+                    </div>
+                    <ChevronRight strokeWidth={1.5} className="w-4 h-4 mt-2 text-aurora-neutral-400" />
+                  </button>
+                </div>
+
+                {/* Telemetry Status Card */}
+                <div className="p-4 bg-aurora-neutral-100 rounded-lg border border-aurora-neutral-200 space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <span className="w-2 h-2 rounded-full bg-aurora-success animate-pulse"></span>
+                    <span className="text-xs font-bold text-aurora-neutral-900">
+                      Governance Engine Online
+                    </span>
+                  </div>
+                  <div className="text-[11px] text-aurora-neutral-600 space-y-1 font-mono">
+                    <div className="flex justify-between">
+                      <span>Deterministic Rules:</span>
+                      <span className="font-bold text-aurora-neutral-900">Active v1.0</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Multi-Agent Core:</span>
+                      <span className="font-bold text-aurora-neutral-900">6 Specialized Agents</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Outbound Channels:</span>
+                      <span className="font-bold text-aurora-neutral-900">WA, SMS, Email, Voice</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Drawer Footer */}
+              <div className="p-4 border-t border-aurora-neutral-200 bg-aurora-neutral-100 text-center text-[11px] text-aurora-neutral-500">
+                Aurora Cloud Orchestrator · Enterprise Edition
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
