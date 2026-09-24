@@ -5,10 +5,8 @@ import {
   Signal,
   Wifi,
   Battery,
-  User,
   Info,
   Camera,
-  Mic,
   Smile,
   ArrowUp,
 } from 'lucide-react';
@@ -51,22 +49,29 @@ export const SMSFrame: React.FC<SMSFrameProps> = ({
             </div>
           </div>
 
-          {/* iOS Messages Navigation Bar */}
-          <div className="bg-white/90 backdrop-blur-md px-3 py-2 flex items-center justify-between border-b border-neutral-200 shadow-2xs">
-            <div className="flex items-center space-x-1 text-blue-500 cursor-pointer -ml-1">
-              <ChevronLeft className="w-5 h-5" />
-              <span className="text-xs font-normal">Messages</span>
+          {/* iOS Messages Navigation Bar with Mathematically Centered Header */}
+          <div className="bg-white/90 backdrop-blur-md px-3 py-2 relative flex items-center justify-between border-b border-neutral-200 shadow-2xs min-h-[58px]">
+            {/* Left Back action */}
+            <div className="flex items-center space-x-0.5 text-blue-500 cursor-pointer z-10 -ml-1">
+              <ChevronLeft className="w-4 h-4" />
+              <span className="text-[10px] font-normal tracking-tight">Messages</span>
             </div>
 
-            <div className="flex flex-col items-center">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-slate-600 to-slate-400 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+            {/* Mathematically Centered Contact Initials & Name */}
+            <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 flex flex-col items-center justify-center pointer-events-none text-center">
+              <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-slate-600 to-slate-500 text-white font-bold text-[10px] flex items-center justify-center shadow-xs">
                 AC
               </div>
-              <span className="text-[11px] font-bold text-neutral-900 mt-0.5">Aurora Cloud</span>
-              <span className="text-[9px] text-neutral-500 font-mono">{recipientPhone}</span>
+              <span className="text-[10.5px] font-bold text-neutral-900 mt-0.5 leading-tight">
+                Aurora Cloud
+              </span>
+              <span className="text-[8.5px] text-neutral-500 font-mono leading-tight">
+                {recipientPhone}
+              </span>
             </div>
 
-            <div className="w-6 flex justify-end">
+            {/* Right Info action */}
+            <div className="z-10 flex justify-end">
               <Info className="w-4 h-4 text-blue-500 cursor-pointer" />
             </div>
           </div>
@@ -75,18 +80,18 @@ export const SMSFrame: React.FC<SMSFrameProps> = ({
           <div className="p-3.5 space-y-3 flex-1 flex flex-col justify-end">
             {/* Date / Timestamp Header */}
             <div className="self-center text-center">
-              <span className="text-[10px] text-neutral-400 font-medium">
+              <span className="text-[9.5px] text-neutral-400 font-medium">
                 Today 10:24 AM
               </span>
-              <div className="text-[9px] uppercase tracking-wider text-neutral-400 font-bold mt-0.5">
+              <div className="text-[8.5px] uppercase tracking-wider text-neutral-400 font-bold mt-0.5">
                 SMS / Text Message
               </div>
             </div>
 
-            {/* Inbound SMS Bubble (iOS Neutral Grey Style) */}
-            <div className="self-start max-w-[90%] bg-[#E9E9EB] text-neutral-900 rounded-[20px] rounded-tl-sm px-3.5 py-2.5 shadow-2xs text-[12px] leading-relaxed relative">
+            {/* Inbound SMS Bubble (iOS Neutral Grey Style, Reduced Crisp Typography) */}
+            <div className="self-start max-w-[90%] bg-[#E9E9EB] text-neutral-900 rounded-[18px] rounded-tl-sm px-3 py-2.5 shadow-2xs text-[11px] leading-relaxed relative">
               <p className="whitespace-pre-line font-sans">{message.body}</p>
-              <div className="text-[9px] text-neutral-500 text-right mt-1 font-mono">
+              <div className="text-[8.5px] text-neutral-500 text-right mt-1 font-mono">
                 Delivered
               </div>
             </div>
@@ -94,13 +99,13 @@ export const SMSFrame: React.FC<SMSFrameProps> = ({
 
           {/* Bottom iOS SMS Composer Bar */}
           <div className="bg-white/90 backdrop-blur-md px-3 py-2 flex items-center space-x-2 border-t border-neutral-200">
-            <Camera className="w-5 h-5 text-neutral-400 cursor-pointer" />
-            <div className="flex-1 bg-[#E9E9EB] rounded-full px-3.5 py-1.5 flex items-center justify-between text-xs text-neutral-400">
+            <Camera className="w-4 h-4 text-neutral-400 cursor-pointer" />
+            <div className="flex-1 bg-[#E9E9EB] rounded-full px-3 py-1 flex items-center justify-between text-[11px] text-neutral-400">
               <span>Text Message</span>
-              <Smile className="w-4 h-4 text-neutral-400" />
+              <Smile className="w-3.5 h-3.5 text-neutral-400" />
             </div>
-            <div className="w-7 h-7 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-xs cursor-pointer">
-              <ArrowUp className="w-4 h-4" />
+            <div className="w-6 h-6 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-xs cursor-pointer">
+              <ArrowUp className="w-3.5 h-3.5" />
             </div>
           </div>
 
