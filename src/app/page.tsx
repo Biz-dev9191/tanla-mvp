@@ -26,7 +26,7 @@ import { DynamicPolicyParseResult } from '@/core/policy-generator';
 import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2, MessageSquare, ArrowRight } from 'lucide-react';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('brief');
+  const [activeTab, setActiveTab] = useState<'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('home');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentResult, setCurrentResult] = useState<OrchestrationResult | null>(null);
@@ -141,7 +141,7 @@ export default function Home() {
           if ((t as string) === 'settings') {
             setIsSettingsOpen(true);
           } else {
-            setActiveTab(t);
+            setActiveTab(t as any);
           }
         }}
       />
@@ -161,39 +161,52 @@ export default function Home() {
       )}
 
       <main className="flex-1 pb-16">
-        {/* HERO SECTION ON HOME BRIEF TAB */}
-        {activeTab === 'brief' && (
-          <div className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 py-12 lg:py-16 shadow-sm">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="max-w-3xl space-y-4">
-                <div className="inline-flex items-center space-x-2 px-2.5 py-1 bg-aurora-primary-light border border-aurora-primary/10 rounded-full text-xs font-semibold text-aurora-primary">
-                  <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
-                  <span>Enterprise Agentic Communication Layer</span>
+        {/* HOME VIEW: ONLY HERO SECTION */}
+        {activeTab === 'home' && (
+          <div className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto my-auto flex flex-col justify-center items-center text-center">
+            <div className="space-y-6 max-w-3xl">
+              <div className="inline-flex items-center space-x-2 px-3 py-1 bg-aurora-primary-light border border-aurora-primary/10 rounded-full text-xs font-semibold text-aurora-primary">
+                <Sparkles strokeWidth={1.5} className="w-4 h-4" />
+                <span>Enterprise Agentic Communication Layer</span>
+              </div>
+
+              <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-aurora-neutral-900 leading-tight">
+                From customer event to the right conversation.
+              </h1>
+
+              <p className="text-base sm:text-lg text-aurora-neutral-700 leading-relaxed max-w-2xl mx-auto">
+                An AI agent system that understands customer context, consults company policies, determines the communication strategy, crafts channel-tailored messages, validates deterministic safety guardrails, and executes live communications.
+              </p>
+
+              {/* ONLY Get Started CTA */}
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('brief')}
+                  className="inline-flex items-center space-x-2.5 px-8 py-3.5 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-md text-sm font-semibold shadow-aurora transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                >
+                  <span>Get Started</span>
+                  <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Minimal Trust Indicator Badges */}
+              <div className="pt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left border-t border-aurora-neutral-200 text-xs font-medium text-aurora-neutral-700">
+                <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
+                  <div className="font-bold text-aurora-neutral-900">Context Grounded</div>
+                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Dual-mode brief input</p>
                 </div>
-
-                <h1 className="text-3xl sm:text-5xl font-bold tracking-tight text-aurora-neutral-900 leading-tight">
-                  From customer event to the right conversation.
-                </h1>
-
-                <p className="text-sm sm:text-base text-aurora-neutral-700 leading-relaxed font-normal">
-                  An AI agent system that understands customer context, consults company policies, determines the communication strategy, crafts channel-tailored messages, validates deterministic safety guardrails, and executes live communications.
-                </p>
-
-                {/* Only Get Started CTA */}
-                <div className="pt-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const el = document.getElementById('brief-section');
-                      if (el) {
-                        el.scrollIntoView({ behavior: 'smooth' });
-                      }
-                    }}
-                    className="inline-flex items-center space-x-2 px-6 py-3 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-md text-sm font-semibold shadow-aurora transition-all transform active:scale-95"
-                  >
-                    <span>Get Started</span>
-                    <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
-                  </button>
+                <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
+                  <div className="font-bold text-aurora-neutral-900">Policy Governed</div>
+                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Dynamic document tree</p>
+                </div>
+                <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
+                  <div className="font-bold text-aurora-neutral-900">Multi-Channel</div>
+                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">WhatsApp, SMS, Email, Voice</p>
+                </div>
+                <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
+                  <div className="font-bold text-aurora-neutral-900">Guardrail Engine</div>
+                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Zero-hallucination checks</p>
                 </div>
               </div>
             </div>

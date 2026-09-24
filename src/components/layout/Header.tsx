@@ -10,16 +10,19 @@ import {
   Menu,
   X,
   ChevronRight,
+  Home as HomeIcon,
   ShieldCheck,
   Cpu,
 } from 'lucide-react';
 
+export type TabType = 'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
+
 interface HeaderProps {
-  activeTab?: 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
-  onTabChange?: (tab: 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history') => void;
+  activeTab?: TabType;
+  onTabChange?: (tab: TabType | 'settings') => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab = 'home', onTabChange }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Close menu on ESC key
@@ -33,48 +36,54 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
 
   const navItems = [
     {
-      id: 'brief',
+      id: 'home' as const,
+      label: 'Home Overview',
+      description: 'System overview & agentic orchestrator landing',
+      icon: HomeIcon,
+    },
+    {
+      id: 'brief' as const,
       label: 'Communication Brief',
       description: 'Configure customer profile, events & business objectives',
       icon: PlusCircle,
     },
     {
-      id: 'control-room',
+      id: 'control-room' as const,
       label: 'Agent Control Room',
       description: 'Observe multi-agent reasoning, decision traces & previews',
       icon: Activity,
     },
     {
-      id: 'policy-tree',
+      id: 'policy-tree' as const,
       label: 'Policy Tree',
       description: 'Inspect governance rules and upload dynamic policy docs',
       icon: GitBranch,
     },
     {
-      id: 'knowledge-base',
+      id: 'knowledge-base' as const,
       label: 'Knowledge Base',
       description: 'Enterprise brand guidelines, tone rules & templates',
       icon: BookOpen,
     },
     {
-      id: 'history',
+      id: 'history' as const,
       label: 'Audit History',
       description: 'View previous orchestration runs and decision records',
       icon: History,
     },
-  ] as const;
+  ];
 
   const currentActiveItem = navItems.find((item) => item.id === activeTab) || navItems[0];
   const CurrentIcon = currentActiveItem.icon;
 
-  const handleSelectTab = (tabId: typeof activeTab) => {
+  const handleSelectTab = (tabId: TabType) => {
     onTabChange?.(tabId);
     setIsMenuOpen(false);
   };
 
   const handleOpenSettings = () => {
     setIsMenuOpen(false);
-    onTabChange?.('settings' as any);
+    onTabChange?.('settings');
   };
 
   return (
@@ -82,38 +91,51 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
       <header className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 sticky top-0 z-30 shadow-aurora">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Left: Brand Lockup */}
-            <div
-              className="cursor-pointer flex items-center"
-              onClick={() => handleSelectTab('brief')}
-            >
-              <BrandBadge subtitle="AI Customer Communication Orchestrator" />
-            </div>
-
-            {/* Right: Active View Badge + Collapsible Menu Button */}
+            
+            {/* Left: Left-Hand Menu Trigger + Brand Logo */}
             <div className="flex items-center space-x-3">
-              {/* Current Active Tab Pill */}
-              <div className="hidden sm:flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs font-semibold text-aurora-neutral-700">
-                <CurrentIcon strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-                <span>{currentActiveItem.label}</span>
-              </div>
-
-              {/* Collapsible Menu Trigger Button */}
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(true)}
-                className="flex items-center space-x-2 px-3.5 py-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
-                aria-label="Open Navigation Menu"
+                className="flex items-center space-x-2 px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
+                aria-label="Open Left Navigation Menu"
               >
                 <Menu strokeWidth={1.5} className="w-4 h-4" />
-                <span>Menu</span>
+                <span className="hidden sm:inline">Menu</span>
+              </button>
+
+              <div
+                className="cursor-pointer flex items-center"
+                onClick={() => handleSelectTab('home')}
+              >
+                <BrandBadge subtitle="AI Customer Communication Orchestrator" />
+              </div>
+            </div>
+
+            {/* Right: Active View Badge + API Keys */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              {/* Current Active Tab Pill */}
+              <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs font-semibold text-aurora-neutral-700">
+                <CurrentIcon strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                <span className="hidden sm:inline">{currentActiveItem.label}</span>
+              </div>
+
+              {/* API Keys quick access */}
+              <button
+                type="button"
+                onClick={() => onTabChange?.('settings')}
+                className="p-1.5 sm:px-2.5 sm:py-1.5 rounded-md text-xs font-semibold text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 flex items-center space-x-1 transition"
+                title="API Keys & Settings"
+              >
+                <Key strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                <span className="hidden md:inline">API Keys</span>
               </button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Right-Hand Collapsible Side Menu Drawer */}
+      {/* Left-Hand Collapsible Side Menu Drawer */}
       {isMenuOpen && (
         <div className="fixed inset-0 z-50 overflow-hidden">
           {/* Backdrop Overlay */}
@@ -122,9 +144,9 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
             onClick={() => setIsMenuOpen(false)}
           />
 
-          {/* Slide-over Drawer Panel */}
-          <div className="fixed inset-y-0 right-0 max-w-full flex pl-10">
-            <div className="w-screen max-w-md bg-aurora-neutral-0 border-l border-aurora-neutral-200 shadow-2xl flex flex-col justify-between transform transition-transform ease-in-out duration-300">
+          {/* Slide-over Drawer Panel on the Left */}
+          <div className="fixed inset-y-0 left-0 max-w-full flex pr-10">
+            <div className="w-screen max-w-md bg-aurora-neutral-0 border-r border-aurora-neutral-200 shadow-2xl flex flex-col justify-between transform transition-transform ease-in-out duration-300">
               
               {/* Drawer Header */}
               <div className="p-6 border-b border-aurora-neutral-200 flex items-center justify-between bg-aurora-neutral-100/50">
