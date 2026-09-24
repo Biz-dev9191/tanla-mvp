@@ -4,7 +4,7 @@ import { sendOutboundEmail } from '@/core/providers/email-provider';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { to, subject, body: emailBody, from } = body;
+    const { to, subject, body: emailBody, from, apiKey } = body;
 
     if (!to || !subject || !emailBody) {
       return NextResponse.json(
@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
       subject,
       body: emailBody,
       from,
+      apiKey,
     });
 
     return NextResponse.json(result);

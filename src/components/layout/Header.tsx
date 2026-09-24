@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrandBadge } from './BrandBadge';
-import { Activity, BookOpen, GitBranch, History, PlusCircle } from 'lucide-react';
+import { Activity, BookOpen, GitBranch, History, PlusCircle, Key } from 'lucide-react';
 
 interface HeaderProps {
   activeTab?: 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history';
@@ -48,10 +48,20 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
             })}
           </nav>
 
-          {/* Aurora Cloud Single-Accent Status Pill */}
-          <div className="hidden lg:flex items-center space-x-2 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-300 px-3 py-1 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-aurora-success"></span>
-            <span className="font-medium">Governance Engine Online</span>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => onTabChange?.('settings' as any)}
+              className="px-2.5 py-1.5 rounded-md text-xs font-semibold text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 flex items-center space-x-1 transition"
+            >
+              <Key strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+              <span className="hidden sm:inline">API Keys & Settings</span>
+            </button>
+
+            {/* Aurora Cloud Single-Accent Status Pill */}
+            <div className="hidden lg:flex items-center space-x-2 text-xs text-aurora-neutral-700 bg-aurora-neutral-100 border border-aurora-neutral-300 px-3 py-1 rounded-full">
+              <span className="w-2 h-2 rounded-full bg-aurora-success"></span>
+              <span className="font-medium">Governance Engine Online</span>
+            </div>
           </div>
         </div>
       </div>

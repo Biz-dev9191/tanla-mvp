@@ -17,17 +17,22 @@ import { ObjectivePivotBar } from '@/components/preview/ObjectivePivotBar';
 import { CustomerResponseSimulator } from '@/components/preview/CustomerResponseSimulator';
 import { InteractiveTree } from '@/components/policy/InteractiveTree';
 import { PolicyDetailModal } from '@/components/policy/PolicyDetailModal';
+import { PolicyUploader } from '@/components/policy/PolicyUploader';
 import { KnowledgeBaseView } from '@/components/knowledge/KnowledgeBaseView';
 import { HistoryView } from '@/components/history/HistoryView';
+import { SettingsModal } from '@/components/layout/SettingsModal';
 import { PolicyTreeNode } from '@/core/policy-tree-data';
-import { ArrowLeft, RefreshCw, AlertCircle } from 'lucide-react';
+import { DynamicPolicyParseResult } from '@/core/policy-generator';
+import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2, MessageSquare, ArrowRight } from 'lucide-react';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('brief');
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [currentResult, setCurrentResult] = useState<OrchestrationResult | null>(null);
   const [history, setHistory] = useState<OrchestrationResult[]>([]);
   const [selectedPolicyNode, setSelectedPolicyNode] = useState<PolicyTreeNode | null>(null);
+  const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Run orchestration
@@ -35,6 +40,17 @@ export default function Home() {
     try {
       setIsLoading(true);
       setErrorMessage(null);
+
+      // Validate that all 3 columns have at least 1 input
+      if (payload.customerProfileText !== undefined) {
+        const hasCol1 = payload.customerProfileText.trim().length > 0 || (payload.customerPills && payload.customerPills.length > 0);
+        const hasCol2 = payload.eventHistoryText.trim().length > 0 || (payload.eventPills && payload.eventPills.length > 0);
+        const hasCol3 = payload.objectiveText.trim().length > 0 || (payload.objectivePills && payload.objectivePills.length > 0);
+
+        if (!hasCol1 || !hasCol2 || !hasCol3) {
+          throw new Error("Please provide at least one detail (text description, filter pill, or structured field) in each of the 3 columns to proceed.");
+        }
+      }
 
       const res = await fetch('/api/orchestrate', {
         method: 'POST',
@@ -70,6 +86,17 @@ export default function Home() {
       event: currentResult.event,
       objective: updatedObjective,
     });
+  };
+
+  // Dynamic policy applied
+  const handleApplyDynamicPolicy = (result: DynamicPolicyParseResult) => {
+    setCustomPolicyTree(result.tree);
+    if (currentResult) {
+      setCurrentResult({
+        ...currentResult,
+        appliedPolicies: result.rules,
+      });
+    }
   };
 
   // Human approval handlers
@@ -108,7 +135,16 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-aurora-neutral-100 text-aurora-neutral-900 font-sans">
-      <Header activeTab={activeTab} onTabChange={(t) => setActiveTab(t)} />
+      <Header
+        activeTab={activeTab}
+        onTabChange={(t) => {
+          if ((t as string) === 'settings') {
+            setIsSettingsOpen(true);
+          } else {
+            setActiveTab(t);
+          }
+        }}
+      />
 
       {errorMessage && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
@@ -125,6 +161,47 @@ export default function Home() {
       )}
 
       <main className="flex-1 pb-16">
+        {/* HERO SECTION ON HOME BRIEF TAB */}
+        {activeTab === 'brief' && (
+          <div className="bg-aurora-neutral-0 border-b border-aurora-neutral-200 py-10 shadow-sm">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="max-w-3xl space-y-3">
+                <div className="inline-flex items-center space-x-2 px-2.5 py-1 bg-aurora-primary-light border border-aurora-primary/10 rounded-full text-xs font-semibold text-aurora-primary">
+                  <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
+                  <span>Enterprise Agentic Communication Layer</span>
+                </div>
+
+                <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-aurora-neutral-900 leading-tight">
+                  From customer event to the right conversation.
+                </h1>
+
+                <p className="text-sm sm:text-base text-aurora-neutral-700 leading-relaxed font-normal">
+                  An AI agent system that understands customer context, consults company policies, determines the communication strategy, crafts channel-tailored messages, validates deterministic safety guardrails, and executes live communications.
+                </p>
+
+                <div className="pt-2 flex flex-wrap gap-4 text-xs font-semibold text-aurora-neutral-700">
+                  <div className="flex items-center space-x-1.5">
+                    <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 text-aurora-success" />
+                    <span>Context Grounded</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 text-aurora-success" />
+                    <span>Policy Tree Governed</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 text-aurora-success" />
+                    <span>Multi-Channel (WhatsApp, SMS, Email, Voice)</span>
+                  </div>
+                  <div className="flex items-center space-x-1.5">
+                    <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 text-aurora-success" />
+                    <span>Deterministic Guardrails</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Tab 1: Communication Brief */}
         {activeTab === 'brief' && (
           <CommunicationBrief onRunOrchestration={handleRunOrchestration} isLoading={isLoading} />
@@ -264,10 +341,14 @@ export default function Home() {
                 Enterprise Policy Tree Explorer
               </h1>
               <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-                Inspect the deterministic rulebook governing transactional payments, order statuses, opt-in consent gates, privacy masking, and escalation paths.
+                Upload custom policy documents, paste company rules, or inspect the interactive deterministic rule hierarchy governing all automated outbound communications.
               </p>
             </div>
 
+            {/* Dynamic Policy Document Uploader */}
+            <PolicyUploader onApplyDynamicPolicy={handleApplyDynamicPolicy} />
+
+            {/* Interactive Policy Tree */}
             <InteractiveTree
               highlightedPath={currentResult?.appliedPolicyPath || ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"]}
               onSelectNode={(node) => setSelectedPolicyNode(node)}
@@ -295,6 +376,13 @@ export default function Home() {
           />
         )}
       </main>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSaveKeys={() => {}}
+      />
 
       {/* Footer */}
       <footer className="bg-aurora-neutral-0 border-t border-aurora-neutral-200 py-6 text-center text-xs text-aurora-neutral-500">

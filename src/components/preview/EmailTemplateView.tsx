@@ -22,6 +22,9 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
       setIsSending(true);
       setSendResult(null);
 
+      const customKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_resend_key') : null;
+      const customFrom = typeof window !== 'undefined' ? localStorage.getItem('aurora_sender_email') : null;
+
       const res = await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -29,6 +32,8 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
           to: emailTo,
           subject: message.subject || 'Aurora Cloud Notification',
           body: message.body,
+          apiKey: customKey || undefined,
+          from: customFrom || undefined,
         }),
       });
 
