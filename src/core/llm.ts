@@ -65,6 +65,7 @@ export async function callLiveLLM(
   customOpenaiKey?: string
 ): Promise<LLMAgentDecision | null> {
   const geminiKey = customGeminiKey?.trim() || process.env.GEMINI_API_KEY;
+  const openrouterKey = process.env.OPENROUTER_API_KEY;
   const openaiKey = customOpenaiKey?.trim() || process.env.OPENAI_API_KEY;
 
   const systemPrompt = `You are the Aurora Cloud AI Customer Communication Orchestrator.
@@ -122,7 +123,42 @@ Determine the customer context, business objective, policy path, communication s
     }
   }
 
-  // 2. Try OpenAI API if key is present
+  // 2. Try OpenRouter API if key is present
+  if (openrouterKey) {
+    try {
+      const model = process.env.OPENROUTER_MODEL || 'google/gemini-flash-1.5';
+      const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openrouterKey.trim()}`,
+          'HTTP-Referer': 'https://auroracloud.app',
+          'X-Title': 'Aurora Cloud Orchestrator',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.2,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const text = data.choices?.[0]?.message?.content;
+        if (text) {
+          return JSON.parse(text) as LLMAgentDecision;
+        }
+      }
+    } catch (err) {
+      console.warn('OpenRouter API call error, continuing to fallback:', err);
+    }
+  }
+
+  // 3. Try OpenAI API if key is present
   if (openaiKey) {
     try {
       const res = await fetch('https://api.openai.com/v1/chat/completions', {
