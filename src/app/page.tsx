@@ -35,6 +35,20 @@ export default function Home() {
   const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Load history from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedHistory = localStorage.getItem('aurora_orchestration_history');
+        if (savedHistory) {
+          setHistory(JSON.parse(savedHistory));
+        }
+      } catch (e) {
+        console.warn('Could not load history from storage:', e);
+      }
+    }
+  }, []);
+
   // Run orchestration
   const handleRunOrchestration = async (payload: any) => {
     try {
@@ -72,7 +86,15 @@ export default function Home() {
       }
 
       setCurrentResult(data);
-      setHistory((prev) => [data, ...prev]);
+      setHistory((prev) => {
+        const updated = [data, ...prev];
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('aurora_orchestration_history', JSON.stringify(updated.slice(0, 50)));
+          } catch (e) {}
+        }
+        return updated;
+      });
       setActiveTab('control-room');
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred during agent orchestration.');
