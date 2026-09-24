@@ -302,7 +302,18 @@ export default function Home() {
                   reflectionLoops={currentResult.reflectionLoops}
                 />
 
-                {/* 3. Expandable Analysis Section (Governance Scorecard, Strategy Decision & Trace, conditional Policy Citations) */}
+                {/* 3. Customer Roleplay & Multi-Turn Situation Simulator */}
+                <CustomerResponseSimulator
+                  customer={currentResult.customer}
+                  event={currentResult.event}
+                  message={
+                    currentResult.messages[
+                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
+                    ] || currentResult.messages.whatsapp
+                  }
+                />
+
+                {/* 4. Expandable Analysis Section (Collapsed by default) */}
                 <ExpandableAnalysisSection
                   guardrails={currentResult.guardrails}
                   strategy={currentResult.strategy}
@@ -316,17 +327,6 @@ export default function Home() {
                     (currentResult.clauseCitations && currentResult.clauseCitations.length > 0) ||
                     (currentResult.policyTree !== null && currentResult.policyTree !== undefined)
                   )}
-                />
-
-                {/* 4. Customer Roleplay & Multi-Turn Situation Simulator */}
-                <CustomerResponseSimulator
-                  customer={currentResult.customer}
-                  event={currentResult.event}
-                  message={
-                    currentResult.messages[
-                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
-                    ] || currentResult.messages.whatsapp
-                  }
                 />
               </>
             ) : (

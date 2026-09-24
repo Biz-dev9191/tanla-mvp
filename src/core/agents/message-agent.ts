@@ -27,11 +27,12 @@ export function runMessageGenerationAgent(
   const startTime = Date.now();
   const persona = customPersona || matchCustomerPersona(customer);
   
-  // Cleanly extract first name without labels
-  const cleanFullName = (customer.name || 'Valued Customer')
-    .replace(/^(?:Customer|User|Name|Account Holder|Client)[\s:-]*/i, '')
-    .trim();
-  const firstName = cleanFullName.split(/[\s,]+/)[0] || 'Customer';
+  // Cleanly extract first name without labels, defaulting strictly to 'Customer'
+  const rawCustomerName = (customer.name || 'Customer').trim();
+  const cleanFullName = rawCustomerName.toLowerCase() === 'valued customer' || rawCustomerName.toLowerCase() === 'valued' || !rawCustomerName
+    ? 'Customer'
+    : rawCustomerName.replace(/^(?:Customer|User|Name|Account Holder|Client)[\s:-]*/i, '').trim() || 'Customer';
+  const firstName = cleanFullName === 'Customer' ? 'Customer' : (cleanFullName.split(/[\s,]+/)[0] || 'Customer');
 
   const chainOfThought: string[] = [];
   const correctionsApplied: string[] = [];

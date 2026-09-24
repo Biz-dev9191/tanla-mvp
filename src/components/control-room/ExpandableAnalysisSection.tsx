@@ -36,7 +36,7 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
   clauseCitations = [],
   hasPolicyTreeOrCitations,
 }) => {
-  const [isExpanded, setIsExpanded] = useState<boolean>(true);
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'strategy' | 'scorecard' | 'policies'>('strategy');
 
   return (

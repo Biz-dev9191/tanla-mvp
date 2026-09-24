@@ -50,15 +50,18 @@ export async function orchestrateCommunication(
     const pillsStr = (p.customerPills || []).join(' ').toLowerCase();
 
     // 1. Accurate Customer Name Extraction
-    let cleanName = 'Valued Customer';
+    let cleanName = 'Customer';
     const nameMatch = custText.match(/(?:Customer|Name|User|Account Holder|Client)[\s:]+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
     if (nameMatch && nameMatch[1]) {
-      cleanName = nameMatch[1].split(/[,.\n]/)[0].trim();
+      const extracted = nameMatch[1].split(/[,.\n]/)[0].trim();
+      if (extracted.toLowerCase() !== 'valued customer' && extracted.toLowerCase() !== 'valued') {
+        cleanName = extracted;
+      }
     } else {
       const firstLineClean = custText.split(/[,.\n]/)[0]
         .replace(/^(?:Customer|Name|User|Account Holder|Profile)[\s:-]*/i, '')
         .trim();
-      if (firstLineClean && firstLineClean.length >= 2 && firstLineClean.length < 35 && !firstLineClean.toLowerCase().includes('account')) {
+      if (firstLineClean && firstLineClean.length >= 2 && firstLineClean.length < 35 && !firstLineClean.toLowerCase().includes('account') && firstLineClean.toLowerCase() !== 'valued' && firstLineClean.toLowerCase() !== 'valued customer') {
         cleanName = firstLineClean;
       }
     }

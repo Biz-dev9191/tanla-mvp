@@ -192,7 +192,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const finalCustomerName = structCustomerName.trim() || 'Valued Customer';
+    const finalCustomerName = structCustomerName.trim() || 'Customer';
     const finalEventTitle = structEventTitle.trim() || structEventType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
     const finalTxId = structTransactionId.trim() || 'PAY_99482';
     const finalOrderId = structOrderId.trim() || 'ORD-7721';

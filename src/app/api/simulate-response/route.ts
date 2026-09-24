@@ -47,7 +47,10 @@ export async function POST(req: NextRequest) {
 
     const currentPersona = personaDescriptions[personaId] || personaDescriptions['anxious_buyer'];
     const turnCount = (turns as SimulationTurn[]).length;
-    const customerFirstName = (customer?.name || 'Customer').split(' ')[0];
+    const rawCustName = (customer?.name || 'Customer').trim();
+    const customerFirstName = rawCustName.toLowerCase().startsWith('valued') || !rawCustName
+      ? 'Customer'
+      : rawCustName.split(' ')[0] || 'Customer';
 
     // 1. Try Live LLM simulation if key is available
     if (geminiKey) {
