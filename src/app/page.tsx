@@ -20,7 +20,7 @@ import { PolicyDetailModal } from '@/components/policy/PolicyDetailModal';
 import { PolicyUploader } from '@/components/policy/PolicyUploader';
 import { KnowledgeBaseView } from '@/components/knowledge/KnowledgeBaseView';
 import { HistoryView } from '@/components/history/HistoryView';
-import { PolicyTreeNode } from '@/core/policy-tree-data';
+import { PolicyTreeNode, defaultPolicyTree } from '@/core/policy-tree-data';
 import { DynamicPolicyParseResult } from '@/core/policy-generator';
 import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2, MessageSquare, ArrowRight } from 'lucide-react';
 
@@ -389,12 +389,20 @@ export default function Home() {
             </div>
 
             {/* Dynamic Policy Document Uploader */}
-            <PolicyUploader onApplyDynamicPolicy={handleApplyDynamicPolicy} />
+            <div id="policy-uploader-card">
+              <PolicyUploader onApplyDynamicPolicy={handleApplyDynamicPolicy} />
+            </div>
 
             {/* Interactive Policy Tree */}
             <InteractiveTree
+              tree={customPolicyTree !== null ? customPolicyTree : currentResult?.policyTree !== undefined ? currentResult.policyTree : null}
               highlightedPath={currentResult?.appliedPolicyPath || ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"]}
               onSelectNode={(node) => setSelectedPolicyNode(node)}
+              onLoadSampleTree={() => setCustomPolicyTree(defaultPolicyTree)}
+              onOpenUploader={() => {
+                const el = document.getElementById('policy-uploader-card');
+                if (el) el.scrollIntoView({ behavior: 'smooth' });
+              }}
             />
 
             <PolicyDetailModal

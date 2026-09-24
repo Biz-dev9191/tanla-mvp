@@ -7,7 +7,10 @@ import {
   PreferredChannel,
   StreamlinedBriefPayload,
   ReflectionLoopIteration,
-  PolicyRule
+  PolicyRule,
+  AgeGroup,
+  CustomerSegment,
+  DigitalProfile
 } from './types';
 import { runDeterministicPreChecks } from './guardrails/deterministic';
 import { runCustomerContextAgent } from './agents/context-agent';
@@ -25,51 +28,117 @@ export async function orchestrateCommunication(
   objectiveArg?: BusinessObjective,
   apiKeys?: { geminiKey?: string; openaiKey?: string },
   customRules?: PolicyRule[],
-  customPolicyDocText?: string
+  customPolicyDocText?: string,
+  useSamplePolicyTreeArg?: boolean
 ): Promise<OrchestrationResult> {
-  // Check if caller passed the streamlined 3-column payload
   const isStreamlined = 'customerProfileText' in customerOrPayload;
   let customer: CustomerProfile;
   let event: BusinessEvent;
   let objective: BusinessObjective;
+  let useSamplePolicyTree = useSamplePolicyTreeArg || false;
 
   if (isStreamlined) {
     const p = customerOrPayload as StreamlinedBriefPayload;
+    if (p.useSamplePolicyTree !== undefined) {
+      useSamplePolicyTree = p.useSamplePolicyTree;
+    }
+    if (p.customPolicyDocText) {
+      customPolicyDocText = p.customPolicyDocText;
+    }
 
-    // Parse customer from pills & text
-    const pillsStr = p.customerPills.join(' ').toLowerCase();
-    const isVIP = pillsStr.includes('vip') || pillsStr.includes('high ltv');
-    const isPremium = pillsStr.includes('premium') || isVIP;
-    const isAssisted = pillsStr.includes('assisted');
-    const isYoung = pillsStr.includes('18–24') || pillsStr.includes('25–34');
+    const custText = p.customerProfileText || '';
+    const pillsStr = (p.customerPills || []).join(' ').toLowerCase();
+
+    // 1. Accurate Customer Name Extraction
+    let cleanName = 'Valued Customer';
+    const nameMatch = custText.match(/(?:Customer|Name|User|Account Holder|Client)[\s:]+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
+    if (nameMatch && nameMatch[1]) {
+      cleanName = nameMatch[1].split(/[,.\n]/)[0].trim();
+    } else {
+      const firstLineClean = custText.split(/[,.\n]/)[0]
+        .replace(/^(?:Customer|Name|User|Account Holder|Profile)[\s:-]*/i, '')
+        .trim();
+      if (firstLineClean && firstLineClean.length >= 2 && firstLineClean.length < 35 && !firstLineClean.toLowerCase().includes('account')) {
+        cleanName = firstLineClean;
+      }
+    }
+
+    // 2. Age & Generational Cohort Extraction
+    let age = 34;
+    let ageGroup: AgeGroup = '25–34';
+    const ageMatch = custText.match(/(\d{2})\s*(?:years?\s*old|yo|\b)/i);
+    if (ageMatch && parseInt(ageMatch[1]) >= 18 && parseInt(ageMatch[1]) <= 99) {
+      age = parseInt(ageMatch[1]);
+      if (age <= 26) ageGroup = '18–24';
+      else if (age <= 34) ageGroup = '25–34';
+      else if (age <= 44) ageGroup = '35–44';
+      else if (age <= 54) ageGroup = '45–54';
+      else ageGroup = '55+';
+    } else if (pillsStr.includes('18–24') || pillsStr.includes('gen z') || pillsStr.includes('student')) {
+      age = 22; ageGroup = '18–24';
+    } else if (pillsStr.includes('55+') || pillsStr.includes('senior') || pillsStr.includes('boomer') || pillsStr.includes('retired')) {
+      age = 65; ageGroup = '55+';
+    } else if (pillsStr.includes('45–54') || pillsStr.includes('gen x')) {
+      age = 48; ageGroup = '45–54';
+    } else if (pillsStr.includes('35–44')) {
+      age = 38; ageGroup = '35–44';
+    }
+
+    // 3. Segment & Value
+    const isVIP = pillsStr.includes('vip') || custText.toLowerCase().includes('vip') || pillsStr.includes('high ltv');
+    const isPremium = pillsStr.includes('premium') || custText.toLowerCase().includes('premium') || isVIP;
+    const isNew = pillsStr.includes('new') || custText.toLowerCase().includes('new customer');
+    const segment: CustomerSegment = isVIP ? 'High Value' : isPremium ? 'Premium' : isNew ? 'New' : 'Standard';
+    const customerValue = isVIP ? 'VIP' : isPremium ? 'High' : 'Standard';
+
+    // 4. Digital Maturity & Channel
+    const isAssisted = pillsStr.includes('assisted') || custText.toLowerCase().includes('assisted') || ageGroup === '55+';
+    const isMixed = pillsStr.includes('mixed') || custText.toLowerCase().includes('mixed');
+    const digitalProfile: DigitalProfile = isAssisted ? 'Assisted' : isMixed ? 'Mixed' : 'Digital-first';
+    const preferredChannel: PreferredChannel = isAssisted ? 'Email' : 'WhatsApp';
+
+    // 5. Sentiment & History
+    const combinedHistory = (custText + ' ' + (p.eventHistoryText || '')).toLowerCase();
+    const isFrustrated = combinedHistory.includes('frustrated') || combinedHistory.includes('angry') || combinedHistory.includes('complaint');
+    const isAnxious = combinedHistory.includes('anxious') || combinedHistory.includes('worried') || combinedHistory.includes('concerned');
+    const sentiment = isFrustrated ? 'Frustrated' : isAnxious ? 'Anxious' : 'Neutral';
 
     customer = {
       id: `CUST-${Math.floor(10000 + Math.random() * 90000)}`,
-      name: p.customerProfileText.split('\n')[0]?.replace(/name:?/i, '').trim() || 'Valued Customer',
-      age: isYoung ? 24 : isAssisted ? 58 : 34,
-      ageGroup: isYoung ? '18–24' : isAssisted ? '55+' : '25–34',
-      segment: isVIP ? 'High Value' : isPremium ? 'Premium' : 'Standard',
-      digitalProfile: isAssisted ? 'Assisted' : 'Digital-first',
+      name: cleanName,
+      age,
+      ageGroup,
+      segment,
+      digitalProfile,
       preferredLanguage: 'English',
-      preferredChannel: isAssisted ? 'Email' : 'WhatsApp',
+      preferredChannel,
       consent: { transactional: true, promotional: !pillsStr.includes('opt-out'), voice: isAssisted },
-      customerValue: isVIP ? 'VIP' : isPremium ? 'High' : 'Standard',
-      tenureMonths: pillsStr.includes('long-term') ? 36 : 12,
+      customerValue,
+      tenureMonths: pillsStr.includes('long-term') ? 36 : 14,
       recentCommunicationCount24h: {
-        transactional: p.eventPills.some((ep) => ep.toLowerCase().includes('fatigue')) ? 3 : 1,
+        transactional: (p.eventPills || []).some((ep) => ep.toLowerCase().includes('fatigue')) ? 3 : 1,
         promotional: 0,
       },
-      previousSupportContacts: p.eventHistoryText.toLowerCase().includes('contacted support') ? 2 : 1,
-      sentiment: p.eventHistoryText.toLowerCase().includes('frustrated') ? 'Frustrated' : 'Anxious',
-      email: 'customer@example.com',
+      previousSupportContacts: combinedHistory.includes('contacted support') ? 2 : 1,
+      sentiment,
+      email: `${cleanName.toLowerCase().replace(/\s+/g, '.')}@example.com`,
       phone: '+91 98765 43210',
     };
 
-    // Parse event from pills & text
-    const eventPillsStr = p.eventPills.join(' ').toLowerCase();
-    const isAppIncomplete = eventPillsStr.includes('application') || eventPillsStr.includes('kyc');
-    const isComplaint = eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint');
-    const isPayFailed = eventPillsStr.includes('payment failed');
+    // Parse Event & Telemetry
+    const eventPillsStr = (p.eventPills || []).join(' ').toLowerCase();
+    const eventText = p.eventHistoryText || '';
+    const isAppIncomplete = eventPillsStr.includes('application') || eventPillsStr.includes('kyc') || eventText.toLowerCase().includes('application');
+    const isComplaint = eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint') || eventText.toLowerCase().includes('dispute');
+    const isPayFailed = eventPillsStr.includes('payment failed') || eventText.toLowerCase().includes('payment failed');
+
+    const payMatch = eventText.match(/(?:PAY[_-]?\w+|TXN[_-]?\w+)/i);
+    const orderMatch = eventText.match(/(?:ORD[_-]?\w+|APP[_-]?\w+|ENT[_-]?\w+|#\w+)/i);
+    const amountMatch = eventText.match(/\$\s*\d+(?:\.\d{2})?|\b\d+(?:\.\d{2})?\s*(?:USD|dollars?)/i);
+
+    const transactionId = payMatch ? payMatch[0].toUpperCase() : 'PAY_99482';
+    const orderId = orderMatch ? orderMatch[0].replace('#', '').toUpperCase() : 'ORD-7721';
+    const amount = amountMatch ? amountMatch[0] : '$49.50';
 
     event = {
       id: `EVT-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -80,34 +149,35 @@ export async function orchestrateCommunication(
         : isPayFailed
         ? 'payment_failed'
         : 'payment_successful_order_failed',
-      title: p.eventPills[0] || 'Customer Transaction Update',
-      description: p.eventHistoryText || 'Event update requiring agent orchestration.',
+      title: p.eventPills?.[0] || (isAppIncomplete ? 'Application Incomplete' : isComplaint ? 'Customer Dispute Review' : 'Payment Received / Order Provisioning Update'),
+      description: eventText || 'Event update requiring governed orchestration.',
       timestamp: 'Just now',
       verifiedFacts: [
-        'Transaction ID: PAY_99482',
-        'Order ID: ORD-7721 ($49.50)',
-        'Auto-refund initiated to card ending 4012',
+        `Transaction ID: ${transactionId}`,
+        `Order Reference: ${orderId} (${amount})`,
+        eventText.toLowerCase().includes('refund') ? 'Auto-refund initiated to payment card' : 'Verified in billing telemetry',
       ],
       resolutionStatus: isAppIncomplete
         ? 'Requires Customer Action'
         : isComplaint
         ? 'Pending Approval'
         : 'Refund Initiated',
-      transactionId: 'PAY_99482',
-      orderId: 'ORD-7721',
-      amount: '$49.50',
+      transactionId,
+      orderId,
+      amount,
     };
 
-    // Parse objective
+    // Parse Objective
+    const objPills = p.objectivePills || [];
     objective = {
-      primary: p.objectivePills.some((op) => op.toLowerCase().includes('support'))
+      primary: objPills.some((op) => op.toLowerCase().includes('support'))
         ? 'reduce_support_contacts'
-        : p.objectivePills.some((op) => op.toLowerCase().includes('reassure'))
+        : objPills.some((op) => op.toLowerCase().includes('reassure'))
         ? 'reassure_customer'
-        : p.objectivePills.some((op) => op.toLowerCase().includes('retain'))
+        : objPills.some((op) => op.toLowerCase().includes('retain'))
         ? 'retain_customer'
         : 'resolve_issue',
-      secondary: p.objectivePills.join(', '),
+      secondary: objPills.join(', '),
       customNote: p.objectiveText,
     };
   } else {
@@ -157,13 +227,13 @@ export async function orchestrateCommunication(
           agentId: 'policy_tree',
           agentName: 'Policy Tree Generator Agent',
           status: 'completed',
-          summary: liveLLMResult.policyTreeDecision?.summary || 'Policy Tree: Applied Enterprise Baseline Hierarchy',
+          summary: liveLLMResult.policyTreeDecision?.summary || (useSamplePolicyTree ? 'Policy Tree: Loaded Sample Enterprise Hierarchy' : 'Policy Tree: Skipped (No Document Uploaded)'),
           details: [
-            'Ingested enterprise policy rules and validated Directed Acyclic Graph (DAG).',
+            'Evaluated policy tree requirements for orchestration session.',
             'Enforced mandatory $0 unauthorized financial compensation gate (POL-FIN-001).',
           ],
           chainOfThought: liveLLMResult.policyTreeDecision?.chainOfThought || [
-            '[Step 1 - Baseline Ingestion] Standard policy tree verified for session.',
+            '[Step 1 - Policy Tree Check] Configured policy tree state per brief.',
           ],
           durationMs: 40,
           timestamp: new Date().toISOString(),
@@ -200,8 +270,9 @@ export async function orchestrateCommunication(
           agentId: 'message',
           agentName: 'Multi-Channel Message Generator',
           status: 'completed',
-          summary: `Drafted channel variants (WhatsApp: ${liveLLMResult.messages.whatsapp.characterCount}c, SMS: ${liveLLMResult.messages.sms.characterCount}c, Email: ${liveLLMResult.messages.email.characterCount}c)`,
+          summary: `Drafted channel variants addressing ${customer.name} (WhatsApp: ${liveLLMResult.messages.whatsapp.characterCount}c, SMS: ${liveLLMResult.messages.sms.characterCount}c, Email: ${liveLLMResult.messages.email.characterCount}c)`,
           details: [
+            `Explicit customer greeting used in WhatsApp & Email.`,
             `Zero exclamation marks strictly verified across all channels.`,
             `SMS within telecom 160-char constraint (${liveLLMResult.messages.sms.characterCount} chars).`,
           ],
@@ -280,8 +351,8 @@ export async function orchestrateCommunication(
         genericTemplateComparison: {
           templateText: 'Dear Customer, An update regarding your account is available. Please log in.',
           differences: [
-            `Personalisation: Grounded in customer's profile and history.`,
-            `Grounded Resolution: Explicitly cites payment and refund reference.`,
+            `Personalisation: Grounded in ${customer.name}'s profile and history.`,
+            `Grounded Resolution: Explicitly cites payment reference (${event.transactionId}) and confirms automated refund.`,
             `Channel Optimised: Formatted specifically for ${liveLLMResult.strategyDecision.selectedChannel}.`,
           ],
         },
@@ -290,7 +361,7 @@ export async function orchestrateCommunication(
     }
   }
 
-  // 2. Built-in Multi-Agent Pipeline with 7 Specialized Agents & Autonomous Reflection Loops
+  // 2. Built-in Multi-Agent Pipeline with 7 Specialized Agents
   const steps: AgentExecutionStep[] = [];
   const decisionTrace: string[] = [];
   const reflectionLoops: ReflectionLoopIteration[] = [];
@@ -300,7 +371,7 @@ export async function orchestrateCommunication(
   // Step 1: Customer Context & Persona Agent
   const contextOutput = runCustomerContextAgent(customer, event);
   steps.push(contextOutput.step);
-  decisionTrace.push(`Customer '${customer.name}' matched to Persona '${contextOutput.matchedPersona.name}' (${contextOutput.matchedPersona.cohort}). Attention Fatigue Risk: ${contextOutput.fatigueRisk} (${contextOutput.fatigueScore}/100).`);
+  decisionTrace.push(`Customer '${customer.name}' mapped to Persona '${contextOutput.matchedPersona.name}' (${contextOutput.matchedPersona.cohort}). Attention Fatigue Risk: ${contextOutput.fatigueRisk} (${contextOutput.fatigueScore}/100).`);
   if (customer.previousSupportContacts > 0) {
     decisionTrace.push(`Identified ${customer.previousSupportContacts} prior support contacts with '${customer.sentiment}' sentiment.`);
   }
@@ -364,6 +435,7 @@ export async function orchestrateCommunication(
         templateText: 'Generic Template: An update regarding your account is available.',
         differences: ['Communication was safely suppressed by enterprise frequency rules rather than spamming the user.'],
       },
+      policyTree: null,
     };
   }
 
@@ -373,8 +445,8 @@ export async function orchestrateCommunication(
   decisionTrace.push(`Established communication objective: '${objOutput.primaryGoal}' with customer action: '${objOutput.recommendedCustomerAction}' (${objOutput.customerActionFriction}).`);
   decisionTrace.push(`Resolution pathway: ${objOutput.resolutionSummary}`);
 
-  // Step 3: Policy Tree Generator Agent (Dynamic or Baseline Skip)
-  const policyTreeOutput = runPolicyTreeGeneratorAgent(customPolicyDocText, customRules);
+  // Step 3: Policy Tree Generator Agent (Dynamic custom doc or Sample baseline or Skipped)
+  const policyTreeOutput = runPolicyTreeGeneratorAgent(customPolicyDocText, customRules, useSamplePolicyTree);
   steps.push(policyTreeOutput.step);
   decisionTrace.push(`Policy Tree Agent Status: ${policyTreeOutput.status} - ${policyTreeOutput.summary}`);
 
@@ -464,7 +536,7 @@ export async function orchestrateCommunication(
 
   const comparisonDifferences = [
     `Persona Alignment: Tailored to ${customer.name} via '${contextOutput.matchedPersona.name}' (${contextOutput.matchedPersona.cohort}) tone rather than generic blast.`,
-    `Grounded Resolution: Explicitly cites payment reference (${event.transactionId || 'PAY_99482'}) and confirms automated refund without forcing customer to contact support.`,
+    `Grounded Resolution: Explicitly cites payment reference (${event.transactionId}) and confirms automated refund without forcing customer to contact support.`,
     `Clause-Level Governance: Verified against ${policyOutput.clauseCitations.length > 0 ? policyOutput.clauseCitations[0].sourceDocument : 'PRL-2026'} with $0 unauthorized compensation controls (POL-FIN-001).`,
     `Channel Optimised: Formatted specifically for ${stratOutput.strategy.selectedChannel} rather than copy-pasting across all channels.`,
     `Autonomous Reflection: Verified across ${revisionLoop + 1} validation cycles with ZERO exclamation marks and zero customer friction.`,
@@ -494,5 +566,6 @@ export async function orchestrateCommunication(
       differences: comparisonDifferences,
     },
     humanApprovalStatus: stratOutput.strategy.humanApprovalRequired || guardrailOutput.evaluation.status === 'ESCALATE' ? 'Pending' : 'Not Required',
+    policyTree: policyTreeOutput.activeTree,
   };
 }

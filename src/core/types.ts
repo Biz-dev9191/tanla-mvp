@@ -11,6 +11,8 @@ export interface StreamlinedBriefPayload {
   eventPills: string[];
   objectiveText: string;
   objectivePills: string[];
+  useSamplePolicyTree?: boolean;
+  customPolicyDocText?: string;
 }
 
 export interface CustomerConsent {
@@ -236,5 +238,6 @@ export interface OrchestrationResult {
     differences: string[];
   };
   humanApprovalStatus?: 'Pending' | 'Approved' | 'Rejected' | 'Not Required';
+  policyTree?: any | null;
 }
 

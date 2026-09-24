@@ -73,6 +73,10 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>("resolve_issue");
   const [structSecondaryObjective, setStructSecondaryObjective] = useState("Minimise support contacts and reassure customer");
 
+  // Policy Tree Mode State (PTGAP-2026)
+  const [policyOption, setPolicyOption] = useState<'none' | 'sample' | 'custom'>('none');
+  const [customPolicyDocText, setCustomPolicyDocText] = useState<string>('');
+
   // Filter Pill Library
   const availableCustomerPills = [
     "18–24", "25–34", "35–44", "45–54", "55+",
@@ -251,6 +255,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         customer: customerPayload,
         event: eventPayload,
         objective: objectivePayload,
+        useSamplePolicyTree: policyOption === 'sample',
+        customPolicyDocText: policyOption === 'custom' ? customPolicyDocText : undefined,
       });
     } else {
       // Build streamlined payload with structured fallbacks
@@ -261,6 +267,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         eventPills: eventTab === 'structured' ? [structEventType.replace(/_/g, ' ')] : eventPills,
         objectiveText: objectiveTab === 'structured' ? `${structPrimaryObjective.replace(/_/g, ' ')}. ${structSecondaryObjective}` : objectiveText,
         objectivePills: objectiveTab === 'structured' ? [structPrimaryObjective.replace(/_/g, ' ')] : objectivePills,
+        useSamplePolicyTree: policyOption === 'sample',
+        customPolicyDocText: policyOption === 'custom' ? customPolicyDocText : undefined,
       });
     }
   };
@@ -911,6 +919,109 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-500">
               Directly drives tone, CTA density, and escalation gates.
             </div>
+          </div>
+        </div>
+
+        {/* Policy Tree Generator Agent Configuration Card (PTGAP-2026) */}
+        <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora overflow-hidden">
+          <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2">
+              <ShieldCheck strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+              <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
+                Policy Tree Generator Agent (Agent 3 - PTGAP-2026)
+              </h3>
+            </div>
+            <span className="text-[10px] font-mono text-aurora-neutral-500 bg-white px-2 py-0.5 rounded border border-aurora-neutral-200">
+              Only created if selected or document shared
+            </span>
+          </div>
+
+          <div className="p-5 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <label
+                onClick={() => setPolicyOption('none')}
+                className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between space-y-2 ${
+                  policyOption === 'none'
+                    ? 'bg-aurora-primary-light/40 border-aurora-primary ring-1 ring-aurora-primary'
+                    : 'bg-white border-aurora-neutral-200 hover:border-aurora-neutral-300'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-bold text-aurora-neutral-900">1. Skip Policy Tree (Empty)</span>
+                  <input
+                    type="radio"
+                    name="policyOption"
+                    checked={policyOption === 'none'}
+                    onChange={() => setPolicyOption('none')}
+                    className="text-aurora-primary mt-0.5"
+                  />
+                </div>
+                <p className="text-[11px] text-aurora-neutral-600 leading-snug">
+                  Policy tree remains empty; step is safely bypassed. Critic agent enforces statutory safety rules.
+                </p>
+              </label>
+
+              <label
+                onClick={() => setPolicyOption('sample')}
+                className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between space-y-2 ${
+                  policyOption === 'sample'
+                    ? 'bg-aurora-primary-light/40 border-aurora-primary ring-1 ring-aurora-primary'
+                    : 'bg-white border-aurora-neutral-200 hover:border-aurora-neutral-300'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-bold text-aurora-neutral-900">2. Load Sample Policy Tree</span>
+                  <input
+                    type="radio"
+                    name="policyOption"
+                    checked={policyOption === 'sample'}
+                    onChange={() => setPolicyOption('sample')}
+                    className="text-aurora-primary mt-0.5"
+                  />
+                </div>
+                <p className="text-[11px] text-aurora-neutral-600 leading-snug">
+                  Generates the standard 4-category Enterprise Baseline DAG (Transactional, Privacy, Frequency, Financial).
+                </p>
+              </label>
+
+              <label
+                onClick={() => setPolicyOption('custom')}
+                className={`p-3.5 rounded-lg border cursor-pointer transition flex flex-col justify-between space-y-2 ${
+                  policyOption === 'custom'
+                    ? 'bg-aurora-primary-light/40 border-aurora-primary ring-1 ring-aurora-primary'
+                    : 'bg-white border-aurora-neutral-200 hover:border-aurora-neutral-300'
+                }`}
+              >
+                <div className="flex items-start justify-between">
+                  <span className="font-bold text-aurora-neutral-900">3. Upload / Paste Custom Doc</span>
+                  <input
+                    type="radio"
+                    name="policyOption"
+                    checked={policyOption === 'custom'}
+                    onChange={() => setPolicyOption('custom')}
+                    className="text-aurora-primary mt-0.5"
+                  />
+                </div>
+                <p className="text-[11px] text-aurora-neutral-600 leading-snug">
+                  Parses custom uploaded text or compliance guidelines dynamically into a hierarchical decision tree.
+                </p>
+              </label>
+            </div>
+
+            {policyOption === 'custom' && (
+              <div className="space-y-2 pt-2 border-t border-aurora-neutral-200">
+                <label className="block text-xs font-bold text-aurora-neutral-800">
+                  Paste Custom Compliance Document or Rule Text:
+                </label>
+                <textarea
+                  rows={4}
+                  value={customPolicyDocText}
+                  onChange={(e) => setCustomPolicyDocText(e.target.value)}
+                  placeholder="Paste policy document text here (e.g. Section 2.1: Automated refund within 3 days. Section 5.2: Goodwill compensation requires supervisor approval under POL-FIN-001)..."
+                  className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary leading-relaxed font-mono"
+                />
+              </div>
+            )}
           </div>
         </div>
 

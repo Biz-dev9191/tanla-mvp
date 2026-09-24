@@ -1,21 +1,32 @@
 import React, { useState } from 'react';
 import { POLICY_TREE_DATA, PolicyTreeNode } from '@/core/policy-tree-data';
-import { ChevronRight, ChevronDown, Shield, FileCode, CheckCircle2, AlertCircle, Info } from 'lucide-react';
+import { ChevronRight, ChevronDown, Shield, FileCode, CheckCircle2, AlertCircle, Info, GitBranch, UploadCloud, Sparkles } from 'lucide-react';
 
 interface InteractiveTreeProps {
+  tree?: PolicyTreeNode | null;
   highlightedPath?: string[];
   onSelectNode?: (node: PolicyTreeNode) => void;
+  onLoadSampleTree?: () => void;
+  onOpenUploader?: () => void;
 }
 
 export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
+  tree,
   highlightedPath = ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"],
   onSelectNode,
+  onLoadSampleTree,
+  onOpenUploader,
 }) => {
+  const activeTreeData = tree;
+
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
     root: true,
     tx: true,
     'tx-pay': true,
     gov: true,
+    custom_root: true,
+    'custom-tx': true,
+    'custom-fin': true,
   });
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
@@ -28,12 +39,12 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
   };
 
   const renderNode = (node: PolicyTreeNode, depth = 0) => {
-    const isExpanded = expandedNodes[node.id];
+    const isExpanded = expandedNodes[node.id] !== undefined ? expandedNodes[node.id] : true;
     const hasChildren = node.children && node.children.length > 0;
     const isHighlighted = isNodeHighlighted(node);
 
     return (
-      <div key={node.id} className="space-y-1.5" style={{ marginLeft: `${depth * 20}px` }}>
+      <div key={node.id} className="space-y-1.5" style={{ marginLeft: `${depth * 18}px` }}>
         <div
           onClick={() => onSelectNode?.(node)}
           className={`p-2.5 rounded-lg border transition-all flex items-center justify-between cursor-pointer ${
@@ -98,18 +109,60 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
     <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-aurora-neutral-200 mb-4 gap-2">
         <div>
-          <h3 className="text-sm font-bold text-aurora-neutral-900">Interactive Enterprise Policy Hierarchy</h3>
+          <h3 className="text-sm font-bold text-aurora-neutral-900">Interactive Policy Decision Hierarchy</h3>
           <p className="text-xs text-aurora-neutral-500">
-            Expand nodes to inspect deterministic governance gates, permitted actions, and prohibited claims.
+            {activeTreeData
+              ? 'Expand decision nodes to inspect deterministic governance rules, condition operators, and prohibitions.'
+              : 'Policy tree is currently empty (bypassed). Created dynamically only when sample is selected or custom doc uploaded.'}
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-xs">
-          <span className="w-3 h-3 rounded bg-aurora-primary-light border border-aurora-primary"></span>
-          <span className="text-aurora-neutral-700 font-medium">Applied in Current Run</span>
-        </div>
+        {activeTreeData && (
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="w-3 h-3 rounded bg-aurora-primary-light border border-aurora-primary"></span>
+            <span className="text-aurora-neutral-700 font-medium">Applied in Current Run</span>
+          </div>
+        )}
       </div>
 
-      <div className="space-y-2">{renderNode(POLICY_TREE_DATA)}</div>
+      {activeTreeData ? (
+        <div className="space-y-2">{renderNode(activeTreeData)}</div>
+      ) : (
+        <div className="py-12 px-6 text-center border-2 border-dashed border-aurora-neutral-300 rounded-xl space-y-4 bg-aurora-neutral-50/50">
+          <div className="w-12 h-12 rounded-full bg-aurora-neutral-200 text-aurora-neutral-600 flex items-center justify-center mx-auto">
+            <GitBranch strokeWidth={1.5} className="w-6 h-6 text-aurora-neutral-500" />
+          </div>
+          <div>
+            <h4 className="text-sm font-bold text-aurora-neutral-900">Policy Tree is Currently Empty</h4>
+            <p className="text-xs text-aurora-neutral-600 mt-1 max-w-md mx-auto">
+              Per Agent 3 Governance Policy (PTGAP-2026), policy tree generation was skipped because no custom compliance document was uploaded and no sample tree was requested.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {onLoadSampleTree && (
+              <button
+                type="button"
+                onClick={onLoadSampleTree}
+                className="px-4 py-2 bg-aurora-primary text-white rounded-lg text-xs font-bold hover:bg-aurora-primary-hover shadow-sm transition flex items-center space-x-1.5"
+              >
+                <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
+                <span>Load Sample Enterprise Policy Tree</span>
+              </button>
+            )}
+
+            {onOpenUploader && (
+              <button
+                type="button"
+                onClick={onOpenUploader}
+                className="px-4 py-2 bg-white border border-aurora-neutral-300 text-aurora-neutral-800 rounded-lg text-xs font-semibold hover:bg-aurora-neutral-100 transition flex items-center space-x-1.5"
+              >
+                <UploadCloud strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                <span>Upload / Paste Policy Document</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
