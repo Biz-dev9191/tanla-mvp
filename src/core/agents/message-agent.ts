@@ -54,9 +54,15 @@ export function runMessageGenerationAgent(
   let emailBody = '';
   let voiceScript = '';
 
-  const payId = event.transactionId || 'PAY_99482';
-  const amount = event.amount || '$49.50';
-  const orderId = event.orderId || 'ORD-7721';
+  const hasPayId = Boolean(event.transactionId && event.transactionId.trim() && !event.transactionId.includes('e.g.'));
+  const hasAmount = Boolean(event.amount && event.amount.trim() && !event.amount.includes('e.g.'));
+  const hasOrderId = Boolean(event.orderId && event.orderId.trim() && !event.orderId.includes('e.g.'));
+
+  const payRef = hasPayId ? ` (Ref: ${event.transactionId})` : '';
+  const orderRef = hasOrderId ? `order ${event.orderId}` : 'your recent order';
+  const orderRefCap = hasOrderId ? `Order ${event.orderId}` : 'Your order';
+  const amountRef = hasAmount ? event.amount : 'the captured amount';
+  const refundAmountRef = hasAmount ? `a full refund of ${event.amount}` : 'a full refund';
 
   // Generational Greetings & Closings
   const isGenZ = persona.cohort === 'Gen Z (18–26)';
@@ -76,23 +82,24 @@ export function runMessageGenerationAgent(
 
   if (event.eventType === 'payment_successful_order_failed') {
     if (isGenZ) {
-      waText = `${waGreeting} your payment of ${amount} (Ref: ${payId}) was received, but order ${orderId} failed due to inventory. A full refund of ${amount} has been initiated to your card ending in 4012. No action needed.\n\nRefund ETA: 3 to 5 business days.`;
-      smsText = `Aurora Cloud (${firstName}): Payment of ${amount} for order ${orderId} was refunded to your card ending 4012. No action required.`;
+      waText = `${waGreeting} your payment for ${orderRef}${payRef} was received, but the order failed due to inventory. ${refundAmountRef.charAt(0).toUpperCase() + refundAmountRef.slice(1)} has been initiated to your original payment method. No action needed.\n\nRefund ETA: 3 to 5 business days.`;
+      smsText = `Aurora Cloud (${firstName}): Payment for ${orderRef} has been refunded to your original payment method. No action required.`;
     } else if (isSenior) {
-      waText = `${waGreeting}\n\nWe are contacting you regarding order ${orderId}. Your payment of ${amount} (Ref: ${payId}) was received safely, but our system was unable to complete the order.\n\nWe have initiated a full refund of ${amount} back to your card ending in 4012. You do not need to take any action. The funds will reflect in your bank account within 3 to 5 business days.\n\nIf you have any questions, our support team is available at 1800-000-287.\n\n${emailClosing}`;
-      smsText = `Aurora Cloud: Order ${orderId} refund of ${amount} sent to card ending 4012 for ${cleanFullName}. 3-5 day settlement. No action needed.`;
+      waText = `${waGreeting}\n\nWe are contacting you regarding ${orderRef}. Your payment${payRef} was received safely, but our system was unable to complete the order.\n\nWe have automatically initiated ${refundAmountRef} back to your original payment method. You do not need to take any action. The funds will reflect in your bank account within 3 to 5 business days.\n\nIf you have any questions, our support team is available at 1800-000-287.\n\n${emailClosing}`;
+      smsText = `Aurora Cloud: ${orderRefCap} refund initiated for ${cleanFullName}. 3-5 day settlement to original payment method. No action needed.`;
     } else {
-      waText = `${waGreeting} your payment of ${amount} (Ref: ${payId}) was successfully received, but order ${orderId} could not be completed due to inventory availability.\n\nWe have automatically initiated a full refund of ${amount} to your original payment card ending in 4012. No action is required from your side.\n\nYour refund will reflect in your account within 3 to 5 business days. We apologize for the inconvenience.`;
-      smsText = `Aurora Cloud: Your payment for ${orderId} succeeded, but order processing failed. Full refund of ${amount} initiated to card ending 4012. No action needed.`;
+      waText = `${waGreeting} your payment for ${orderRef}${payRef} was successfully received, but the order could not be completed due to inventory availability.\n\nWe have automatically initiated ${refundAmountRef} to your original payment method. No action is required from your side.\n\nYour refund will reflect in your account within 3 to 5 business days. We apologize for the inconvenience.`;
+      smsText = `Aurora Cloud: Your payment for ${orderRef} succeeded, but order processing failed. Full refund initiated to original payment method. No action needed.`;
     }
 
-    emailSubject = `Update regarding your order ${orderId} and refund confirmation`;
-    emailBody = `${emailGreeting}\n\nThank you for your recent transaction with Aurora Cloud.\n\nYour payment of ${amount} (Reference ID: ${payId}) was successfully captured. However, during order provisioning for ${orderId}, our system encountered an inventory timeout, and the order could not be completed.\n\nWhat we have done:\n- A full refund of ${amount} has been initiated to your original payment method (Card ending in 4012).\n- Your refund reference number is REF_882103.\n- The funds will reflect in your account within 3 to 5 business days, subject to your bank's standard settlement cycle.\n\nNext steps:\n- No action is required from you.\n- If you have questions or require further assistance, you can reply directly to this email or visit our Help Center.\n\nWe appreciate your patience and apologize for this interruption.\n\n${emailClosing}`;
+    emailSubject = hasOrderId ? `Update regarding your order ${event.orderId} and refund confirmation` : `Update regarding your recent order and refund confirmation`;
+    emailBody = `${emailGreeting}\n\nThank you for your recent transaction with Aurora Cloud.\n\nYour payment${hasPayId ? ` (Reference ID: ${event.transactionId})` : ''} was successfully captured. However, during order provisioning for ${orderRef}, our system encountered an inventory timeout, and the order could not be completed.\n\nWhat we have done:\n- ${refundAmountRef.charAt(0).toUpperCase() + refundAmountRef.slice(1)} has been initiated to your original payment method.\n- The funds will reflect in your account within 3 to 5 business days, subject to your bank's standard settlement cycle.\n\nNext steps:\n- No action is required from you.\n- If you have questions or require further assistance, you can reply directly to this email or visit our Help Center.\n\nWe appreciate your patience and apologize for this interruption.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is an automated update from Aurora Cloud regarding your recent payment. Your payment of ${amount} was captured, but order ${orderId} could not be completed. We have already initiated a full refund to your card. No action is required on your part. Thank you.`;
+    voiceScript = `Hello ${firstName}, this is an automated update from Aurora Cloud regarding your recent payment. Your payment was captured, but ${orderRef} could not be completed. We have already initiated a full refund to your original payment method. No action is required on your part. Thank you.`;
 
   } else if (event.eventType === 'application_incomplete') {
-    const appId = event.orderId || 'APP-9921';
+    const appId = hasOrderId ? event.orderId : 'your application';
+    const appRef = hasOrderId ? ` (${event.orderId})` : '';
 
     waText = `${waGreeting} we received your application (${appId}). To complete your verification, please upload your recent utility bill or bank statement by October 15, 2026.\n\nSecure upload link: https://auroracloud.app/verify/${appId}\n\nOur team is available if you need any guidance.`;
     smsText = `Aurora Cloud: Hi ${firstName}, address proof needed for application ${appId}. Upload securely by Oct 15: https://auroracloud.app/verify/${appId}`;
@@ -103,13 +110,13 @@ export function runMessageGenerationAgent(
     voiceScript = `Hello ${firstName}, this is Aurora Cloud with an update on your application. Your identity is verified, and we just need a copy of your recent address proof to finalize your account. Please check your email for the secure upload link. Thank you.`;
 
   } else if (event.eventType === 'customer_complaint') {
-    waText = `${waGreeting} we reviewed your report regarding order ${orderId}. Your delivery fee waiver has been applied.\n\nOur supervisor team is currently reviewing your account credit request under policy POL-FIN-001 and will provide a direct update within 4 business hours.`;
-    smsText = `Aurora Cloud: Hi ${firstName}, fee waiver applied for order ${orderId}. Your credit request is currently under supervisor review.`;
+    waText = `${waGreeting} we reviewed your report regarding ${orderRef}. Your delivery fee waiver has been applied.\n\nOur supervisor team is currently reviewing your account credit request under policy POL-FIN-001 and will provide a direct update within 4 business hours.`;
+    smsText = `Aurora Cloud: Hi ${firstName}, fee waiver applied for ${orderRef}. Your credit request is currently under supervisor review.`;
 
-    emailSubject = `Update regarding your support inquiry on order ${orderId}`;
-    emailBody = `${emailGreeting}\n\nWe understand how critical timely delivery is for your operations, and we sincerely regret the delay encountered with order ${orderId}.\n\nStatus update on your account:\n- Delivery fee waiver: Applied to your account.\n- Account credit review: Escalated to our Operations Supervisor for formal review under policy POL-FIN-001.\n\nA senior account manager will contact you within 4 business hours with the final resolution.\n\n${emailClosing}`;
+    emailSubject = hasOrderId ? `Update regarding your support inquiry on order ${event.orderId}` : `Update regarding your recent support inquiry`;
+    emailBody = `${emailGreeting}\n\nWe understand how critical timely delivery is for your operations, and we sincerely regret the delay encountered with ${orderRef}.\n\nStatus update on your account:\n- Delivery fee waiver: Applied to your account.\n- Account credit review: Escalated to our Operations Supervisor for formal review under policy POL-FIN-001.\n\nA senior account manager will contact you within 4 business hours with the final resolution.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent support inquiry on order ${orderId}. We have waived the delivery fee and our operations supervisor is reviewing your credit request. A manager will follow up shortly.`;
+    voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent support inquiry on ${orderRef}. We have waived the delivery fee and our operations supervisor is reviewing your credit request. A manager will follow up shortly.`;
 
   } else {
     // Dynamic / Custom Brief Event

@@ -139,9 +139,16 @@ export async function orchestrateCommunication(
     const orderMatch = eventText.match(/(?:ORD[_-]?\w+|APP[_-]?\w+|ENT[_-]?\w+|#\w+)/i);
     const amountMatch = eventText.match(/\$\s*\d+(?:\.\d{2})?|\b\d+(?:\.\d{2})?\s*(?:USD|dollars?)/i);
 
-    const transactionId = payMatch ? payMatch[0].toUpperCase() : 'PAY_99482';
-    const orderId = orderMatch ? orderMatch[0].replace('#', '').toUpperCase() : 'ORD-7721';
-    const amount = amountMatch ? amountMatch[0] : '$49.50';
+    const transactionId = payMatch ? payMatch[0].toUpperCase() : undefined;
+    const orderId = orderMatch ? orderMatch[0].replace('#', '').toUpperCase() : undefined;
+    const amount = amountMatch ? amountMatch[0] : undefined;
+
+    const facts: string[] = [];
+    if (transactionId) facts.push(`Transaction ID: ${transactionId}`);
+    if (orderId && amount) facts.push(`Order Reference: ${orderId} (${amount})`);
+    else if (orderId) facts.push(`Order Reference: ${orderId}`);
+    else if (amount) facts.push(`Captured Amount: ${amount}`);
+    facts.push(eventText.toLowerCase().includes('refund') ? 'Auto-refund initiated to original payment method' : 'Verified in billing telemetry');
 
     event = {
       id: `EVT-${Math.floor(10000 + Math.random() * 90000)}`,
@@ -155,11 +162,7 @@ export async function orchestrateCommunication(
       title: p.eventPills?.[0] || (isAppIncomplete ? 'Application Incomplete' : isComplaint ? 'Customer Dispute Review' : 'Payment Received / Order Provisioning Update'),
       description: eventText || 'Event update requiring governed orchestration.',
       timestamp: 'Just now',
-      verifiedFacts: [
-        `Transaction ID: ${transactionId}`,
-        `Order Reference: ${orderId} (${amount})`,
-        eventText.toLowerCase().includes('refund') ? 'Auto-refund initiated to payment card' : 'Verified in billing telemetry',
-      ],
+      verifiedFacts: facts,
       resolutionStatus: isAppIncomplete
         ? 'Requires Customer Action'
         : isComplaint

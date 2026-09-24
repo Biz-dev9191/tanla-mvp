@@ -194,12 +194,22 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
     const finalCustomerName = structCustomerName.trim() || 'Customer';
     const finalEventTitle = structEventTitle.trim() || structEventType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
-    const finalTxId = structTransactionId.trim() || 'PAY_99482';
-    const finalOrderId = structOrderId.trim() || 'ORD-7721';
-    const finalAmount = structAmount.trim() || '$49.50';
-    const finalVerifiedFacts = structVerifiedFacts.trim().length > 0
-      ? structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean)
-      : [`Transaction ID: ${finalTxId}`, `Order: ${finalOrderId}`, `Amount: ${finalAmount}`];
+    const finalTxId = structTransactionId.trim();
+    const finalOrderId = structOrderId.trim();
+    const finalAmount = structAmount.trim();
+    
+    const finalVerifiedFacts: string[] = [];
+    if (structVerifiedFacts.trim().length > 0) {
+      finalVerifiedFacts.push(...structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean));
+    } else {
+      if (finalTxId) finalVerifiedFacts.push(`Transaction ID: ${finalTxId}`);
+      if (finalOrderId) finalVerifiedFacts.push(`Order ID: ${finalOrderId}`);
+      if (finalAmount) finalVerifiedFacts.push(`Amount: ${finalAmount}`);
+      if (finalVerifiedFacts.length === 0) {
+        finalVerifiedFacts.push(`Event: ${finalEventTitle}`);
+        finalVerifiedFacts.push(`Status: ${structResolutionStatus}`);
+      }
+    }
 
     const customerPayload: CustomerProfile = {
       id: `CUST-${Date.now()}`,
@@ -224,13 +234,13 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       id: `EVT-${Date.now()}`,
       eventType: structEventType,
       title: finalEventTitle,
-      description: eventText.trim() || `${finalEventTitle} requiring proactive automated communication.`,
+      description: eventText.trim() || `${finalEventTitle} status update.`,
       timestamp: 'Just now',
       verifiedFacts: finalVerifiedFacts,
       resolutionStatus: structResolutionStatus,
-      transactionId: finalTxId,
-      orderId: finalOrderId,
-      amount: finalAmount,
+      transactionId: finalTxId || undefined,
+      orderId: finalOrderId || undefined,
+      amount: finalAmount || undefined,
     };
 
     const objectivePayload: BusinessObjective = {
@@ -248,12 +258,16 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       });
     } else {
       onRunOrchestration({
-        customerProfileText: customerTab === 'structured' ? `Customer: ${structCustomerName}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}, Sentiment: ${structSentiment}` : customerText,
-        customerPills: customerTab === 'structured' ? [structAgeGroup, structSegment, structDigitalProfile] : customerPills,
-        eventHistoryText: eventTab === 'structured' ? `${structEventTitle}. Verified: ${structVerifiedFacts}` : eventText,
-        eventPills: eventTab === 'structured' ? [structEventType.replace(/_/g, ' ')] : eventPills,
-        objectiveText: objectiveTab === 'structured' ? `${structPrimaryObjective.replace(/_/g, ' ')}. ${structSecondaryObjective}` : objectiveText,
-        objectivePills: objectiveTab === 'structured' ? [structPrimaryObjective.replace(/_/g, ' ')] : objectivePills,
+        customerProfileText: customerTab === 'structured' 
+          ? `Customer: ${finalCustomerName}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}, Sentiment: ${structSentiment}` 
+          : (customerText.trim() || `Customer: Customer, Age: 25–34, Segment: Standard, Digital: Digital-first, Sentiment: Neutral`),
+        customerPills: customerTab === 'structured' ? [structAgeGroup, structSegment, structDigitalProfile] : (customerPills.length > 0 ? customerPills : ['25–34', 'Standard', 'Digital-first']),
+        eventHistoryText: eventTab === 'structured' 
+          ? `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}` 
+          : (eventText.trim() || `${finalEventTitle}. Auto-refund initiated to original payment method.`),
+        eventPills: eventTab === 'structured' ? [structEventType.replace(/_/g, ' ')] : (eventPills.length > 0 ? eventPills : [structEventType.replace(/_/g, ' ')]),
+        objectiveText: objectiveTab === 'structured' ? `${structPrimaryObjective.replace(/_/g, ' ')}. ${structSecondaryObjective}` : (objectiveText.trim() || 'Resolve issue and reassure customer.'),
+        objectivePills: objectiveTab === 'structured' ? [structPrimaryObjective.replace(/_/g, ' ')] : (objectivePills.length > 0 ? objectivePills : ['Resolve issue']),
         useSamplePolicyTree: true,
       });
     }
@@ -298,11 +312,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
                     Preset Loaded
                   </span>
-                ) : (
-                  <span className="text-[10px] text-aurora-neutral-600 bg-aurora-neutral-100 border border-aurora-neutral-200 px-2 py-0.2 rounded font-semibold">
-                    Unset (Manual)
-                  </span>
-                )}
+                ) : null}
               </div>
               <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
                 {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
@@ -310,7 +320,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                     Loaded: <strong className="text-aurora-neutral-900">{structCustomerName || 'Custom'}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
                   </>
                 ) : (
-                  'No preset selected · Enter scenario details manually below or choose a quick preset'
+                  'Choose a pre-configured customer scenario or fill in details manually below'
                 )}
               </p>
             </div>
@@ -322,14 +332,13 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               e.stopPropagation();
               setIsMatrixExpanded(!isMatrixExpanded);
             }}
-            className="flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-800 border border-aurora-neutral-300 rounded-lg text-xs font-semibold shadow-2xs transition"
+            className="p-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-700 border border-aurora-neutral-300 rounded-lg shadow-2xs transition"
             aria-label={isMatrixExpanded ? 'Minimize Presets' : 'Expand Presets'}
           >
-            <span>{isMatrixExpanded ? 'Minimize' : 'Select Preset'}</span>
             {isMatrixExpanded ? (
-              <ChevronUp strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
+              <ChevronUp strokeWidth={2} className="w-4 h-4" />
             ) : (
-              <ChevronDown strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
+              <ChevronDown strokeWidth={2} className="w-4 h-4" />
             )}
           </button>
         </div>
@@ -581,8 +590,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               )}
             </div>
 
-            <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-500">
-              Evaluates generational persona (1 of 25) and 24h fatigue.
+            <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-600">
+              Defines customer identity, demographic cohort, and communication preferences.
             </div>
           </div>
 
@@ -649,7 +658,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         value={structTransactionId}
                         onChange={(e) => setStructTransactionId(e.target.value)}
                         placeholder="e.g. PAY_99482"
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       />
                     </div>
                     <div>
@@ -659,7 +668,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         value={structOrderId}
                         onChange={(e) => setStructOrderId(e.target.value)}
                         placeholder="e.g. ORD-7721"
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       />
                     </div>
                   </div>
@@ -716,7 +725,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                       value={eventText}
                       onChange={(e) => setEventText(e.target.value)}
                       placeholder="Paste event telemetry, transaction details, and system state..."
-                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary leading-relaxed font-mono"
+                      className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary leading-relaxed"
                     />
                   </div>
 
@@ -749,8 +758,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               )}
             </div>
 
-            <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-500">
-              Triggers root-cause isolation and compliance rules.
+            <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-600">
+              Specifies the transaction event and system status to generate an accurate resolution message.
             </div>
           </div>
 
@@ -869,8 +878,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               )}
             </div>
 
-            <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-500">
-              Directly drives tone, CTA density, and escalation gates.
+            <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-600">
+              Defines the primary communication goal, call-to-action type, and required customer actions.
             </div>
           </div>
         </div>

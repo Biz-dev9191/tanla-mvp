@@ -83,11 +83,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
               <button
                 type="button"
                 onClick={() => setIsMenuOpen(true)}
-                className="flex items-center space-x-2 px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs font-semibold shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
+                className="flex items-center justify-center p-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
                 aria-label="Open Navigation Menu"
               >
-                <Menu strokeWidth={1.5} className="w-4 h-4" />
-                <span className="hidden sm:inline">Menu</span>
+                <Menu strokeWidth={1.75} className="w-4 h-4" />
               </button>
 
               <div
