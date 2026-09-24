@@ -19,7 +19,7 @@ export interface EmailDispatchResult {
 }
 
 export async function sendOutboundEmail(params: SendEmailParams): Promise<EmailDispatchResult> {
-  // 1. Check for Gmail / Custom SMTP credentials (ZERO Domain Verification Required!)
+  // 1. Check for Gmail / Custom SMTP credentials (Zero Domain Verification Required)
   const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD || process.env.SMTP_PASS;
   const smtpHost = process.env.SMTP_HOST || 'smtp.gmail.com';
