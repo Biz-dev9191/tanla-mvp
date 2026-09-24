@@ -12,8 +12,6 @@ import { PolicyPathViewer } from '@/components/control-room/PolicyPathViewer';
 import { HumanApprovalBanner } from '@/components/control-room/HumanApprovalBanner';
 import { ChannelPreviewTabs } from '@/components/preview/ChannelPreviewTabs';
 import { QualityScorecard } from '@/components/preview/QualityScorecard';
-import { BeforeAfterCompare } from '@/components/preview/BeforeAfterCompare';
-import { ObjectivePivotBar } from '@/components/preview/ObjectivePivotBar';
 import { CustomerResponseSimulator } from '@/components/preview/CustomerResponseSimulator';
 import { InteractiveTree } from '@/components/policy/InteractiveTree';
 import { PolicyDetailModal } from '@/components/policy/PolicyDetailModal';
@@ -300,25 +298,7 @@ export default function Home() {
                 {/* 2. Message Quality & Guardrail Scorecard */}
                 <QualityScorecard guardrails={currentResult.guardrails} />
 
-                {/* 3. Before vs AI Comparison */}
-                <BeforeAfterCompare
-                  genericTemplateText={currentResult.genericTemplateComparison.templateText}
-                  aiMessageText={
-                    currentResult.messages[
-                      currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
-                    ]?.body || currentResult.messages.whatsapp.body
-                  }
-                  differences={currentResult.genericTemplateComparison.differences}
-                />
-
-                {/* 4. Objective Pivot & Live Re-run Bar */}
-                <ObjectivePivotBar
-                  currentObjective={currentResult.objective.primary}
-                  onPivotObjective={handlePivotObjective}
-                  isLoading={isLoading}
-                />
-
-                {/* 5. Customer Response Simulation */}
+                {/* 3. Customer Response Simulation */}
                 <CustomerResponseSimulator
                   customer={currentResult.customer}
                   event={currentResult.event}

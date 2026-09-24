@@ -144,7 +144,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
           <MessageSquareText strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
           <div>
             <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Roleplay & Multi-Turn Simulator</h3>
-            <p className="text-[11px] text-aurora-neutral-500">Test how different customer personas react to orchestrated outbound communications</p>
+            <p className="text-[11px] text-aurora-neutral-500">Observe how different customer personas react to orchestrated outbound communications</p>
           </div>
         </div>
 
@@ -333,7 +333,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
 
             {/* Quick Canned Injections */}
             <div className="flex flex-wrap gap-1.5 text-[11px]">
-              <span className="text-aurora-neutral-500 self-center text-[10px] font-semibold">Test Inbound Inquiry:</span>
+              <span className="text-aurora-neutral-500 self-center text-[10px] font-semibold">Sample Inbound Inquiry:</span>
               <button
                 type="button"
                 onClick={() => handleSimulateTurn('When exactly will the funds show up in my Citibank app?')}

@@ -35,14 +35,14 @@ export const SMSFrame: React.FC<SMSFrameProps> = ({
 
         {/* Mobile Screen */}
         <div className="bg-[#F2F2F7] rounded-[34px] overflow-hidden flex flex-col justify-between border border-slate-900 relative shadow-inner min-h-[540px]">
-          {/* Top Status Bar (iOS style) */}
-          <div className="bg-white/90 backdrop-blur-md text-neutral-900 pt-2 px-6 pb-1 flex items-center justify-between text-[11px] font-semibold tracking-tight border-b border-neutral-200/50">
-            <span>9:41</span>
-            {/* Dynamic Island Notch */}
-            <div className="w-20 h-4 bg-black rounded-full flex items-center justify-center">
+          {/* Top Status Bar (iOS style) with Mathematically Centered Dynamic Island */}
+          <div className="bg-white/90 backdrop-blur-md text-neutral-900 pt-2 px-6 pb-1 flex items-center justify-between text-[11px] font-semibold tracking-tight border-b border-neutral-200/50 relative">
+            <span className="z-10">9:41</span>
+            {/* Dynamic Island Notch - Centered Mathematically */}
+            <div className="absolute left-1/2 -translate-x-1/2 top-1.5 w-20 h-4 bg-black rounded-full flex items-center justify-center pointer-events-none z-10 shadow-xs">
               <div className="w-2 h-2 rounded-full bg-slate-900 mr-1" />
             </div>
-            <div className="flex items-center space-x-1.5 text-neutral-800">
+            <div className="flex items-center space-x-1.5 text-neutral-800 z-10">
               <Signal className="w-3 h-3" />
               <Wifi className="w-3 h-3" />
               <Battery className="w-3.5 h-3.5" />

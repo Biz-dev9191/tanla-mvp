@@ -21,6 +21,8 @@ import {
   ShieldCheck,
   Layers,
   RotateCcw,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface CommunicationBriefProps {
@@ -32,7 +34,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onRunOrchestration,
   isLoading,
 }) => {
-  // Test Matrix 5x5x5 Selection State
+  // Scenario Presets Selection State (Minimized by default)
+  const [isMatrixExpanded, setIsMatrixExpanded] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string>(MATRIX_CUSTOMERS[0].id);
   const [selectedEventId, setSelectedEventId] = useState<string>(MATRIX_EVENTS[0].id);
   const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(MATRIX_OBJECTIVES[0].id);
@@ -231,89 +234,124 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             AI Customer Communication Orchestrator
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-            Select any test matrix combination or configure structured fields and text pills below. The multi-agent engine dynamically adapts its persona voice, channel routing, and policy tree for all 125 scenarios.
+            Configure customer profile context, event telemetry, and business objectives below. The multi-agent engine dynamically adapts its persona voice, channel routing, and policy compliance.
           </p>
         </div>
       </div>
 
-      {/* TEST CASE MATRIX SELECTOR BAR */}
-      <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Layers strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-            <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
-              Test Case Matrix
-            </h3>
+      {/* SCENARIO PRESETS SELECTOR BAR (Collapsible - Minimized by default) */}
+      <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all">
+        {/* Toggle Bar / Header */}
+        <div
+          onClick={() => setIsMatrixExpanded(!isMatrixExpanded)}
+          className="p-4 flex items-center justify-between cursor-pointer hover:bg-aurora-neutral-50/80 transition select-none"
+        >
+          <div className="flex items-center space-x-2.5">
+            <div className="p-1.5 rounded-md bg-aurora-primary-light text-aurora-primary">
+              <Layers strokeWidth={1.5} className="w-4 h-4" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
+                  Scenario Presets
+                </h3>
+                <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
+                  Active
+                </span>
+              </div>
+              <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
+                Loaded: <strong className="text-aurora-neutral-900">{structCustomerName}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
+              </p>
+            </div>
           </div>
-          <span className="text-[11px] font-mono text-aurora-neutral-600 bg-aurora-neutral-100 px-2.5 py-0.5 rounded border border-aurora-neutral-200">
-            125 Dynamic Permutations
-          </span>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsMatrixExpanded(!isMatrixExpanded);
+            }}
+            className="flex items-center space-x-1.5 px-3 py-1.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-800 border border-aurora-neutral-300 rounded-lg text-xs font-semibold shadow-2xs transition"
+            aria-label={isMatrixExpanded ? 'Minimize Presets' : 'Expand Presets'}
+          >
+            <span>{isMatrixExpanded ? 'Minimize' : 'Select Preset'}</span>
+            {isMatrixExpanded ? (
+              <ChevronUp strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
+            ) : (
+              <ChevronDown strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
+            )}
+          </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Dropdown 1: Customer Profile */}
-          <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
-              1. Customer Profile (5 Archetypes)
-            </label>
-            <select
-              value={selectedCustomerId}
-              onChange={(e) => handleCustomerChange(e.target.value)}
-              className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
-            >
-              {MATRIX_CUSTOMERS.map((cust) => (
-                <option key={cust.id} value={cust.id}>
-                  {cust.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Expandable Dropdowns Body */}
+        {isMatrixExpanded && (
+          <div className="p-5 pt-0 space-y-4 border-t border-aurora-neutral-200/70 bg-aurora-neutral-50/40 animate-fadeIn">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+              {/* Dropdown 1: Customer Profile */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+                  1. Customer Profile Cohort
+                </label>
+                <select
+                  value={selectedCustomerId}
+                  onChange={(e) => handleCustomerChange(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+                >
+                  {MATRIX_CUSTOMERS.map((cust) => (
+                    <option key={cust.id} value={cust.id}>
+                      {cust.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Dropdown 2: Business Event */}
-          <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
-              2. Event & Telemetry (5 Scenarios)
-            </label>
-            <select
-              value={selectedEventId}
-              onChange={(e) => handleEventChange(e.target.value)}
-              className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
-            >
-              {MATRIX_EVENTS.map((evt) => (
-                <option key={evt.id} value={evt.id}>
-                  {evt.label}
-                </option>
-              ))}
-            </select>
-          </div>
+              {/* Dropdown 2: Business Event */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+                  2. Event & Telemetry
+                </label>
+                <select
+                  value={selectedEventId}
+                  onChange={(e) => handleEventChange(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+                >
+                  {MATRIX_EVENTS.map((evt) => (
+                    <option key={evt.id} value={evt.id}>
+                      {evt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Dropdown 3: Business Objective */}
-          <div className="space-y-1">
-            <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
-              3. Business Objective (5 Goals)
-            </label>
-            <select
-              value={selectedObjectiveId}
-              onChange={(e) => handleObjectiveChange(e.target.value)}
-              className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
-            >
-              {MATRIX_OBJECTIVES.map((obj) => (
-                <option key={obj.id} value={obj.id}>
-                  {obj.label}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+              {/* Dropdown 3: Business Objective */}
+              <div className="space-y-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+                  3. Business Objective
+                </label>
+                <select
+                  value={selectedObjectiveId}
+                  onChange={(e) => handleObjectiveChange(e.target.value)}
+                  className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+                >
+                  {MATRIX_OBJECTIVES.map((obj) => (
+                    <option key={obj.id} value={obj.id}>
+                      {obj.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-        <div className="flex items-center justify-between pt-2 border-t border-aurora-neutral-200/80 text-[11px] text-aurora-neutral-600">
-          <span>
-            Selected Combination: <strong className="text-aurora-neutral-900">{structCustomerName}</strong> (Cohort: <span className="font-mono text-aurora-primary">{structAgeGroup}</span>) • <strong className="text-aurora-neutral-900">{structEventType.replace(/_/g, ' ')}</strong> • <strong className="text-aurora-neutral-900">{structPrimaryObjective.replace(/_/g, ' ')}</strong>
-          </span>
-          <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
-            Live Synced Below
-          </span>
-        </div>
+            <div className="flex items-center justify-between pt-2 border-t border-aurora-neutral-200/80 text-[11px] text-aurora-neutral-600">
+              <span>
+                Selected Scenario: <strong className="text-aurora-neutral-900">{structCustomerName}</strong> (Cohort: <span className="font-mono text-aurora-primary">{structAgeGroup}</span>) • <strong className="text-aurora-neutral-900">{structEventType.replace(/_/g, ' ')}</strong> • <strong className="text-aurora-neutral-900">{structPrimaryObjective.replace(/_/g, ' ')}</strong>
+              </span>
+              <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
+                Live Synced Below
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 3-COLUMN BRIEF FORM */}
