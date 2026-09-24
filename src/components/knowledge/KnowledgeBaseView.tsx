@@ -1,13 +1,28 @@
 import React, { useState } from 'react';
 import { BRAND_VOICE_GUIDELINES, CUSTOMER_SEGMENT_GUIDELINES, CHANNEL_GUIDELINES } from '@/core/knowledge-base';
 import { CUSTOMER_PERSONA_CATALOG, CustomerPersona } from '@/core/personas';
-import { AGENT_TRANSFORMATION_HIERARCHY } from '@/core/agent-policies';
-import { BookOpen, Sparkles, Smartphone, Check, X, Search, Users, Layers, ArrowRight } from 'lucide-react';
+import { AGENT_GOVERNANCE_POLICIES, AGENT_TRANSFORMATION_HIERARCHY, AgentGovernancePolicy } from '@/core/agent-policies';
+import {
+  BookOpen,
+  Sparkles,
+  Smartphone,
+  Check,
+  X,
+  Search,
+  Users,
+  Layers,
+  Shield,
+  ArrowRight,
+  AlertTriangle,
+  ShieldCheck,
+  ShieldAlert,
+} from 'lucide-react';
 
 export const KnowledgeBaseView: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<'personas' | 'hierarchy' | 'brand' | 'segments' | 'channels'>('personas');
+  const [activeSection, setActiveSection] = useState<'agent_policies' | 'personas' | 'hierarchy' | 'brand' | 'segments' | 'channels'>('agent_policies');
   const [personaSearch, setPersonaSearch] = useState<string>('');
   const [selectedCohort, setSelectedCohort] = useState<string>('all');
+  const [selectedAgentPolicy, setSelectedAgentPolicy] = useState<string>('CCAP-2026-v2.4');
 
   // Filter Personas
   const filteredPersonas = CUSTOMER_PERSONA_CATALOG.filter((p) => {
@@ -21,32 +36,35 @@ export const KnowledgeBaseView: React.FC = () => {
     return matchesCohort && matchesSearch;
   });
 
+  const currentPolicy = AGENT_GOVERNANCE_POLICIES.find((p) => p.policyCode === selectedAgentPolicy) || AGENT_GOVERNANCE_POLICIES[0];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
       <div className="pb-4 border-b border-aurora-neutral-200">
         <div className="flex flex-wrap items-center gap-2 mb-2">
           <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-            Knowledge Base
+            Agent Governance & Knowledge Base
           </span>
           <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
             25+ Persona Catalog Active
           </span>
           <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded border border-purple-200">
-            7 Agent Transformation Layers
+            7 Governed Agent Layers
           </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-          Enterprise Knowledge Base & Guidelines
+          Governed Knowledge Base & Agent Engine
         </h1>
         <p className="text-sm text-aurora-neutral-700 mt-1 max-w-4xl leading-relaxed">
-          The central repository for customer personas across demographic cohorts, multi-agent transformation hierarchies, brand voice guidelines, customer segment profiles, and channel formatting constraints.
+          The central repository for specialized AI agent governance rules, 25+ demographic customer personas, multi-agent transformation hierarchies, brand voice guidelines, customer segment profiles, and channel formatting constraints.
         </p>
       </div>
 
       {/* Navigation Tabs */}
       <div className="flex space-x-2 border-b border-aurora-neutral-200 pb-3 overflow-x-auto">
         {[
+          { id: 'agent_policies', label: 'Agent Governance Rules (7)', icon: Shield },
           { id: 'personas', label: 'Customer Personas (25+)', icon: Users },
           { id: 'hierarchy', label: 'Transformation Hierarchy', icon: Layers },
           { id: 'brand', label: 'Brand Voice & Tone', icon: Sparkles },
@@ -72,7 +90,254 @@ export const KnowledgeBaseView: React.FC = () => {
         })}
       </div>
 
-      {/* TAB 1: 25+ Customer Personas Catalog */}
+      {/* TAB 1: Agent Governance Policies & Rules */}
+      {activeSection === 'agent_policies' && (
+        <div className="space-y-6">
+          {/* Agent Policy Selector */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">
+            {AGENT_GOVERNANCE_POLICIES.map((p) => {
+              const isSelected = selectedAgentPolicy === p.policyCode;
+              return (
+                <button
+                  key={p.policyCode}
+                  onClick={() => setSelectedAgentPolicy(p.policyCode)}
+                  className={`p-3 rounded-lg border text-left transition flex flex-col justify-between ${
+                    isSelected
+                      ? 'bg-aurora-primary-light/40 border-aurora-primary shadow-sm ring-1 ring-aurora-primary'
+                      : 'bg-white border-aurora-neutral-200 hover:border-aurora-neutral-300'
+                  }`}
+                >
+                  <div>
+                    <span className="text-[10px] font-mono font-bold text-aurora-primary block">
+                      Agent {p.agentNumber}
+                    </span>
+                    <span className="text-xs font-bold text-aurora-neutral-900 line-clamp-1 mt-0.5">
+                      {p.title.split(' ')[0]} {p.title.split(' ')[1]}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-aurora-neutral-500 mt-2 block">
+                    {p.policyCode.split('-')[0]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Selected Agent Governance Detailed Card */}
+          <div className="bg-white rounded-xl border border-aurora-neutral-200 shadow-sm p-6 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-mono font-bold text-white bg-aurora-primary px-2.5 py-1 rounded">
+                    {currentPolicy.policyCode}
+                  </span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-600 bg-aurora-neutral-100 px-2.5 py-1 rounded">
+                    Agent {currentPolicy.agentNumber}: {currentPolicy.agentId.toUpperCase()}
+                  </span>
+                  <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                    Active & Enforced
+                  </span>
+                </div>
+                <h2 className="text-xl font-bold text-aurora-neutral-900 mt-2">
+                  {currentPolicy.title}
+                </h2>
+                <p className="text-xs text-aurora-neutral-600 mt-1">
+                  Department: <span className="font-semibold text-aurora-neutral-800">{currentPolicy.department}</span> • Version: <span className="font-mono">{currentPolicy.version}</span>
+                </p>
+              </div>
+
+              <div className="p-3 bg-aurora-neutral-50 rounded-lg border border-aurora-neutral-200 text-xs max-w-sm">
+                <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-1">
+                  Transformation Layer
+                </span>
+                <p className="text-aurora-neutral-600 leading-snug">{currentPolicy.transformationRole}</p>
+              </div>
+            </div>
+
+            {/* Governance Objective */}
+            <div className="p-4 bg-sky-50/70 rounded-lg border border-sky-200 space-y-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-sky-800 block">
+                Official Governance Objective
+              </span>
+              <p className="text-xs text-sky-950 leading-relaxed font-medium">
+                {currentPolicy.governanceObjective}
+              </p>
+            </div>
+
+            {/* Mandatory Inputs & Governed Outputs */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-2 text-xs">
+                <span className="font-bold text-aurora-neutral-800 uppercase tracking-wider block text-[11px]">
+                  Mandatory Ingested Inputs
+                </span>
+                <ul className="space-y-1.5 text-aurora-neutral-700">
+                  {currentPolicy.mandatoryInputs.map((input, idx) => (
+                    <li key={idx} className="flex items-start space-x-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-aurora-primary mt-1 flex-shrink-0"></span>
+                      <span>{input}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-lg bg-aurora-neutral-50 border border-aurora-neutral-200 space-y-2 text-xs">
+                <span className="font-bold text-aurora-neutral-800 uppercase tracking-wider block text-[11px]">
+                  Governed Transformation Outputs
+                </span>
+                <ul className="space-y-1.5 text-aurora-neutral-700">
+                  {currentPolicy.governedOutputs.map((output, idx) => (
+                    <li key={idx} className="flex items-start space-x-1.5">
+                      <Check strokeWidth={2} className="w-3.5 h-3.5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                      <span>{output}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Permitted & Prohibited Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-emerald-50/60 border border-emerald-200 space-y-2 text-xs">
+                <span className="font-bold text-emerald-900 uppercase tracking-wider block text-[11px]">
+                  Permitted Agent Actions
+                </span>
+                <ul className="space-y-1.5 text-emerald-950">
+                  {currentPolicy.permittedActions.map((action, idx) => (
+                    <li key={idx} className="flex items-start space-x-1.5">
+                      <span className="text-emerald-700 font-bold">✓</span>
+                      <span>{action}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-lg bg-red-50/60 border border-red-200 space-y-2 text-xs">
+                <span className="font-bold text-red-900 uppercase tracking-wider block text-[11px]">
+                  Prohibited Agent Actions
+                </span>
+                <ul className="space-y-1.5 text-red-950">
+                  {currentPolicy.prohibitedActions.map((action, idx) => (
+                    <li key={idx} className="flex items-start space-x-1.5">
+                      <span className="text-red-700 font-bold">✕</span>
+                      <span>{action}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Strict Railguards & Anti-Hallucination Constraints */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-amber-50/60 border border-amber-200 space-y-2 text-xs">
+                <div className="flex items-center space-x-1.5 text-amber-900 font-bold">
+                  <ShieldCheck strokeWidth={1.5} className="w-4 h-4 text-amber-700" />
+                  <span className="uppercase tracking-wider text-[11px]">Strict Railguards</span>
+                </div>
+                <ul className="space-y-1.5 text-amber-950">
+                  {currentPolicy.strictRailguards.map((rg, idx) => (
+                    <li key={idx} className="leading-snug">{rg}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-4 rounded-lg bg-purple-50/60 border border-purple-200 space-y-2 text-xs">
+                <div className="flex items-center space-x-1.5 text-purple-900 font-bold">
+                  <ShieldAlert strokeWidth={1.5} className="w-4 h-4 text-purple-700" />
+                  <span className="uppercase tracking-wider text-[11px]">Anti-Hallucination Constraints</span>
+                </div>
+                <ul className="space-y-1.5 text-purple-950">
+                  {currentPolicy.antiHallucinationConstraints.map((ah, idx) => (
+                    <li key={idx} className="leading-snug">{ah}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            {/* Governance Rules Table */}
+            <div className="space-y-3">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-700">
+                Agent Policy Rules ({currentPolicy.rules.length})
+              </h3>
+              <div className="border border-aurora-neutral-200 rounded-lg overflow-hidden">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-aurora-neutral-100 text-aurora-neutral-600 uppercase text-[10px] tracking-wider border-b border-aurora-neutral-200">
+                    <tr>
+                      <th className="py-2.5 px-3">Rule Code</th>
+                      <th className="py-2.5 px-3">Rule Name & Description</th>
+                      <th className="py-2.5 px-3">Category</th>
+                      <th className="py-2.5 px-3">Enforcement</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-aurora-neutral-200">
+                    {currentPolicy.rules.map((rule) => (
+                      <tr key={rule.ruleCode} className="hover:bg-aurora-neutral-50/80">
+                        <td className="py-2.5 px-3 font-mono font-bold text-aurora-primary align-top">
+                          {rule.ruleCode}
+                        </td>
+                        <td className="py-2.5 px-3 align-top">
+                          <span className="font-bold text-aurora-neutral-900 block">{rule.name}</span>
+                          <span className="text-aurora-neutral-600 text-[11px] block mt-0.5">{rule.description}</span>
+                          <span className="text-emerald-700 font-mono text-[10px] block mt-1">Verification: {rule.railguardCheck}</span>
+                        </td>
+                        <td className="py-2.5 px-3 align-top">
+                          <span className="text-[10px] bg-aurora-neutral-100 text-aurora-neutral-700 px-2 py-0.5 rounded font-medium">
+                            {rule.category}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3 align-top">
+                          <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                            rule.enforcementLevel === 'MANDATORY'
+                              ? 'bg-aurora-primary-light text-aurora-primary'
+                              : rule.enforcementLevel === 'PROHIBITIVE'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-aurora-neutral-200 text-aurora-neutral-700'
+                          }`}>
+                            {rule.enforcementLevel}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Decision Heuristics & Escalation Triggers */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+              <div className="p-3 bg-aurora-neutral-50 rounded-lg border border-aurora-neutral-200 text-xs space-y-1.5">
+                <span className="font-bold text-aurora-neutral-800 uppercase tracking-wider block text-[11px]">
+                  Decision Heuristics
+                </span>
+                <ul className="space-y-1 text-aurora-neutral-700 text-[11px]">
+                  {currentPolicy.decisionHeuristics.map((dh, i) => (
+                    <li key={i} className="flex items-start space-x-1.5">
+                      <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary flex-shrink-0 mt-0.5" />
+                      <span>{dh}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div className="p-3 bg-red-50/50 rounded-lg border border-red-200 text-xs space-y-1.5">
+                <span className="font-bold text-red-800 uppercase tracking-wider block text-[11px]">
+                  Mandatory Human Approval Triggers
+                </span>
+                <ul className="space-y-1 text-red-900 text-[11px]">
+                  {currentPolicy.escalationTriggers.map((et, i) => (
+                    <li key={i} className="flex items-start space-x-1.5">
+                      <AlertTriangle strokeWidth={1.5} className="w-3.5 h-3.5 text-red-600 flex-shrink-0 mt-0.5" />
+                      <span>{et}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: 25+ Customer Personas Catalog */}
       {activeSection === 'personas' && (
         <div className="space-y-6">
           {/* Persona Cohort Filter & Search */}
@@ -173,7 +438,7 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 2: Transformation Layer Hierarchy */}
+      {/* TAB 3: Transformation Layer Hierarchy */}
       {activeSection === 'hierarchy' && (
         <div className="space-y-6">
           <div className="bg-white p-6 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-6">
@@ -245,7 +510,7 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 3: Brand Voice & Tone */}
+      {/* TAB 4: Brand Voice & Tone */}
       {activeSection === 'brand' && (
         <div className="space-y-6">
           <div className="bg-aurora-neutral-0 p-6 rounded-lg border border-aurora-neutral-200 shadow-aurora">
@@ -293,7 +558,7 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: Customer Segments */}
+      {/* TAB 5: Customer Segments */}
       {activeSection === 'segments' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {Object.entries(CUSTOMER_SEGMENT_GUIDELINES).map(([segment, data]) => (
@@ -327,7 +592,7 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 5: Channels */}
+      {/* TAB 6: Channels */}
       {activeSection === 'channels' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(CHANNEL_GUIDELINES).map(([channel, data]) => (
