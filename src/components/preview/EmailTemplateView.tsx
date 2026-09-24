@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ChannelMessage } from '@/core/types';
-import { Mail, Send, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
+import { Mail } from 'lucide-react';
 
 interface EmailTemplateViewProps {
   message: ChannelMessage;
@@ -14,45 +14,6 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
   recipientName = "Customer",
 }) => {
   const [emailTo, setEmailTo] = useState(recipientEmail);
-  const [isSending, setIsSending] = useState(false);
-  const [sendResult, setSendResult] = useState<{ status: 'DELIVERED' | 'SIMULATED' | 'FAILED'; details: string } | null>(null);
-
-  const handleSendEmail = async () => {
-    try {
-      setIsSending(true);
-      setSendResult(null);
-
-      const res = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: emailTo,
-          subject: message.subject || 'Aurora Cloud Notification',
-          body: message.body,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setSendResult({
-          status: data.status,
-          details: data.details,
-        });
-      } else {
-        setSendResult({
-          status: 'FAILED',
-          details: data.error || 'Failed to dispatch email.',
-        });
-      }
-    } catch (err: any) {
-      setSendResult({
-        status: 'FAILED',
-        details: err.message || 'Network error.',
-      });
-    } finally {
-      setIsSending(false);
-    }
-  };
 
   return (
     <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-300 shadow-aurora-md overflow-hidden max-w-2xl mx-auto">
@@ -64,7 +25,7 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
             <span className="text-xs font-bold text-aurora-neutral-900">Enterprise Email Client</span>
           </div>
           <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-aurora-primary-light text-aurora-primary border border-aurora-primary/20">
-            Live Outbound Channel
+            Outbound Channel Preview
           </span>
         </div>
 
@@ -112,60 +73,11 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
         </div>
       </div>
 
-      {/* Dispatch Action Footer */}
-      <div className="p-3.5 bg-aurora-neutral-100 border-t border-aurora-neutral-200 flex flex-col sm:flex-row items-center justify-between gap-3">
-        <span className="text-xs text-aurora-neutral-500 font-mono">
-          {message.characterCount} words/chars · Grounded in verified facts
-        </span>
-
-        <button
-          type="button"
-          onClick={handleSendEmail}
-          disabled={isSending}
-          className="w-full sm:w-auto px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold flex items-center justify-center space-x-1.5 shadow-sm transition disabled:opacity-50"
-        >
-          {isSending ? (
-            <>
-              <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
-              <span>Sending Outbound Email...</span>
-            </>
-          ) : (
-            <>
-              <Send strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>Send Live Email via Provider</span>
-            </>
-          )}
-        </button>
+      {/* Footer Meta */}
+      <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 flex items-center justify-between text-xs text-aurora-neutral-500 font-mono">
+        <span>{message.characterCount} characters</span>
+        <span>Grounded in verified event facts</span>
       </div>
-
-      {/* Dispatch Result Notification */}
-      {sendResult && (
-        <div
-          className={`p-3 text-xs flex items-start space-x-2 ${
-            sendResult.status === 'DELIVERED'
-              ? 'bg-aurora-success-light text-aurora-success border-t border-aurora-success/20'
-              : sendResult.status === 'SIMULATED'
-              ? 'bg-aurora-primary-light text-aurora-primary border-t border-aurora-primary/20'
-              : 'bg-aurora-error-light text-aurora-error border-t border-aurora-error/20'
-          }`}
-        >
-          {sendResult.status === 'FAILED' ? (
-            <AlertCircle strokeWidth={1.5} className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          ) : (
-            <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 flex-shrink-0 mt-0.5" />
-          )}
-          <div>
-            <span className="font-bold block">
-              {sendResult.status === 'DELIVERED'
-                ? 'Outbound Email Delivered [LIVE]'
-                : sendResult.status === 'SIMULATED'
-                ? 'Outbound Email Dispatched [SIMULATION]'
-                : 'Delivery Failed'}
-            </span>
-            <span>{sendResult.details}</span>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

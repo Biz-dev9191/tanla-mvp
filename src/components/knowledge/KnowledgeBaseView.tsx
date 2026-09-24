@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { BRAND_VOICE_GUIDELINES, CUSTOMER_SEGMENT_GUIDELINES, CHANNEL_GUIDELINES } from '@/core/knowledge-base';
+import { CHANNEL_GUIDELINES } from '@/core/knowledge-base';
 import { CUSTOMER_PERSONA_CATALOG, CustomerPersona } from '@/core/personas';
-import { AGENT_GOVERNANCE_POLICIES, AGENT_TRANSFORMATION_HIERARCHY, AgentGovernancePolicy } from '@/core/agent-policies';
+import { AGENT_GOVERNANCE_POLICIES, AGENT_TRANSFORMATION_HIERARCHY } from '@/core/agent-policies';
 import {
-  BookOpen,
-  Sparkles,
   Smartphone,
   Check,
-  X,
   Search,
   Users,
   Layers,
@@ -19,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const KnowledgeBaseView: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<'agent_policies' | 'personas' | 'hierarchy' | 'brand' | 'segments' | 'channels'>('agent_policies');
+  const [activeSection, setActiveSection] = useState<'agent_policies' | 'personas' | 'hierarchy' | 'channels'>('agent_policies');
   const [personaSearch, setPersonaSearch] = useState<string>('');
   const [selectedCohort, setSelectedCohort] = useState<string>('all');
   const [selectedAgentPolicy, setSelectedAgentPolicy] = useState<string>('CCAP-2026-v2.4');
@@ -46,18 +43,12 @@ export const KnowledgeBaseView: React.FC = () => {
           <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
             Agent Governance & Knowledge Base
           </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
-            25+ Persona Catalog Active
-          </span>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded border border-purple-200">
-            7 Governed Agent Layers
-          </span>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
           Governed Knowledge Base & Agent Engine
         </h1>
         <p className="text-sm text-aurora-neutral-700 mt-1 max-w-4xl leading-relaxed">
-          The central repository for specialized AI agent governance rules, 25+ demographic customer personas, multi-agent transformation hierarchies, brand voice guidelines, customer segment profiles, and channel formatting constraints.
+          The central repository for specialized AI agent governance rules, demographic customer personas, multi-agent transformation hierarchies, and channel formatting constraints.
         </p>
       </div>
 
@@ -67,8 +58,6 @@ export const KnowledgeBaseView: React.FC = () => {
           { id: 'agent_policies', label: 'Agent Governance Rules (7)', icon: Shield },
           { id: 'personas', label: 'Customer Personas (25+)', icon: Users },
           { id: 'hierarchy', label: 'Transformation Hierarchy', icon: Layers },
-          { id: 'brand', label: 'Brand Voice & Tone', icon: Sparkles },
-          { id: 'segments', label: 'Customer Segments', icon: BookOpen },
           { id: 'channels', label: 'Channel Constraints', icon: Smartphone },
         ].map((tab) => {
           const Icon = tab.icon;
@@ -510,89 +499,7 @@ export const KnowledgeBaseView: React.FC = () => {
         </div>
       )}
 
-      {/* TAB 4: Brand Voice & Tone */}
-      {activeSection === 'brand' && (
-        <div className="space-y-6">
-          <div className="bg-aurora-neutral-0 p-6 rounded-lg border border-aurora-neutral-200 shadow-aurora">
-            <h3 className="text-base font-bold text-aurora-neutral-900 mb-2">{BRAND_VOICE_GUIDELINES.name}</h3>
-            <div className="flex flex-wrap gap-2 mb-6">
-              {BRAND_VOICE_GUIDELINES.values.map((v, i) => (
-                <span key={i} className="text-xs px-2.5 py-1 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded font-medium text-aurora-neutral-900">
-                  {v}
-                </span>
-              ))}
-            </div>
-
-            <h4 className="text-xs font-bold text-aurora-neutral-500 uppercase tracking-wider mb-3">Core Pillars</h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {Object.entries(BRAND_VOICE_GUIDELINES.pillars).map(([key, item]) => (
-                <div key={key} className="p-4 rounded-lg bg-aurora-neutral-100 border border-aurora-neutral-200 text-xs space-y-2">
-                  <span className="font-bold text-sm uppercase tracking-wide text-aurora-primary block">{key}</span>
-                  <p className="text-aurora-neutral-700">{item.rule}</p>
-                  <div className="pt-2 border-t border-aurora-neutral-200 space-y-1">
-                    <div className="flex items-start space-x-1.5 text-aurora-success">
-                      <Check strokeWidth={1.5} className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                      <span className="font-medium">"{item.goodExample}"</span>
-                    </div>
-                    <div className="flex items-start space-x-1.5 text-aurora-error">
-                      <X strokeWidth={1.5} className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-                      <span className="line-through text-aurora-neutral-500">"{item.badExample}"</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-6 pt-4 border-t border-aurora-neutral-200">
-              <h4 className="text-xs font-bold text-aurora-neutral-500 uppercase tracking-wider mb-2">Strict Formatting Rules</h4>
-              <ul className="space-y-1.5 text-xs text-aurora-neutral-700">
-                {BRAND_VOICE_GUIDELINES.formattingRules.map((r, i) => (
-                  <li key={i} className="flex items-center space-x-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-aurora-primary"></span>
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 5: Customer Segments */}
-      {activeSection === 'segments' && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {Object.entries(CUSTOMER_SEGMENT_GUIDELINES).map(([segment, data]) => (
-            <div key={segment} className="bg-aurora-neutral-0 p-5 rounded-lg border border-aurora-neutral-200 shadow-aurora text-xs space-y-3">
-              <div className="flex items-center justify-between pb-2 border-b border-aurora-neutral-200">
-                <span className="font-bold text-sm text-aurora-neutral-900">{segment}</span>
-                <span className="text-[11px] px-2 py-0.5 bg-aurora-primary-light text-aurora-primary font-bold rounded">
-                  Profile
-                </span>
-              </div>
-              <div>
-                <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-0.5">Communication Style:</span>
-                <p className="text-aurora-neutral-700">{data.style}</p>
-              </div>
-              <div>
-                <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-0.5">Channel Affinity:</span>
-                <div className="flex flex-wrap gap-1">
-                  {data.channelPreferenceWeight.map((ch, i) => (
-                    <span key={i} className="text-[10px] bg-aurora-neutral-100 text-aurora-neutral-800 border border-aurora-neutral-300 px-1.5 py-0.2 rounded font-mono">
-                      {ch}
-                    </span>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <span className="font-bold text-aurora-neutral-800 block text-[11px] uppercase tracking-wider mb-0.5">Information Density:</span>
-                <p className="text-aurora-neutral-600 text-[11px]">{data.informationDensity}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* TAB 6: Channels */}
+      {/* TAB 4: Channels */}
       {activeSection === 'channels' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {Object.entries(CHANNEL_GUIDELINES).map(([channel, data]) => (

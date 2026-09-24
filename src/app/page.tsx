@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CustomerProfile, BusinessEvent, BusinessObjective, OrchestrationResult, BusinessObjectiveType } from '@/core/types';
+import { CustomerProfile, BusinessEvent, BusinessObjective, OrchestrationResult, BusinessObjectiveType, PreferredChannel } from '@/core/types';
 import { PRESET_SCENARIOS } from '@/core/presets';
 import { Header } from '@/components/layout/Header';
 import { CommunicationBrief } from '@/components/brief/CommunicationBrief';
@@ -85,20 +85,52 @@ export default function Home() {
       }
 
       setCurrentResult(data);
-      setHistory((prev) => {
-        const updated = [data, ...prev];
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem('aurora_orchestration_history', JSON.stringify(updated.slice(0, 50)));
-          } catch (e) {}
-        }
-        return updated;
-      });
       setActiveTab('control-room');
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred during agent orchestration.');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Log sent communication to Audit History
+  const handleSendMessage = (target: { channel: string; channelName: string; timestamp: string }) => {
+    if (!currentResult) return;
+    
+    let resolvedChannel: PreferredChannel = 'WhatsApp';
+    const chLower = target.channel.toLowerCase();
+    if (chLower.includes('sms')) resolvedChannel = 'SMS';
+    else if (chLower.includes('email')) resolvedChannel = 'Email';
+    else if (chLower.includes('voice')) resolvedChannel = 'Voice';
+
+    const dispatchedRun: OrchestrationResult = {
+      ...currentResult,
+      id: `DISP-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      strategy: {
+        ...currentResult.strategy,
+        selectedChannel: resolvedChannel,
+      },
+    };
+
+    setHistory((prev) => {
+      const updated = [dispatchedRun, ...prev];
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aurora_orchestration_history', JSON.stringify(updated.slice(0, 50)));
+        } catch (e) {}
+      }
+      return updated;
+    });
+  };
+
+  // Clear Audit History
+  const handleClearHistory = () => {
+    setHistory([]);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('aurora_orchestration_history');
+      } catch (e) {}
     }
   };
 
@@ -294,6 +326,7 @@ export default function Home() {
                   messages={currentResult.messages}
                   recommendedChannel={currentResult.strategy.selectedChannel}
                   customer={currentResult.customer}
+                  onSendMessage={handleSendMessage}
                 />
 
                 {/* 2. Multi-Agent Execution Pipeline with Reflection Loops */}
@@ -398,6 +431,7 @@ export default function Home() {
               setActiveTab('control-room');
             }}
             onNewRun={() => setActiveTab('brief')}
+            onClearHistory={handleClearHistory}
           />
         )}
       </main>
