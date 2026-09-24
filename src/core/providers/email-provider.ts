@@ -50,6 +50,9 @@ export async function sendOutboundEmail(params: SendEmailParams): Promise<EmailD
         };
       } else {
         const errData = await response.json().catch(() => ({}));
+        const rawMsg = errData.message || response.statusText;
+        const isSandboxRestricted = rawMsg.toLowerCase().includes('only send testing emails to your own email');
+
         return {
           success: false,
           messageId: `RESEND-ERR-${Date.now()}`,
@@ -57,7 +60,9 @@ export async function sendOutboundEmail(params: SendEmailParams): Promise<EmailD
           deliveredAt: new Date().toISOString(),
           recipient: params.to,
           status: 'FAILED',
-          details: `Resend API Error: ${errData.message || response.statusText}. Please verify your Resend API Key.`,
+          details: isSandboxRestricted
+            ? `Resend Sandbox Policy: The free sandbox only sends live emails to your registered account email (bizmodel9191@gmail.com). To send to all external recipients, verify your custom domain at resend.com/domains.`
+            : `Resend API: ${rawMsg}`,
         };
       }
     } catch (error: any) {
