@@ -52,10 +52,17 @@ export default function Home() {
         }
       }
 
+      const geminiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_gemini_key') || undefined : undefined;
+      const openaiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_openai_key') || undefined : undefined;
+
       const res = await fetch('/api/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          ...payload,
+          geminiKey,
+          openaiKey,
+        }),
       });
 
       const data: OrchestrationResult = await res.json();

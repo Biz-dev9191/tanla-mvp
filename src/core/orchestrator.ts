@@ -11,7 +11,8 @@ import { callLiveLLM } from './llm';
 export async function orchestrateCommunication(
   customerOrPayload: CustomerProfile | StreamlinedBriefPayload,
   eventArg?: BusinessEvent,
-  objectiveArg?: BusinessObjective
+  objectiveArg?: BusinessObjective,
+  apiKeys?: { geminiKey?: string; openaiKey?: string }
 ): Promise<OrchestrationResult> {
   // Check if caller passed the streamlined 3-column payload
   const isStreamlined = 'customerProfileText' in customerOrPayload;
@@ -104,7 +105,11 @@ export async function orchestrateCommunication(
 
   // 1. Try Live LLM Execution
   if (isStreamlined) {
-    const liveLLMResult = await callLiveLLM(customerOrPayload as StreamlinedBriefPayload);
+    const liveLLMResult = await callLiveLLM(
+      customerOrPayload as StreamlinedBriefPayload,
+      apiKeys?.geminiKey,
+      apiKeys?.openaiKey
+    );
     if (liveLLMResult) {
       const steps: AgentExecutionStep[] = [
         {

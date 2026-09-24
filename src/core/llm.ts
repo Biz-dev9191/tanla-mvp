@@ -59,9 +59,13 @@ export interface LLMAgentDecision {
   decisionTrace: string[];
 }
 
-export async function callLiveLLM(input: LLMOrchestrationInput): Promise<LLMAgentDecision | null> {
-  const geminiKey = process.env.GEMINI_API_KEY;
-  const openaiKey = process.env.OPENAI_API_KEY;
+export async function callLiveLLM(
+  input: LLMOrchestrationInput,
+  customGeminiKey?: string,
+  customOpenaiKey?: string
+): Promise<LLMAgentDecision | null> {
+  const geminiKey = customGeminiKey?.trim() || process.env.GEMINI_API_KEY;
+  const openaiKey = customOpenaiKey?.trim() || process.env.OPENAI_API_KEY;
 
   const systemPrompt = `You are the Aurora Cloud AI Customer Communication Orchestrator.
 You govern and orchestrate enterprise outbound communications according to the Aurora Cloud Brand & Governance Guidelines:
