@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { CHANNEL_GUIDELINES } from '@/core/knowledge-base';
 import { CUSTOMER_PERSONA_CATALOG, CustomerPersona } from '@/core/personas';
 import { AGENT_GOVERNANCE_POLICIES, AGENT_TRANSFORMATION_HIERARCHY } from '@/core/agent-policies';
+import { PolicyTreeNode, defaultPolicyTree } from '@/core/policy-tree-data';
 import {
   Smartphone,
   Check,
@@ -20,13 +21,29 @@ import {
   BarChart3,
   HeartHandshake,
   CheckCircle2,
+  Network,
+  FileText,
+  ExternalLink,
 } from 'lucide-react';
 
-export const KnowledgeBaseView: React.FC = () => {
-  const [activeSection, setActiveSection] = useState<'agent_policies' | 'personas' | 'hierarchy' | 'channels' | 'heuristics'>('agent_policies');
+interface KnowledgeBaseViewProps {
+  customPolicyTree?: PolicyTreeNode | null;
+  customPolicyRules?: any[];
+  customPolicyDocText?: string | null;
+  onNavigateToPolicyTree?: () => void;
+}
+
+export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
+  customPolicyTree,
+  customPolicyRules,
+  customPolicyDocText,
+  onNavigateToPolicyTree,
+}) => {
+  const [activeSection, setActiveSection] = useState<'agent_policies' | 'policy_tree' | 'heuristics' | 'personas' | 'hierarchy' | 'channels'>('agent_policies');
   const [personaSearch, setPersonaSearch] = useState<string>('');
   const [selectedCohort, setSelectedCohort] = useState<string>('all');
   const [selectedAgentPolicy, setSelectedAgentPolicy] = useState<string>('CCAP-2026-v2.4');
+  const [policySearch, setPolicySearch] = useState<string>('');
 
   // Filter Personas
   const filteredPersonas = CUSTOMER_PERSONA_CATALOG.filter((p) => {
@@ -63,6 +80,7 @@ export const KnowledgeBaseView: React.FC = () => {
       <div className="flex space-x-2 border-b border-aurora-neutral-200 pb-3 overflow-x-auto">
         {[
           { id: 'agent_policies', label: 'Agent Governance Rules (7)', icon: Shield },
+          { id: 'policy_tree', label: 'Policy Tree & Rules', icon: Network },
           { id: 'heuristics', label: 'Scoring & Heuristic Formulas', icon: Calculator },
           { id: 'personas', label: 'Customer Personas (25+)', icon: Users },
           { id: 'hierarchy', label: 'Execution Pipeline', icon: Layers },
@@ -329,6 +347,251 @@ export const KnowledgeBaseView: React.FC = () => {
                   ))}
                 </ul>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB: Policy Tree & Governance Rules */}
+      {activeSection === 'policy_tree' && (
+        <div className="space-y-6">
+          {/* Policy Overview Header Card */}
+          <div className="bg-white p-6 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-3">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-mono font-bold text-white bg-aurora-primary px-2.5 py-1 rounded">
+                    POL-TREE-2026
+                  </span>
+                  {customPolicyRules && customPolicyRules.length > 0 ? (
+                    <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                      Custom Session Policy ({customPolicyRules.length} Rules Active)
+                    </span>
+                  ) : (
+                    <span className="text-xs font-medium text-aurora-neutral-700 bg-aurora-neutral-100 px-2 py-0.5 rounded border border-aurora-neutral-200">
+                      Standard Enterprise Governance Tree Active
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-xl font-bold text-aurora-neutral-900 mt-2">
+                  Active Policy Governance Tree & Rule Matrix
+                </h2>
+                <p className="text-xs text-aurora-neutral-600 mt-1">
+                  Hierarchical categorization of permitted communications, forbidden claims, and deterministic supervisor gates.
+                </p>
+              </div>
+
+              {onNavigateToPolicyTree && (
+                <button
+                  type="button"
+                  onClick={onNavigateToPolicyTree}
+                  className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 self-start sm:self-auto"
+                >
+                  <span>Open Interactive Tree Visualizer</span>
+                  <ExternalLink strokeWidth={1.5} className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Quick Search */}
+            <div className="relative">
+              <Search strokeWidth={1.5} className="w-4 h-4 text-aurora-neutral-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                value={policySearch}
+                onChange={(e) => setPolicySearch(e.target.value)}
+                placeholder="Search policy rules by code (POL-TX-001), category, permitted actions, or prohibitions..."
+                className="w-full pl-9 pr-3 py-2 bg-aurora-neutral-50 border border-aurora-neutral-200 rounded-lg text-xs text-aurora-neutral-900 focus:bg-white focus:ring-1 focus:ring-aurora-primary font-sans"
+              />
+            </div>
+          </div>
+
+          {/* Active Custom Policy Document Text Preview (if loaded) */}
+          {customPolicyDocText && (
+            <div className="bg-white p-5 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-2">
+              <div className="flex items-center space-x-2 pb-2 border-b border-aurora-neutral-200">
+                <FileText strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
+                  Active Custom Policy Document (Session Memory)
+                </h3>
+              </div>
+              <pre className="p-3 bg-aurora-neutral-50 rounded-lg border border-aurora-neutral-200 text-xs text-aurora-neutral-800 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto leading-relaxed">
+                {customPolicyDocText}
+              </pre>
+            </div>
+          )}
+
+          {/* Policy Categories Hierarchy Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white p-4 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-2">
+              <div className="flex items-center space-x-2 pb-2 border-b border-aurora-neutral-200">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-aurora-neutral-900">
+                  1. Transactional Governance
+                </h3>
+              </div>
+              <p className="text-xs text-aurora-neutral-600 leading-snug">
+                Covers payment receipts, transaction failures, automated refund guarantees, onboarding KYC, and delivery delay alerts.
+              </p>
+              <div className="pt-2 text-[11px] text-aurora-neutral-500 space-y-1">
+                <div>• Payment Succeeded / Order Failed (POL-TX-001)</div>
+                <div>• Payment Decline & Retry Link (POL-TX-002)</div>
+                <div>• Missing Application Documents (POL-TX-003)</div>
+                <div>• Automated Refund Status (POL-TX-004)</div>
+                <div>• Shipment Delay Update (POL-TX-005)</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-2">
+              <div className="flex items-center space-x-2 pb-2 border-b border-aurora-neutral-200">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-aurora-neutral-900">
+                  2. Safety & Governance Gates
+                </h3>
+              </div>
+              <p className="text-xs text-aurora-neutral-600 leading-snug">
+                Enforces PII privacy masking, customer message frequency fatigue caps, and supervisor escalation gates for financial concessions.
+              </p>
+              <div className="pt-2 text-[11px] text-aurora-neutral-500 space-y-1">
+                <div>• 24-Hour Fatigue Threshold (POL-FAT-001)</div>
+                <div>• Financial Approval / Goodwill Gate (POL-FIN-001)</div>
+                <div>• PII Masking & PCI Compliance (POL-PRV-001)</div>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 rounded-xl border border-aurora-neutral-200 shadow-sm space-y-2">
+              <div className="flex items-center space-x-2 pb-2 border-b border-aurora-neutral-200">
+                <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                <h3 className="font-bold text-xs uppercase tracking-wider text-aurora-neutral-900">
+                  3. Promotional & Opt-in
+                </h3>
+              </div>
+              <p className="text-xs text-aurora-neutral-600 leading-snug">
+                Governs marketing campaigns, upsells, discount vouchers, and mandatory explicit consent verification before dispatch.
+              </p>
+              <div className="pt-2 text-[11px] text-aurora-neutral-500 space-y-1">
+                <div>• Verified Consent Requirement (POL-CONS-001)</div>
+                <div>• Frequency Capping (Max 2 Promo/Day)</div>
+                <div>• 1-Tap Opt-Out Compliance Link</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Active Rules Breakdown Table */}
+          <div className="bg-white rounded-xl border border-aurora-neutral-200 shadow-sm p-6 space-y-4">
+            <h3 className="text-sm font-bold text-aurora-neutral-900">
+              Active Policy Rules Matrix
+            </h3>
+
+            <div className="border border-aurora-neutral-200 rounded-lg overflow-hidden">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-aurora-neutral-50 text-aurora-neutral-600 font-bold border-b border-aurora-neutral-200">
+                  <tr>
+                    <th className="p-3 w-28">Rule Code</th>
+                    <th className="p-3 w-40">Rule Name</th>
+                    <th className="p-3">Permitted Actions (Directives)</th>
+                    <th className="p-3">Prohibited Claims (Constraints)</th>
+                    <th className="p-3 w-32 text-center">Supervisor Approval</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-aurora-neutral-200">
+                  {[
+                    {
+                      code: 'POL-TX-001',
+                      name: 'Payment Capture / Order Failure',
+                      permitted: 'Cite payment ID, confirm auto-refund initiation within 3-5 business days, reassure zero customer action.',
+                      prohibited: 'Do not ask customer to re-pay immediately. Do not promise unverified immediate replacement.',
+                      escalation: 'No',
+                    },
+                    {
+                      code: 'POL-TX-002',
+                      name: 'Payment Decline / Retry',
+                      permitted: 'Provide secure retry link, state general decline category without technical codes.',
+                      prohibited: 'Never expose bank error logs or trigger auto-charge without explicit consent.',
+                      escalation: 'No',
+                    },
+                    {
+                      code: 'POL-TX-003',
+                      name: 'Incomplete KYC / Documents',
+                      permitted: 'List exact missing documents, acceptable formats (PDF/PNG), and clear upload deadline.',
+                      prohibited: 'Do not request plain text passwords or sensitive ID over unencrypted channels.',
+                      escalation: 'No',
+                    },
+                    {
+                      code: 'POL-TX-004',
+                      name: 'Automated Refund Status',
+                      permitted: 'Provide payment ARN or refund reference number, reassure safe return to original account.',
+                      prohibited: 'Do not invent bank turnaround times outside established 3-5 day window.',
+                      escalation: 'No',
+                    },
+                    {
+                      code: 'POL-FIN-001',
+                      name: 'Financial Commitment & Compensation',
+                      permitted: 'Route all goodwill credit, cash compensation, or fee waiver requests to human supervisor review.',
+                      prohibited: 'Agents must never promise monetary compensation or vouchers autonomously.',
+                      escalation: 'Mandatory',
+                    },
+                    {
+                      code: 'POL-FAT-001',
+                      name: 'Communication Fatigue Limits',
+                      permitted: 'Suppress non-critical promotional communications if customer received 2+ messages in last 24h.',
+                      prohibited: 'Never send marketing messages to fatigue-saturated or highly frustrated customers.',
+                      escalation: 'No',
+                    },
+                    {
+                      code: 'POL-PRV-001',
+                      name: 'Privacy & Data Masking',
+                      permitted: 'Display masked identifiers (e.g. card ending **** 4012, masked email a***@domain.com).',
+                      prohibited: 'Never include full 16-digit card numbers, CVVs, passwords, or raw database keys.',
+                      escalation: 'No',
+                    },
+                    {
+                      code: 'POL-CONS-001',
+                      name: 'Promotional Consent Verification',
+                      permitted: 'Deliver tailored promotional offers only when customer has explicit opted-in status recorded.',
+                      prohibited: 'Zero promotional messages permitted without active verified consent.',
+                      escalation: 'No',
+                    },
+                  ]
+                    .filter((r) => {
+                      if (!policySearch.trim()) return true;
+                      const q = policySearch.toLowerCase();
+                      return (
+                        r.code.toLowerCase().includes(q) ||
+                        r.name.toLowerCase().includes(q) ||
+                        r.permitted.toLowerCase().includes(q) ||
+                        r.prohibited.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((rule) => (
+                      <tr key={rule.code} className="hover:bg-aurora-neutral-50/70 transition">
+                        <td className="p-3 font-mono font-bold text-aurora-primary whitespace-nowrap">
+                          {rule.code}
+                        </td>
+                        <td className="p-3 font-semibold text-aurora-neutral-900">
+                          {rule.name}
+                        </td>
+                        <td className="p-3 text-emerald-950 bg-emerald-50/20">
+                          {rule.permitted}
+                        </td>
+                        <td className="p-3 text-red-950 bg-red-50/20">
+                          {rule.prohibited}
+                        </td>
+                        <td className="p-3 text-center">
+                          {rule.escalation === 'Mandatory' ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+                              Mandatory
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-aurora-neutral-100 text-aurora-neutral-600">
+                              Standard
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
             </div>
           </div>
         </div>

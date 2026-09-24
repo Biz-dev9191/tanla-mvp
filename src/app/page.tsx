@@ -31,6 +31,7 @@ export default function Home() {
   const [selectedPolicyNode, setSelectedPolicyNode] = useState<PolicyTreeNode | null>(null);
   const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
   const [customPolicyRules, setCustomPolicyRules] = useState<any[]>([]);
+  const [customPolicyDocText, setCustomPolicyDocText] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Load history from localStorage on mount
@@ -67,12 +68,17 @@ export default function Home() {
       const geminiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_gemini_key') || undefined : undefined;
       const openaiKey = typeof window !== 'undefined' ? localStorage.getItem('aurora_openai_key') || undefined : undefined;
 
+      const activeRules = payload.customRules !== undefined ? payload.customRules : (customPolicyRules.length > 0 ? customPolicyRules : undefined);
+      const activeDocText = payload.customPolicyDocText !== undefined ? payload.customPolicyDocText : (customPolicyDocText || undefined);
+
       const res = await fetch('/api/orchestrate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...payload,
-          customRules: customPolicyRules.length > 0 ? customPolicyRules : undefined,
+          customRules: activeRules,
+          customPolicyDocText: activeDocText,
+          useSamplePolicyTree: true,
           geminiKey,
           openaiKey,
         }),
@@ -145,19 +151,39 @@ export default function Home() {
       customer: currentResult.customer,
       event: currentResult.event,
       objective: updatedObjective,
+      customRules: customPolicyRules,
+      customPolicyDocText: customPolicyDocText || undefined,
     });
   };
 
-  // Dynamic policy applied
-  const handleApplyDynamicPolicy = (result: DynamicPolicyParseResult) => {
+  // Dynamic policy applied: Stores policy in session state, re-executes pipeline, lands on preview page
+  const handleApplyDynamicPolicy = async (result: DynamicPolicyParseResult, rawPolicyText?: string) => {
     setCustomPolicyTree(result.tree);
     setCustomPolicyRules(result.rules);
+    if (rawPolicyText) {
+      setCustomPolicyDocText(rawPolicyText);
+    }
+
     if (currentResult) {
-      setCurrentResult({
-        ...currentResult,
-        appliedPolicies: result.rules,
+      await handleRunOrchestration({
+        customer: currentResult.customer,
+        event: currentResult.event,
+        objective: currentResult.objective,
+        customRules: result.rules,
+        customPolicyDocText: rawPolicyText || customPolicyDocText || undefined,
+        useSamplePolicyTree: true,
+      });
+    } else {
+      await handleRunOrchestration({
+        customerProfileText: "Customer: Standard Customer, Segment: Standard",
+        eventHistoryText: "Payment succeeded for online transaction, order confirmation pending",
+        objectiveText: "Primary Objective: Reassure customer of order status and payment safety",
+        customRules: result.rules,
+        customPolicyDocText: rawPolicyText || undefined,
+        useSamplePolicyTree: true,
       });
     }
+    setActiveTab('control-room');
   };
 
 
@@ -383,21 +409,55 @@ export default function Home() {
         {/* Tab 3: Policy Tree */}
         {activeTab === 'policy-tree' && (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-            <div className="pb-4 border-b border-aurora-neutral-200">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-                Policy Governance
-              </span>
-              <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-                Policy Tree & Governance Rules
-              </h1>
-              <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-                View governance rules or upload custom policy documents to dynamically steer agent communications.
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={() => setActiveTab('brief')}
+                    className="p-1 text-aurora-neutral-500 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-200 rounded"
+                    title="Back to Brief"
+                  >
+                    <ArrowLeft strokeWidth={1.5} className="w-4 h-4" />
+                  </button>
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+                    Policy Governance
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
+                  Policy Tree & Governance Rules
+                </h1>
+                <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
+                  View governance rules or upload custom policy documents to dynamically steer agent communications.
+                </p>
+              </div>
+
+              {/* Top Navigation CTAs */}
+              <div className="flex items-center space-x-2 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('brief')}
+                  className="px-3.5 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
+                >
+                  <ArrowLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
+                  <span>Back to Brief</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('control-room')}
+                  className="px-3.5 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
+                >
+                  <span>Go to Decision & Previews</span>
+                  <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
+                </button>
+              </div>
             </div>
 
             {/* Dynamic Policy Document Uploader */}
             <div id="policy-uploader-card">
-              <PolicyUploader onApplyDynamicPolicy={handleApplyDynamicPolicy} />
+              <PolicyUploader
+                onApplyDynamicPolicy={handleApplyDynamicPolicy}
+                activePolicyText={customPolicyDocText || undefined}
+              />
             </div>
 
             {/* Interactive Policy Tree */}
@@ -412,6 +472,26 @@ export default function Home() {
               }}
             />
 
+            {/* Bottom Navigation CTAs */}
+            <div className="flex flex-col sm:flex-row items-center justify-between pt-6 border-t border-aurora-neutral-200 gap-3">
+              <button
+                type="button"
+                onClick={() => setActiveTab('brief')}
+                className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-1.5"
+              >
+                <ArrowLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
+                <span>Back to Communication Brief</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab('control-room')}
+                className="w-full sm:w-auto px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center justify-center space-x-1.5"
+              >
+                <span>Go to Decision & Previews</span>
+                <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
             <PolicyDetailModal
               node={selectedPolicyNode}
               onClose={() => setSelectedPolicyNode(null)}
@@ -420,7 +500,14 @@ export default function Home() {
         )}
 
         {/* Tab 4: Knowledge Base */}
-        {activeTab === 'knowledge-base' && <KnowledgeBaseView />}
+        {activeTab === 'knowledge-base' && (
+          <KnowledgeBaseView
+            customPolicyTree={customPolicyTree}
+            customPolicyRules={customPolicyRules}
+            customPolicyDocText={customPolicyDocText}
+            onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
+          />
+        )}
 
         {/* Tab 5: History */}
         {activeTab === 'history' && (

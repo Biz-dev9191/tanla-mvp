@@ -14,7 +14,24 @@ export interface CustomerPersona {
   exampleClosing: string;
 }
 
+export const DEFAULT_CUSTOMER_PERSONA: CustomerPersona = {
+  id: 'standard-digital-customer',
+  name: 'Standard Customer (Default Profile)',
+  cohort: 'Millennial (27–42)',
+  segment: 'Standard',
+  digitalProfile: 'Digital-first',
+  preferredChannel: 'WhatsApp',
+  archetype: 'Digital Native & Everyday Consumer',
+  tonePreference: 'Clear, reassuring, professional, direct, zero corporate fluff',
+  communicationStyle: 'Values concise updates, direct resolutions, and transparent timelines.',
+  frustrationTriggers: ['Slow refund processing', 'Unclear instructions', 'Bureaucracy'],
+  reassuranceRequirements: 'Explicit status confirmation, clear reference, and zero unnecessary steps.',
+  exampleGreeting: 'Hello Customer,',
+  exampleClosing: 'Aurora Cloud Operations',
+};
+
 export const CUSTOMER_PERSONA_CATALOG: CustomerPersona[] = [
+  DEFAULT_CUSTOMER_PERSONA,
   // --- Gen Z Personas (18-26) ---
   {
     id: 'genz-mobile-minimalist',
@@ -435,8 +452,19 @@ export function matchCustomerPersona(
     preferredChannel = preferredChannelArg || 'WhatsApp';
   }
 
+  // If default customer profile with standard values, return DEFAULT_CUSTOMER_PERSONA
+  const custName = typeof customerOrAge === 'object' && customerOrAge !== null ? customerOrAge.name : '';
+  const isDefaultProfile = (!custName || custName.toLowerCase() === 'customer' || custName.toLowerCase() === 'valued customer') &&
+    segment === 'Standard' &&
+    sentiment === 'Neutral';
+
+  if (isDefaultProfile) {
+    return DEFAULT_CUSTOMER_PERSONA;
+  }
+
   // 1. Filter by Cohort / Age
   let matched = CUSTOMER_PERSONA_CATALOG.filter((p) => {
+    if (p.id === 'standard-digital-customer') return false; // Match specific persona first
     if (age <= 26 || ageGroup === '18–24') return p.cohort.startsWith('Gen Z');
     if (age <= 42 || ageGroup === '25–34' || ageGroup === '35–44') return p.cohort.startsWith('Millennial');
     if (age <= 58 || ageGroup === '45–54') return p.cohort.startsWith('Gen X');
@@ -459,5 +487,5 @@ export function matchCustomerPersona(
     if (vipMatched.length > 0) return vipMatched[0];
   }
 
-  return matched[0] || CUSTOMER_PERSONA_CATALOG[0];
+  return matched[0] || DEFAULT_CUSTOMER_PERSONA;
 }

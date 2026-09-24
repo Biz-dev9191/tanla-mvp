@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import { Upload, FileText, Sparkles, CheckCircle2, RefreshCw } from 'lucide-react';
+import { Upload, FileText, Sparkles, CheckCircle2, ArrowRight } from 'lucide-react';
 import { parsePolicyDocumentText, DynamicPolicyParseResult } from '@/core/policy-generator';
 
 interface PolicyUploaderProps {
-  onApplyDynamicPolicy: (result: DynamicPolicyParseResult) => void;
+  onApplyDynamicPolicy: (result: DynamicPolicyParseResult, rawPolicyText?: string) => void;
+  activePolicyText?: string;
 }
 
-export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPolicy }) => {
-  const [policyText, setPolicyText] = useState("");
+export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPolicy, activePolicyText }) => {
+  const [policyText, setPolicyText] = useState(activePolicyText || "");
+  const [appliedPolicyText, setAppliedPolicyText] = useState<string | null>(activePolicyText || null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
@@ -39,19 +41,21 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
     reader.onload = (event) => {
       const content = event.target?.result as string;
       setPolicyText(content);
-      const parsed = parsePolicyDocumentText(content);
-      onApplyDynamicPolicy(parsed);
-      setStatusMessage(`Parsed ${parsed.rules.length} policy rules from "${file.name}" and regenerated policy tree.`);
+      setStatusMessage(`Loaded "${file.name}". Click "Apply to Current Run" to parse and update communication outputs.`);
     };
     reader.readAsText(file);
   };
 
-  const handleGenerate = () => {
-    if (!policyText.trim()) return;
-    const parsed = parsePolicyDocumentText(policyText);
-    onApplyDynamicPolicy(parsed);
-    setStatusMessage(`Successfully generated dynamic policy tree with ${parsed.rules.length} governance rules.`);
+  const handleApply = () => {
+    const trimmed = policyText.trim();
+    if (!trimmed) return;
+    const parsed = parsePolicyDocumentText(trimmed);
+    setAppliedPolicyText(trimmed);
+    onApplyDynamicPolicy(parsed, trimmed);
+    setStatusMessage(`Successfully applied policy (${parsed.rules.length} rules) to current session. Regenerating preview.`);
   };
+
+  const isApplyDisabled = !policyText.trim() || policyText.trim() === appliedPolicyText?.trim();
 
   return (
     <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
@@ -67,9 +71,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
           onClick={() => {
             setPolicyText(sampleFintechPolicy);
             setFileName("fintech-policy-sample.md");
-            const parsed = parsePolicyDocumentText(sampleFintechPolicy);
-            onApplyDynamicPolicy(parsed);
-            setStatusMessage("Loaded and parsed sample Fintech Communication Policy.");
+            setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Apply to Current Run' to execute.");
           }}
           className="text-xs text-aurora-primary font-semibold hover:underline flex items-center space-x-1"
         >
@@ -99,21 +101,25 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
             value={policyText}
             onChange={(e) => setPolicyText(e.target.value)}
             placeholder="Or paste company policy guidelines, restrictions, required disclosures, and escalation rules here..."
-            className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-mono leading-relaxed"
+            className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-sans leading-relaxed"
           />
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
             <span className="text-[11px] text-aurora-neutral-500">
               The AI parses categories, permitted actions, prohibited claims, and human approval triggers.
             </span>
             <button
               type="button"
-              onClick={handleGenerate}
-              disabled={!policyText.trim()}
-              className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded text-xs font-bold shadow-sm transition disabled:opacity-50 flex items-center space-x-1"
+              onClick={handleApply}
+              disabled={isApplyDisabled}
+              className={`px-4 py-2 rounded text-xs font-bold shadow-sm transition flex items-center justify-center space-x-1.5 ${
+                isApplyDisabled
+                  ? 'bg-aurora-neutral-300 text-aurora-neutral-500 cursor-not-allowed opacity-60'
+                  : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
+              }`}
             >
-              <RefreshCw strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>Generate & Apply Policy Tree</span>
+              <span>Apply to Current Run</span>
+              <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
             </button>
           </div>
         </div>
@@ -128,3 +134,4 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onApplyDynamicPo
     </div>
   );
 };
+
