@@ -35,6 +35,7 @@ const POLICY_CODE_MAP: { [key: string]: { code: string; color: string } } = {
 };
 
 export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunningIndex, reflectionLoops, clauseCitations }) => {
+  const [isSectionExpanded, setIsSectionExpanded] = useState<boolean>(false);
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const getStatusBadge = (status: AgentExecutionStep['status']) => {
@@ -85,30 +86,56 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
   };
 
   return (
-    <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-aurora-neutral-200">
-        <div className="flex items-center space-x-2">
-          <Bot strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
+    <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all duration-200">
+      {/* Header - Collapsible */}
+      <div
+        onClick={() => setIsSectionExpanded(!isSectionExpanded)}
+        className={`flex items-center justify-between p-4 sm:p-5 bg-aurora-neutral-0 hover:bg-aurora-neutral-100/60 cursor-pointer ${
+          isSectionExpanded ? 'border-b border-aurora-neutral-200' : ''
+        } select-none transition`}
+      >
+        <div className="flex items-center space-x-3">
+          <div className="p-2 rounded-md bg-aurora-primary-light text-aurora-primary">
+            <Bot strokeWidth={1.5} className="w-5 h-5" />
+          </div>
           <div>
-            <h2 className="text-sm font-bold text-aurora-neutral-900">Multi-Agent Execution Pipeline</h2>
-            <p className="text-[11px] text-aurora-neutral-500">7 Specialized Collaborative Agents Governed by Dedicated Policy Documents</p>
+            <div className="flex items-center space-x-2">
+              <h2 className="text-sm font-bold text-aurora-neutral-900">Multi-Agent Execution Pipeline</h2>
+              <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-aurora-primary-light text-aurora-primary border border-aurora-primary/20">
+                {steps.length} Collaborative Agents
+              </span>
+            </div>
+            <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
+              Multi-stage reflection and orchestration pipeline governed by deterministic policy documents
+            </p>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          {reflectionLoops && reflectionLoops.length > 0 && (
-            <span className="px-2 py-0.5 rounded bg-aurora-accent-light text-aurora-accent font-bold text-[10px] border border-aurora-accent/20">
-              {reflectionLoops.length} Reflection Loops
+
+        <div className="flex items-center space-x-3">
+          <div className="hidden sm:flex items-center space-x-2 text-xs">
+            {reflectionLoops && reflectionLoops.length > 0 && (
+              <span className="px-2 py-0.5 rounded bg-aurora-accent-light text-aurora-accent font-bold text-[10px] border border-aurora-accent/20">
+                {reflectionLoops.length} Reflection Loops
+              </span>
+            )}
+            <span className="px-2 py-0.5 rounded bg-aurora-neutral-100 border border-aurora-neutral-200 text-aurora-neutral-700 font-mono text-[11px]">
+              {steps.filter((s) => s.status === 'completed' || s.status === 'escalated' || s.status === 'suppressed').length} / {steps.length} Steps
             </span>
-          )}
-          <span className="text-xs text-aurora-neutral-500 font-mono">
-            {steps.filter((s) => s.status === 'completed' || s.status === 'escalated' || s.status === 'suppressed').length} / {steps.length} Steps
-          </span>
+          </div>
+
+          <div className="p-1 rounded text-aurora-neutral-500 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-200 transition">
+            {isSectionExpanded ? (
+              <ChevronUp strokeWidth={1.5} className="w-5 h-5" />
+            ) : (
+              <ChevronDown strokeWidth={1.5} className="w-5 h-5" />
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Steps List */}
-      <div className="space-y-3">
+      {/* Collapsible Content Body */}
+      {isSectionExpanded && (
+        <div className="p-4 sm:p-5 space-y-3 bg-aurora-neutral-50/50">
         {steps.map((step, idx) => {
           const isExpanded = expandedIndex === idx;
           const policyMeta = POLICY_CODE_MAP[step.agentId] || { code: 'GOV-2026', color: 'bg-gray-50 text-gray-700 border-gray-200' };
@@ -237,7 +264,8 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
           );
         })}
       </div>
-    </div>
-  );
+    )}
+  </div>
+);
 };
 

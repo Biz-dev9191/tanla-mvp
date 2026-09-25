@@ -239,8 +239,8 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         <div className="flex items-center space-x-2">
           <MessageSquareText strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
           <div>
-            <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Roleplay & Response Simulator</h3>
-            <p className="text-[11px] text-aurora-neutral-500">Simulate how customers react to this message and generate automated follow-up responses in real time</p>
+            <h3 className="text-sm font-bold text-aurora-neutral-900">Customer Turnaround & Sentiment Simulator</h3>
+            <p className="text-[11px] text-aurora-neutral-500">Stress-test customer reactions across behavioral personas and evaluate automated multi-turn recovery</p>
           </div>
         </div>
 

@@ -409,14 +409,7 @@ export default function Home() {
                   humanApprovalStatus={currentResult.humanApprovalStatus}
                 />
 
-                {/* 2. Multi-Agent Execution Pipeline with Reflection Loops */}
-                <AgentStepper
-                  steps={currentResult.agentSteps}
-                  reflectionLoops={currentResult.reflectionLoops}
-                  clauseCitations={currentResult.clauseCitations}
-                />
-
-                {/* 3. Customer Roleplay & Multi-Turn Situation Simulator */}
+                {/* 2. Customer Turnaround & Sentiment Simulator */}
                 <CustomerResponseSimulator
                   customer={currentResult.customer}
                   event={currentResult.event}
@@ -425,6 +418,13 @@ export default function Home() {
                       currentResult.strategy.selectedChannel.toLowerCase() as keyof typeof currentResult.messages
                     ] || currentResult.messages.whatsapp
                   }
+                />
+
+                {/* 3. Multi-Agent Execution Pipeline (Collapsible, default collapsed) */}
+                <AgentStepper
+                  steps={currentResult.agentSteps}
+                  reflectionLoops={currentResult.reflectionLoops}
+                  clauseCitations={currentResult.clauseCitations}
                 />
 
                 {/* 4. Expandable Analysis Section (Collapsed by default) */}

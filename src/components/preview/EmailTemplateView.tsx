@@ -58,8 +58,22 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
       {/* Email Body Canvas */}
       <div className="p-6 bg-white min-h-[300px]">
         {/* Aurora Cloud Email Header Logo */}
-        <div className="pb-4 mb-4 border-b border-aurora-neutral-200 flex items-center space-x-2">
-          <img src="/icon.svg" alt="Aurora Cloud" className="w-6 h-6 rounded-md shadow-2xs flex-shrink-0" />
+        <div className="pb-4 mb-4 border-b border-aurora-neutral-200 flex items-center space-x-2 select-none">
+          <div className="w-6 h-6 flex-shrink-0 rounded-md shadow-2xs overflow-hidden">
+            <svg
+              viewBox="0 0 64 64"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+              className="w-full h-full"
+            >
+              <rect width="64" height="64" rx="16" fill="#2B4C7E" />
+              <rect x="1" y="1" width="62" height="62" rx="15" stroke="#FFFFFF" strokeWidth="1.2" strokeOpacity="0.3" />
+              <path d="M16 42C21 34 26 24 35 24C44 24 40 40 48 40" stroke="#FFFFFF" strokeWidth="4" strokeLinecap="round" />
+              <path d="M16 26C24 26 28 42 37 42C44 42 46 32 50 28" stroke="#BFDBFE" strokeWidth="3" strokeLinecap="round" />
+              <circle cx="36" cy="33" r="2.5" fill="#FFFFFF" />
+              <path d="M48 18L49 20L51 21L49 22L48 24L47 22L45 21L47 20Z" fill="#FFFFFF" />
+            </svg>
+          </div>
           <span className="font-bold text-xs text-aurora-neutral-900 tracking-tight">Aurora Cloud</span>
         </div>
 
