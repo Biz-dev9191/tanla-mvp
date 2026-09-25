@@ -26,10 +26,6 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
             <Mail strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
             <span className="text-xs font-bold text-aurora-neutral-900">Enterprise Email Client</span>
           </div>
-          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 flex items-center space-x-1.5 shadow-2xs">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Live Dispatch Channel</span>
-          </span>
         </div>
 
         <div className="space-y-1.5 text-xs">
