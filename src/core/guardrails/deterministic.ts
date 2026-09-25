@@ -69,8 +69,8 @@ export function runDeterministicPreChecks(
     return {
       passed: true,
       action: 'REQUIRE_HUMAN_APPROVAL',
-      ruleCode: 'POL-FIN-001',
-      reason: 'Human supervisor approval required by Policy POL-FIN-001 for monetary compensation/credit vouchers above $0.00 or escalated disputes.',
+      ruleCode: 'SUPERVISOR_GATE',
+      reason: 'Human supervisor approval required for monetary compensation/credit vouchers above $0.00 or escalated disputes.',
     };
   }
 

@@ -110,11 +110,11 @@ export function runMessageGenerationAgent(
     voiceScript = `Hello ${firstName}, this is Aurora Cloud with an update on your application. Your identity is verified, and we just need a copy of your recent address proof to finalize your account. Please check your email for the secure upload link. Thank you.`;
 
   } else if (event.eventType === 'customer_complaint') {
-    waText = `${waGreeting} we reviewed your report regarding ${orderRef}. Your delivery fee waiver has been applied.\n\nOur supervisor team is currently reviewing your account credit request under policy POL-FIN-001 and will provide a direct update within 4 business hours.`;
+    waText = `${waGreeting} we reviewed your report regarding ${orderRef}. Your delivery fee waiver has been applied.\n\nOur supervisor team is currently reviewing your account credit request and will provide a direct update within 4 business hours.`;
     smsText = `Aurora Cloud: Hi ${firstName}, fee waiver applied for ${orderRef}. Your credit request is currently under supervisor review.`;
 
     emailSubject = hasOrderId ? `Update regarding your support inquiry on order ${event.orderId}` : `Update regarding your recent support inquiry`;
-    emailBody = `${emailGreeting}\n\nWe understand how critical timely delivery is for your operations, and we sincerely regret the delay encountered with ${orderRef}.\n\nStatus update on your account:\n- Delivery fee waiver: Applied to your account.\n- Account credit review: Escalated to our Operations Supervisor for formal review under policy POL-FIN-001.\n\nA senior account manager will contact you within 4 business hours with the final resolution.\n\n${emailClosing}`;
+    emailBody = `${emailGreeting}\n\nWe understand how critical timely delivery is for your operations, and we sincerely regret the delay encountered with ${orderRef}.\n\nStatus update on your account:\n- Delivery fee waiver: Applied to your account.\n- Account credit review: Escalated to our Operations Supervisor for formal review.\n\nA senior account manager will contact you within 4 business hours with the final resolution.\n\n${emailClosing}`;
 
     voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent support inquiry on ${orderRef}. We have waived the delivery fee and our operations supervisor is reviewing your credit request. A manager will follow up shortly.`;
 

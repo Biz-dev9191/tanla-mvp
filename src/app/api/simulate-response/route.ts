@@ -83,7 +83,7 @@ Generate an automated, empathetic, policy-compliant agent reply following the en
 CRITICAL GOVERNANCE RULES:
 1. Strictly ZERO exclamation marks anywhere in the output.
 2. Ground all facts in the customer context: Customer="${customerFirstName}", Event="${eventTitle}".
-3. If the customer asks for a discount/coupon/goodwill compensation, cite Policy POL-FIN-001 (supervisor approval required for compensation above $0).
+3. If the customer asks for a discount/coupon/goodwill compensation, state that discretionary compensation or vouchers require human supervisor authorization.
 4. If the customer asks about refund timelines, state 3 to 5 business days banking cycle with zero action required.
 5. If the customer asks about reference IDs, cite the verified reference or state that it is recorded in their dashboard.
 
@@ -161,7 +161,7 @@ Generate next natural customer message without exclamation marks:
       if (lastMsg.includes('when') || lastMsg.includes('time') || lastMsg.includes('bank') || lastMsg.includes('deposit') || lastMsg.includes('show') || lastMsg.includes('reflect')) {
         agentReply = `Hello ${customerFirstName}, refund deposits typically reflect in your original payment method within 3 to 5 business days depending on your bank's processing cycle. No further action is required from your side.`;
       } else if (lastMsg.includes('coupon') || lastMsg.includes('discount') || lastMsg.includes('compensation') || lastMsg.includes('credit') || lastMsg.includes('voucher') || lastMsg.includes('waiver')) {
-        agentReply = `Hello ${customerFirstName}, while the full refund has been initiated, goodwill compensation and vouchers require supervisor authorization under policy POL-FIN-001. We have recorded your request and routed it to our supervisor review queue.`;
+        agentReply = `Hello ${customerFirstName}, while the full refund has been initiated, goodwill compensation and vouchers require supervisor authorization. We have recorded your request and routed it to our supervisor review queue.`;
       } else if (lastMsg.includes('reference') || lastMsg.includes('id') || lastMsg.includes('receipt') || lastMsg.includes('number') || lastMsg.includes('track')) {
         agentReply = `Hello ${customerFirstName}, your transaction refund details have been logged and verified in your account dashboard. You will receive an automated confirmation as soon as settlement completes.`;
       } else if (lastMsg.includes('action') || lastMsg.includes('call') || lastMsg.includes('phone') || lastMsg.includes('need') || lastMsg.includes('step')) {

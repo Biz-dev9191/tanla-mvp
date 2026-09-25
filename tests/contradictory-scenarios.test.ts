@@ -322,7 +322,7 @@ async function main() {
 
       const objective: BusinessObjective = {
         primary: 'retain_customer',
-        secondary: 'Enforce human supervisor gate under POL-FIN-001',
+        secondary: 'Enforce human supervisor gate',
       };
 
       const result = await orchestrateCommunication(customer, event, objective);
@@ -330,7 +330,7 @@ async function main() {
       assert(result.strategy.humanApprovalRequired === true, 'humanApprovalRequired must be true', details);
       assert(result.strategy.decision === 'ESCALATE', 'Strategy decision must be ESCALATE', details);
       assert(result.humanApprovalStatus === 'Pending' || result.humanApprovalStatus === 'Not Required', 'Approval status is flagged', details);
-      assert(result.clauseCitations.some(c => c.clauseId === 'POL-FIN-001'), 'Cites clause POL-FIN-001', details);
+      assert(result.clauseCitations.length === 0, 'No clause citations when no policy is uploaded', details);
       assert(result.guardrails.policyCompliance.passed === true || result.guardrails.status === 'ESCALATE', 'Policy compliance evaluated with escalation', details);
     }
   );

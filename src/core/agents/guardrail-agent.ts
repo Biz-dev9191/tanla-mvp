@@ -46,7 +46,7 @@ export function runGuardrailAgent(
   const hasCustomPolicy = Boolean(activePolicyRules && activePolicyRules.length > 0);
   const financialGuardrailApplicable = hasCustomPolicy
     ? policyMentionsFinancialGuardrail(activePolicyRules!)
-    : true; // Standard baseline uses POL-FIN-001
+    : false;
 
   const mentionsCompensation = /coupon|voucher|\$\d+\s*credit|free\s*month/i.test(fullText);
   const unauthorizedCompensation =
@@ -62,7 +62,7 @@ export function runGuardrailAgent(
   chainOfThought.push(
     financialGuardrailApplicable
       ? `[Check 2 - Financial Liability & Compensation Gate] Discretionary credit scan: ${unauthorizedCompensation ? 'FAILED (Unapproved compensation detected)' : 'PASSED (Within autonomous financial limits)'}.`
-      : `[Check 2 - Financial Liability & Compensation Gate] SKIPPED: Active policy does not specify compensation or coupon guardrails.`
+      : `[Check 2 - Financial Liability & Compensation Gate] SKIPPED: No custom policy uploaded or policy does not specify compensation limits.`
   );
 
   // Chain-of-thought 3: Factual Grounding & Anti-Hallucination
@@ -143,8 +143,8 @@ export function runGuardrailAgent(
     policyCompliance: {
       passed: !unauthorizedCompensation,
       details: unauthorizedCompensation
-        ? "Flagged: Compensation offer requires human supervisor approval under POL-FIN-001."
-        : "Passed: Fully aligned with transactional, refund, and privacy governance policies.",
+        ? "Flagged: Compensation offer requires human supervisor approval."
+        : "Passed: Fully aligned with communication safety guardrails.",
     },
     privacyCheck: {
       passed: !hasUnmaskedCard,

@@ -212,7 +212,7 @@ export const PRESET_SCENARIOS: PresetScenario[] = [
     },
     objective: {
       primary: "retain_customer",
-      secondary: "Enforce policy rule POL-FIN-001 (Human supervisor approval for compensation)",
+      secondary: "Enforce human supervisor approval for discretionary compensation",
       customNote: "Acknowledge frustration, confirm $25 fee waiver, and route $150 compensation request to human review.",
     },
   },

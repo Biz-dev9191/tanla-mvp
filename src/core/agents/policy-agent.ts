@@ -272,37 +272,10 @@ export function runPolicyAgent(
     (event.amount && /credit|voucher|waiver/i.test(event.amount));
 
   if (isSupervisorRequired) {
-    appliedPolicyPath.push("Enterprise Policy", "Financial Governance", "POL-FIN-001 (Supervisor Authorization)");
-    const polFin001Rule: PolicyRule = {
-      id: "POL-FIN-001",
-      nodePath: "Enterprise Policy > Financial Governance",
-      category: "financial",
-      title: "Financial Commitments & Discretionary Compensation",
-      rule: "Goodwill compensation or credit vouchers above $0.00 require documented human supervisor approval prior to outbound transmission.",
-      condition: "Discretionary compensation or goodwill credit request",
-      allowedActions: ["Acknowledge Dispute", "Apply Standard Fee Waiver", "Route to Supervisor Queue"],
-      prohibitedActions: ["Grant Unauthorized Cash Refund Above Policy Cap", "Promise Instant Settlement Date Without Verification"],
-      escalationRequired: true,
-      escalationTriggered: true,
-      priority: "high",
-    };
-    appliedPolicies.push(polFin001Rule);
-
-    clauseCitations.push({
-      clauseId: "POL-FIN-001",
-      sourceDocument: "Enterprise Customer Communication Policy",
-      section: "Section 3.2",
-      title: "Financial Commitments & Discretionary Compensation",
-      excerpt: "Goodwill compensation or credit vouchers above $0.00 require documented human supervisor approval prior to outbound transmission.",
-      relevanceScore: 0.98,
-      directiveType: "MANDATORY",
-      complianceRequirement: "Human supervisor approval required before issuing goodwill compensation or credit vouchers.",
-    });
-
-    const approvalReason = "Human supervisor approval required by Policy POL-FIN-001 for discretionary financial compensation or escalated dispute review.";
+    const approvalReason = "Human supervisor review required based on business event escalation status (No custom policy document shared).";
 
     chainOfThought.push(
-      `[Step 1 - Standard Policy Evaluation] Triggered Policy POL-FIN-001: Event '${event.title}' involves financial credit/dispute resolution requiring supervisor authorization.`
+      `[Step 1 - Baseline Safety Check] Event '${event.title}' (Status: ${event.resolutionStatus}) requires supervisor authorization based on transaction status.`
     );
 
     const duration = Date.now() - startTime + 35;
@@ -310,10 +283,10 @@ export function runPolicyAgent(
       agentId: 'policy',
       agentName: 'Enterprise Policy & Compliance Agent',
       status: 'escalated',
-      summary: 'Flagged: Human supervisor authorization required under Policy POL-FIN-001',
+      summary: 'Human supervisor review required based on event status',
       details: [
-        `Enterprise Policy POL-FIN-001 evaluated against event '${event.title}'.`,
-        `Discretionary financial compensation / dispute credit flagged for supervisor authorization.`,
+        `Event '${event.title}' status is '${event.resolutionStatus}'.`,
+        `Business event requires human supervisor review before message dispatch.`,
         `FLAGGED ESCALATION: ${approvalReason}`,
       ],
       chainOfThought,
@@ -322,11 +295,11 @@ export function runPolicyAgent(
     };
 
     return {
-      appliedPolicyPath,
-      appliedPolicies,
-      clauseCitations,
-      allowedActions: ['Acknowledge Dispute', 'Apply Standard Fee Waiver', 'Route to Supervisor Queue'],
-      prohibitedActions: ['Grant Unauthorized Cash Refund Above Policy Cap', 'Promise Instant Settlement Date Without Verification'],
+      appliedPolicyPath: [],
+      appliedPolicies: [],
+      clauseCitations: [],
+      allowedActions: ['Route to Supervisor Queue', 'Acknowledge Event'],
+      prohibitedActions: [],
       humanApprovalRequired: true,
       approvalReason,
       chainOfThought,

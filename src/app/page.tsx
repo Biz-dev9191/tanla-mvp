@@ -413,6 +413,7 @@ export default function Home() {
                 <AgentStepper
                   steps={currentResult.agentSteps}
                   reflectionLoops={currentResult.reflectionLoops}
+                  clauseCitations={currentResult.clauseCitations}
                 />
 
                 {/* 3. Customer Roleplay & Multi-Turn Situation Simulator */}
@@ -438,8 +439,7 @@ export default function Home() {
                   hasPolicyTreeOrCitations={Boolean(
                     (currentResult.appliedPolicies && currentResult.appliedPolicies.length > 0) ||
                     (currentResult.clauseCitations && currentResult.clauseCitations.length > 0) ||
-                    (currentResult.policyTree !== null && currentResult.policyTree !== undefined) ||
-                    currentResult.strategy.humanApprovalRequired
+                    (currentResult.policyTree !== null && currentResult.policyTree !== undefined)
                   )}
                 />
               </>

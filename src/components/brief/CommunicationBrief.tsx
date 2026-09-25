@@ -56,7 +56,7 @@ const EVENT_TYPE_CONFIGS: Record<string, EventTypeFieldConfig> = {
     statusOptions: [
       { value: 'Refund Initiated', label: 'Refund Initiated' },
       { value: 'Requires Customer Action', label: 'Requires Customer Action' },
-      { value: 'Pending Approval', label: 'Pending Approval (POL-FIN-001)' },
+      { value: 'Pending Approval', label: 'Pending Approval' },
       { value: 'Resolved', label: 'Resolved' },
     ],
     verifiedFactsPlaceholder: 'e.g. Payment ID: PAY_99482, Refund to card 4012',

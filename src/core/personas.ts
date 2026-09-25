@@ -198,7 +198,7 @@ export const CUSTOMER_PERSONA_CATALOG: CustomerPersona[] = [
     tonePreference: 'Formal, competent, authoritative, structured',
     communicationStyle: 'Expects structured executive summaries, regulatory compliance, and senior account manager contacts.',
     frustrationTriggers: ['Unprofessional casual slang', 'Lack of accountability for service delays'],
-    reassuranceRequirements: 'Formal audit trail under policy POL-FIN-001 with senior manager follow-up.',
+    reassuranceRequirements: 'Formal audit trail with senior manager follow-up.',
     exampleGreeting: 'Dear Mr. Marcus,',
     exampleClosing: 'Sincerely,\nAurora Cloud Enterprise Leadership',
   },

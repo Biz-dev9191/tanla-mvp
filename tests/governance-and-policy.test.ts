@@ -130,8 +130,9 @@ async function main() {
       assert(result.strategy.decision === 'ESCALATE', 'Decision is ESCALATE', details);
       assert(result.strategy.humanApprovalRequired === true, 'humanApprovalRequired is true', details);
       assert(result.humanApprovalStatus === 'Pending', 'humanApprovalStatus is Pending', details);
-      assert(result.strategy.approvalReason?.includes('POL-FIN-001') === true, 'Approval reason cites POL-FIN-001', details);
-      assert(result.clauseCitations.some(c => c.clauseId === 'POL-FIN-001'), 'Cites POL-FIN-001 clause', details);
+      assert(result.strategy.approvalReason?.includes('supervisor') === true, 'Approval reason requires supervisor', details);
+      assert(result.clauseCitations.length === 0, 'No clause citations when no policy uploaded', details);
+      assert(result.appliedPolicies.length === 0, 'No applied policies when no policy uploaded', details);
     }
   );
 

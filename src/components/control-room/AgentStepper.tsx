@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { AgentExecutionStep, ReflectionLoopIteration } from '@/core/types';
+import { AgentExecutionStep, ReflectionLoopIteration, ClauseCitation } from '@/core/types';
 import { AGENT_GOVERNANCE_POLICIES } from '@/core/agent-policies';
 import {
   CheckCircle2,
@@ -21,6 +21,7 @@ interface AgentStepperProps {
   steps: AgentExecutionStep[];
   currentRunningIndex?: number;
   reflectionLoops?: ReflectionLoopIteration[];
+  clauseCitations?: ClauseCitation[];
 }
 
 const POLICY_CODE_MAP: { [key: string]: { code: string; color: string } } = {
@@ -33,7 +34,7 @@ const POLICY_CODE_MAP: { [key: string]: { code: string; color: string } } = {
   guardrail: { code: 'CSGAP-2026-v3.3', color: 'bg-teal-50 text-teal-700 border-teal-200' },
 };
 
-export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunningIndex, reflectionLoops }) => {
+export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunningIndex, reflectionLoops, clauseCitations }) => {
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
 
   const getStatusBadge = (status: AgentExecutionStep['status']) => {
@@ -175,15 +176,17 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
                             Human review is required before dispatch because this decision triggers a financial concession, goodwill compensation, or complaint escalation threshold.
                           </span>
                         </div>
-                        <div className="p-2 rounded bg-white/80 border border-amber-200 font-mono text-[11px] text-amber-900 space-y-1">
-                          <div className="font-bold flex items-center space-x-1">
-                            <FileText strokeWidth={1.5} className="w-3.5 h-3.5 text-amber-700" />
-                            <span>Governing Policy Citation: POL-FIN-001 (Section 3: Financial Commitments & Compensation)</span>
+                        {clauseCitations && clauseCitations.length > 0 && (
+                          <div className="p-2 rounded bg-white/80 border border-amber-200 font-mono text-[11px] text-amber-900 space-y-1">
+                            <div className="font-bold flex items-center space-x-1">
+                              <FileText strokeWidth={1.5} className="w-3.5 h-3.5 text-amber-700" />
+                              <span>Governing Policy Citation: {clauseCitations[0].clauseId} ({clauseCitations[0].section}: {clauseCitations[0].title})</span>
+                            </div>
+                            <p className="font-sans text-[11px] text-amber-950 leading-relaxed">
+                              "{clauseCitations[0].excerpt || clauseCitations[0].complianceRequirement}"
+                            </p>
                           </div>
-                          <p className="font-sans text-[11px] text-amber-950 leading-relaxed">
-                            "Agents must never grant goodwill compensation, fee waivers, or discount vouchers above $0 without Human Supervisor Approval. Any compensation request must be escalated to supervisor review."
-                          </p>
-                        </div>
+                        )}
                         <div className="text-[11px] text-amber-800">
                           <strong>Required Supervisor Action:</strong> Review customer interaction history, verify credit authorization in CRM, and click <strong>Approve & Send</strong> on the banner above.
                         </div>
@@ -191,19 +194,19 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
                     </div>
                   )}
 
-                  {/* 2. Governing Policy Documentation & Objectives */}
+                  {/* 2. Agent Execution Role & Framework */}
                   {policyDoc && (
                     <div className="p-3 rounded-lg bg-white border border-aurora-neutral-200 space-y-2">
                       <div className="flex items-center justify-between pb-1 border-b border-aurora-neutral-100">
                         <div className="flex items-center space-x-1.5 text-aurora-primary font-bold text-[11px]">
                           <Shield strokeWidth={1.5} className="w-3.5 h-3.5" />
-                          <span>Governing Policy Documentation ({policyDoc.policyCode})</span>
+                          <span>Agent Execution Role &amp; Framework ({policyDoc.policyCode})</span>
                         </div>
                         <span className="text-[10px] font-mono text-aurora-neutral-500">{policyDoc.department}</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
                         <div>
-                          <span className="font-bold text-aurora-neutral-800 text-[11px] block">Policy Objective:</span>
+                          <span className="font-bold text-aurora-neutral-800 text-[11px] block">Agent Objective:</span>
                           <p className="text-aurora-neutral-600 leading-snug text-[11px]">{policyDoc.governanceObjective}</p>
                         </div>
                         <div>

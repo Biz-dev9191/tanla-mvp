@@ -68,7 +68,7 @@ export function runObjectiveResolutionAgent(
     case 'customer_complaint':
       recommendedCustomerAction = 'None';
       customerActionFriction = 'Zero Friction';
-      resolutionSummary = 'Delivery fee waiver processed ($25.00); additional compensation routed to supervisor approval under POL-FIN-001.';
+      resolutionSummary = 'Delivery fee waiver processed ($25.00); additional compensation routed to supervisor approval queue.';
       deflectionStrategy = "Acknowledge grievance immediately and provide clear supervisor review SLA (4 hours).";
       break;
     default:

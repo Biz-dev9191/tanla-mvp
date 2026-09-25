@@ -172,7 +172,7 @@ export const MATRIX_EVENTS: MatrixBusinessEvent[] = [
     orderId: 'ENT-5520',
     amount: '$250.00',
     resolutionStatus: 'Pending Approval',
-    verifiedFacts: 'Shipment ENT-5520 delayed by 48 hours, $25 delivery fee waiver applied automatically, $150 goodwill credit request escalated to Operations Supervisor under POL-FIN-001',
+    verifiedFacts: 'Shipment ENT-5520 delayed by 48 hours, $25 delivery fee waiver applied automatically, $150 goodwill credit request escalated to Operations Supervisor',
     descriptionText: 'Customer raised critical escalation regarding 48-hour delivery delay on order #ENT-5520. $25 delivery fee waiver applied. Customer requested $150 credit requiring human supervisor approval.',
     pills: ['Billing Dispute / Escalation'],
   },

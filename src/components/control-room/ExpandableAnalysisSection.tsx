@@ -49,7 +49,7 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
       return true;
     }
     return false;
-  }).length || (strategy.humanApprovalRequired ? 1 : 0);
+  }).length;
 
   return (
     <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all duration-200">
