@@ -30,6 +30,101 @@ interface CommunicationBriefProps {
   isLoading?: boolean;
 }
 
+interface EventTypeFieldConfig {
+  label1: string;
+  placeholder1: string;
+  label2: string;
+  placeholder2: string;
+  label3: string;
+  placeholder3: string;
+  label4: string;
+  statusOptions: Array<{ value: string; label: string }>;
+  verifiedFactsPlaceholder: string;
+}
+
+const EVENT_TYPE_CONFIGS: Record<string, EventTypeFieldConfig> = {
+  payment_successful_order_failed: {
+    label1: 'Transaction Ref',
+    placeholder1: 'e.g. PAY_99482',
+    label2: 'Order / App ID',
+    placeholder2: 'e.g. ORD-7721',
+    label3: 'Amount',
+    placeholder3: 'e.g. $49.50',
+    label4: 'Resolution Status',
+    statusOptions: [
+      { value: 'Refund Initiated', label: 'Refund Initiated' },
+      { value: 'Requires Customer Action', label: 'Requires Customer Action' },
+      { value: 'Pending Approval', label: 'Pending Approval (POL-FIN-001)' },
+      { value: 'Resolved', label: 'Resolved' },
+    ],
+    verifiedFactsPlaceholder: 'e.g. Payment ID: PAY_99482, Refund to card 4012',
+  },
+  payment_failed: {
+    label1: 'Transaction Ref',
+    placeholder1: 'e.g. PAY_FAIL_1092',
+    label2: 'Order ID',
+    placeholder2: 'e.g. ORD-8832',
+    label3: 'Declined Amount',
+    placeholder3: 'e.g. $120.00',
+    label4: 'Failure / Action Status',
+    statusOptions: [
+      { value: 'Requires Customer Action', label: 'Requires Customer Action (Retry)' },
+      { value: 'Payment Declined', label: 'Payment Declined by Bank' },
+      { value: 'Card Expired', label: 'Card Expired' },
+      { value: 'Pending Retry', label: 'Pending Retry' },
+    ],
+    verifiedFactsPlaceholder: 'e.g. Card ending 4419 declined, Retry link valid for 2 hours',
+  },
+  application_incomplete: {
+    label1: 'Application Ref',
+    placeholder1: 'e.g. KYC_6621',
+    label2: 'Application / Account ID',
+    placeholder2: 'e.g. APP-9921',
+    label3: 'Required Step / Doc',
+    placeholder3: 'e.g. Address Proof / Gov ID',
+    label4: 'Application Status',
+    statusOptions: [
+      { value: 'Requires Customer Action', label: 'Requires Customer Action (Upload Doc)' },
+      { value: 'Pending Verification', label: 'Pending Verification' },
+      { value: 'Under Review', label: 'Under Review' },
+      { value: 'Incomplete KYC', label: 'Incomplete KYC' },
+    ],
+    verifiedFactsPlaceholder: 'e.g. Identity verified, Address proof needed by Oct 15',
+  },
+  customer_complaint: {
+    label1: 'Dispute / Case Ref',
+    placeholder1: 'e.g. DISP_5520',
+    label2: 'Order / Shipment ID',
+    placeholder2: 'e.g. ENT-5520',
+    label3: 'Claimed / Credit Amount',
+    placeholder3: 'e.g. $250.00',
+    label4: 'Escalation Status',
+    statusOptions: [
+      { value: 'Pending Approval', label: 'Pending Approval (Supervisor Gate)' },
+      { value: 'Escalated to Operations', label: 'Escalated to Operations' },
+      { value: 'Fee Waiver Applied', label: 'Fee Waiver Applied' },
+      { value: 'Resolved', label: 'Resolved' },
+    ],
+    verifiedFactsPlaceholder: 'e.g. Shipment delayed 48h, $25 fee waived, credit pending approval',
+  },
+  subscription_expiring: {
+    label1: 'Subscription Ref',
+    placeholder1: 'e.g. SUB_4410',
+    label2: 'Plan / Account ID',
+    placeholder2: 'e.g. SUB-4410 (Cloud Pro Tier)',
+    label3: 'Renewal Amount',
+    placeholder3: 'e.g. $299.00/yr',
+    label4: 'Renewal Status',
+    statusOptions: [
+      { value: 'Resolved', label: 'Resolved (Active / Notice Sent)' },
+      { value: 'Renewal Pending', label: 'Renewal Pending (7 Days Remaining)' },
+      { value: 'Card Expiring Soon', label: 'Card Expiring Soon' },
+      { value: 'Requires Customer Action', label: 'Requires Customer Action (Confirm Plan)' },
+    ],
+    verifiedFactsPlaceholder: 'e.g. Renews Oct 20, 20% loyalty bonus storage voucher available',
+  },
+};
+
 export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onRunOrchestration,
   isLoading,
@@ -633,84 +728,95 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               </div>
 
               {/* Tab 1 (Default / Left): Structured Form */}
-              {eventTab === 'structured' && (
-                <div className="p-4 space-y-3 text-xs">
-                  <div>
-                    <label className="block text-aurora-neutral-700 font-medium mb-1">Event Type</label>
-                    <select
-                      value={structEventType}
-                      onChange={(e) => setStructEventType(e.target.value)}
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                    >
-                      <option value="payment_successful_order_failed">Payment Ok / Order Failed</option>
-                      <option value="payment_failed">Payment Failed (Card Decline)</option>
-                      <option value="application_incomplete">Pending KYC / Incomplete Application</option>
-                      <option value="customer_complaint">Delivery Dispute / Compensation Escalation</option>
-                      <option value="subscription_expiring">Subscription Renewal / Loyalty Perk</option>
-                    </select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
+              {eventTab === 'structured' && (() => {
+                const currentConfig = EVENT_TYPE_CONFIGS[structEventType] || EVENT_TYPE_CONFIGS.payment_successful_order_failed;
+                return (
+                  <div className="p-4 space-y-3 text-xs">
                     <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Transaction Ref</label>
-                      <input
-                        type="text"
-                        value={structTransactionId}
-                        onChange={(e) => setStructTransactionId(e.target.value)}
-                        placeholder="e.g. PAY_99482"
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Order / App ID</label>
-                      <input
-                        type="text"
-                        value={structOrderId}
-                        onChange={(e) => setStructOrderId(e.target.value)}
-                        placeholder="e.g. ORD-7721"
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Amount</label>
-                      <input
-                        type="text"
-                        value={structAmount}
-                        onChange={(e) => setStructAmount(e.target.value)}
-                        placeholder="e.g. $49.50"
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-aurora-neutral-700 font-medium mb-1">Resolution Status</label>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Event Type</label>
                       <select
-                        value={structResolutionStatus}
-                        onChange={(e) => setStructResolutionStatus(e.target.value)}
-                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        value={structEventType}
+                        onChange={(e) => {
+                          const nextType = e.target.value;
+                          setStructEventType(nextType);
+                          const nextConfig = EVENT_TYPE_CONFIGS[nextType];
+                          if (nextConfig && !nextConfig.statusOptions.some((opt) => opt.value === structResolutionStatus)) {
+                            setStructResolutionStatus(nextConfig.statusOptions[0].value);
+                          }
+                        }}
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
-                        <option value="Refund Initiated">Refund Initiated</option>
-                        <option value="Requires Customer Action">Requires Customer Action</option>
-                        <option value="Pending Approval">Pending Approval (POL-FIN-001)</option>
-                        <option value="Resolved">Resolved</option>
+                        <option value="payment_successful_order_failed">Payment Ok / Order Failed</option>
+                        <option value="payment_failed">Payment Failed (Card Decline)</option>
+                        <option value="application_incomplete">Pending KYC / Incomplete Application</option>
+                        <option value="customer_complaint">Delivery Dispute / Compensation Escalation</option>
+                        <option value="subscription_expiring">Subscription Renewal / Loyalty Perk</option>
                       </select>
                     </div>
-                  </div>
 
-                  <div>
-                    <label className="block text-aurora-neutral-700 font-medium mb-1">Verified System Facts</label>
-                    <input
-                      type="text"
-                      value={structVerifiedFacts}
-                      onChange={(e) => setStructVerifiedFacts(e.target.value)}
-                      placeholder="e.g. Payment ID: PAY_99482, Refund to card 4012"
-                      className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 text-xs focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
-                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-aurora-neutral-700 font-medium mb-1">{currentConfig.label1}</label>
+                        <input
+                          type="text"
+                          value={structTransactionId}
+                          onChange={(e) => setStructTransactionId(e.target.value)}
+                          placeholder={currentConfig.placeholder1}
+                          className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-aurora-neutral-700 font-medium mb-1">{currentConfig.label2}</label>
+                        <input
+                          type="text"
+                          value={structOrderId}
+                          onChange={(e) => setStructOrderId(e.target.value)}
+                          placeholder={currentConfig.placeholder2}
+                          className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-aurora-neutral-700 font-medium mb-1">{currentConfig.label3}</label>
+                        <input
+                          type="text"
+                          value={structAmount}
+                          onChange={(e) => setStructAmount(e.target.value)}
+                          placeholder={currentConfig.placeholder3}
+                          className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-aurora-neutral-700 font-medium mb-1">{currentConfig.label4}</label>
+                        <select
+                          value={structResolutionStatus}
+                          onChange={(e) => setStructResolutionStatus(e.target.value)}
+                          className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                        >
+                          {currentConfig.statusOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Verified System Facts</label>
+                      <input
+                        type="text"
+                        value={structVerifiedFacts}
+                        onChange={(e) => setStructVerifiedFacts(e.target.value)}
+                        placeholder={currentConfig.verifiedFactsPlaceholder}
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 text-xs focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      />
+                    </div>
                   </div>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Tab 2: Text Area & Filter Pills */}
               {eventTab === 'text' && (
