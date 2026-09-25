@@ -105,34 +105,44 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
   const isGenerateDisabled = !policyText.trim();
 
   return (
-    <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-aurora-neutral-200 gap-2">
-        <div className="flex items-center space-x-2">
-          <Upload strokeWidth={1.5} className="w-5 h-5 text-aurora-primary" />
-          <h3 className="text-sm font-bold text-aurora-neutral-900">
-            Dynamic Policy Document Uploader & Tree Generator
-          </h3>
+    <div className="bg-aurora-neutral-0 rounded-xl p-6 border border-aurora-neutral-200 shadow-aurora space-y-5">
+      {/* Section Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-3">
+        <div className="flex items-center space-x-2.5">
+          <div className="w-8 h-8 rounded-lg bg-aurora-primary-light flex items-center justify-center text-aurora-primary">
+            <Upload strokeWidth={1.75} className="w-4 h-4" />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-aurora-neutral-900">
+              Dynamic Policy Document Ingestion & Tree Generator
+            </h3>
+            <p className="text-xs text-aurora-neutral-500">
+              Upload compliance guidelines or write markdown directives to construct a real-time governance tree.
+            </p>
+          </div>
         </div>
-        <div className="flex flex-wrap items-center gap-3">
+
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
           {(policyText.trim().length > 0 || fileName) && (
             <button
               type="button"
               onClick={handleClear}
-              className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center space-x-1"
+              className="px-3 py-1.5 bg-aurora-neutral-100 hover:bg-rose-50 text-aurora-neutral-700 hover:text-rose-700 border border-aurora-neutral-300 hover:border-rose-300 rounded-md text-xs font-semibold shadow-2xs transition flex items-center space-x-1.5"
             >
               <Trash2 strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>Clear Policy Document</span>
+              <span>Clear Editor</span>
             </button>
           )}
+
           <button
             type="button"
             onClick={() => {
               setPolicyText(sampleFintechPolicy);
               setFileName("fintech-policy-sample.md");
               setErrorMessage(null);
-              setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
+              setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' to build tree.");
             }}
-            className="text-xs text-aurora-primary font-semibold hover:underline flex items-center space-x-1"
+            className="px-3.5 py-1.5 bg-aurora-primary-light hover:bg-aurora-primary hover:text-white text-aurora-primary border border-aurora-primary/30 rounded-md text-xs font-bold shadow-2xs transition flex items-center space-x-1.5"
           >
             <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
             <span>Insert Sample Enterprise Policy</span>
@@ -140,62 +150,118 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Upload File Box - Restricted to .txt and .md / .md5 */}
-        <div className="border-2 border-dashed border-aurora-neutral-300 rounded-lg p-4 text-center hover:border-aurora-primary transition flex flex-col items-center justify-center bg-aurora-neutral-100">
-          <FileText strokeWidth={1.5} className="w-8 h-8 text-aurora-primary mb-2" />
-          <span className="text-xs font-bold text-aurora-neutral-900 block mb-1">Upload Policy Document</span>
-          <span className="text-[10px] text-aurora-neutral-500 mb-3 font-mono font-semibold">TXT, MD (.txt, .md, .md5)</span>
-          
-          <label className="px-3 py-1.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded text-xs font-semibold cursor-pointer shadow-sm">
-            <span>Browse File</span>
-            <input type="file" accept=".txt,.md,.md5" onChange={handleFileUpload} className="hidden" />
-          </label>
-          {fileName && <span className="text-[10px] font-mono text-aurora-primary mt-2 font-bold">{fileName}</span>}
-        </div>
-
-        {/* Text Paste Box with e.g. Structure Format */}
-        <div className="md:col-span-2 space-y-2">
-          <div className="flex items-center justify-between text-[11px] text-aurora-neutral-500 font-medium">
-            <span>Paste company policy guidelines or use format below:</span>
-            <span className="text-[10px] font-mono bg-aurora-neutral-200 text-aurora-neutral-700 px-2 py-0.5 rounded">
-              Format: # Section &gt; - Directives
+      {/* Main Dual-Column Ingestion Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        {/* Left Column: File Ingestion Panel (4 Cols) */}
+        <div className="lg:col-span-4 space-y-2.5">
+          <div className="flex items-center justify-between h-6">
+            <span className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-700">
+              Document Upload
+            </span>
+            <span className="text-[10px] font-mono text-aurora-neutral-500 bg-aurora-neutral-100 px-2 py-0.5 rounded border border-aurora-neutral-200">
+              .txt, .md, .md5
             </span>
           </div>
-          <textarea
-            rows={7}
-            value={policyText}
-            onChange={(e) => {
-              setPolicyText(e.target.value);
-              if (errorMessage) setErrorMessage(null);
-            }}
-            placeholder={examplePolicyPlaceholder}
-            className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-mono leading-relaxed"
-          />
 
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
-            <span className="text-[11px] text-aurora-neutral-500">
-              Converts text into a Structured Document model first, then constructs the Policy Tree.
+          {/* Drag & Drop File Box - Sized to match textarea */}
+          <div className="border-2 border-dashed border-aurora-neutral-300 hover:border-aurora-primary rounded-xl transition-all bg-aurora-neutral-50/70 hover:bg-aurora-neutral-50 h-[260px] flex flex-col items-center justify-center overflow-hidden">
+            {fileName ? (
+              <div className="flex flex-col items-center justify-center h-full w-full p-4 space-y-3 animate-fadeIn">
+                <div className="w-11 h-11 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shadow-xs">
+                  <FileText strokeWidth={1.75} className="w-5 h-5" />
+                </div>
+                <div className="text-center px-2 w-full">
+                  <span className="text-xs font-bold text-aurora-neutral-900 block font-mono truncate max-w-[220px] mx-auto">
+                    {fileName}
+                  </span>
+                  <div className="text-[11px] text-emerald-700 font-semibold flex items-center justify-center space-x-1 mt-1">
+                    <CheckCircle2 strokeWidth={1.75} className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>File Loaded & Synced</span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 pt-1">
+                  <label className="px-3 py-1.5 bg-white hover:bg-aurora-neutral-100 text-aurora-neutral-700 rounded-lg text-xs font-semibold cursor-pointer transition inline-flex items-center space-x-1.5 border border-aurora-neutral-300 shadow-2xs">
+                    <Upload strokeWidth={1.5} className="w-3.5 h-3.5" />
+                    <span>Change File</span>
+                    <input type="file" accept=".txt,.md,.md5" onChange={handleFileUpload} className="hidden" />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFileName(null);
+                      if (policyText === sampleFintechPolicy) setPolicyText('');
+                    }}
+                    className="px-3 py-1.5 bg-white hover:bg-rose-50 text-rose-700 rounded-lg text-xs font-semibold transition inline-flex items-center space-x-1.5 border border-rose-200 shadow-2xs"
+                  >
+                    <Trash2 strokeWidth={1.5} className="w-3.5 h-3.5" />
+                    <span>Remove</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full w-full p-5 text-center">
+                <div className="w-10 h-10 rounded-full bg-aurora-neutral-200/80 text-aurora-primary flex items-center justify-center mb-2.5">
+                  <FileText strokeWidth={1.75} className="w-5 h-5" />
+                </div>
+                <span className="text-xs font-bold text-aurora-neutral-900 block mb-0.5">
+                  Upload Policy File
+                </span>
+                <p className="text-[11px] text-aurora-neutral-500 mb-3.5 max-w-[200px] leading-tight">
+                  Select or drop your policy text or markdown file
+                </p>
+                <label className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-xs font-bold cursor-pointer shadow-xs transition-transform transform active:scale-95 inline-flex items-center space-x-1.5">
+                  <Upload strokeWidth={1.5} className="w-3.5 h-3.5" />
+                  <span>Browse File</span>
+                  <input type="file" accept=".txt,.md,.md5" onChange={handleFileUpload} className="hidden" />
+                </label>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Markdown Policy Editor (8 Cols) */}
+        <div className="lg:col-span-8 space-y-2.5">
+          <div className="flex items-center justify-between h-6">
+            <span className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-700">
+              Policy Directives & Direct Rules
             </span>
+          </div>
+
+          {/* Textarea Editor - Exact matching height */}
+          <div className="h-[260px] rounded-xl overflow-hidden border border-aurora-neutral-300 focus-within:border-aurora-primary focus-within:ring-1 focus-within:ring-aurora-primary transition shadow-2xs">
+            <textarea
+              value={policyText}
+              onChange={(e) => {
+                setPolicyText(e.target.value);
+                if (errorMessage) setErrorMessage(null);
+              }}
+              placeholder={examplePolicyPlaceholder}
+              className="w-full h-full p-3.5 bg-aurora-neutral-50/60 focus:bg-white text-xs text-aurora-neutral-900 font-mono leading-relaxed resize-none focus:outline-none"
+            />
+          </div>
+
+          {/* Editor Action Footer */}
+          <div className="flex justify-end pt-1">
             <button
               type="button"
               onClick={handleGenerate}
               disabled={isGenerateDisabled}
-              className={`px-4 py-2 rounded text-xs font-bold shadow-sm transition flex items-center justify-center space-x-1.5 ${
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2 flex-shrink-0 ${
                 isGenerateDisabled
-                  ? 'bg-aurora-neutral-300 text-aurora-neutral-500 cursor-not-allowed opacity-60'
-                  : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
+                  ? 'bg-aurora-neutral-200 text-aurora-neutral-400 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
+                  : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer shadow-aurora-md'
               }`}
             >
-              <Network strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <Network strokeWidth={1.5} className="w-4 h-4" />
               <span>Generate Policy Tree</span>
             </button>
           </div>
         </div>
       </div>
 
+      {/* Validation Feedback & Status Banners */}
       {errorMessage && (
-        <div className="p-3 bg-aurora-error-light border border-aurora-error/30 rounded-md text-xs text-aurora-error font-semibold space-y-1">
+        <div className="p-3.5 bg-aurora-error-light border border-aurora-error/30 rounded-lg text-xs text-aurora-error font-semibold space-y-1 animate-fadeIn">
           <div className="flex items-center space-x-2">
             <span className="font-bold uppercase tracking-wider text-[10px] bg-aurora-error/20 px-1.5 py-0.5 rounded">Validation Error</span>
             <span>{errorMessage}</span>
@@ -207,15 +273,15 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
       )}
 
       {statusMessage && (
-        <div className="p-3 bg-aurora-success-light border border-aurora-success/20 rounded-md text-xs text-aurora-success flex items-center space-x-2 font-semibold">
-          <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 flex-shrink-0" />
+        <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-xs text-emerald-900 flex items-center space-x-2 font-semibold shadow-2xs animate-fadeIn">
+          <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 text-emerald-600 flex-shrink-0" />
           <span>{statusMessage}</span>
         </div>
       )}
 
       {/* Structured Document Specification Viewer */}
       {structuredDoc && (
-        <div className="mt-4 pt-4 border-t border-aurora-neutral-200">
+        <div className="mt-4 pt-4 border-t border-aurora-neutral-200 animate-fadeIn">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center space-x-2">
               <FileText strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
