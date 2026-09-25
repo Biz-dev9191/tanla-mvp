@@ -213,6 +213,15 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
 
         {/* Top Navigation CTAs */}
         <div className="flex items-center space-x-2 self-start sm:self-auto flex-shrink-0">
+          {onNavigateToBrief && (
+            <button
+              type="button"
+              onClick={onNavigateToBrief}
+              className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
+            >
+              <span>Back to Brief</span>
+            </button>
+          )}
           {onNavigateToControlRoom && (
             <button
               type="button"
@@ -226,15 +235,6 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
               title={!hasActiveRun ? 'Generate a communication in brief first to view message review' : undefined}
             >
               <span>Decision & Previews</span>
-            </button>
-          )}
-          {onNavigateToBrief && (
-            <button
-              type="button"
-              onClick={onNavigateToBrief}
-              className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
-            >
-              <span>Edit Brief</span>
             </button>
           )}
         </div>
@@ -314,11 +314,11 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
             <div className="flex flex-col lg:flex-row lg:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-mono font-bold text-white bg-aurora-primary px-2.5 py-1 rounded">
-                    {currentPolicy.policyCode}
-                  </span>
                   <span className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-600 bg-aurora-neutral-100 px-2.5 py-1 rounded">
                     Agent {currentPolicy.agentNumber}: {currentPolicy.agentId.toUpperCase()}
+                  </span>
+                  <span className="text-xs font-mono font-bold text-white bg-aurora-primary px-2.5 py-1 rounded">
+                    {currentPolicy.policyCode}
                   </span>
                 </div>
                 <h2 className="text-xl font-bold text-aurora-neutral-900 mt-2">

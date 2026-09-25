@@ -378,17 +378,17 @@ export default function Home() {
                   <div className="flex items-center space-x-2 self-start sm:self-auto">
                     <button
                       type="button"
+                      onClick={() => setActiveTab('brief')}
+                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
+                    >
+                      <span>Back to Brief</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setActiveTab('policy-tree')}
                       className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
                     >
                       <span>Add Policy Rules</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('brief')}
-                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
-                    >
-                      <span>Edit Brief</span>
                     </button>
                   </div>
                 </div>
@@ -486,6 +486,13 @@ export default function Home() {
               <div className="flex items-center space-x-2 self-start sm:self-auto">
                 <button
                   type="button"
+                  onClick={() => setActiveTab('brief')}
+                  className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
+                >
+                  <span>Back to Brief</span>
+                </button>
+                <button
+                  type="button"
                   onClick={() => currentResult && setActiveTab('control-room')}
                   disabled={!currentResult}
                   className={`px-4 py-2 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 flex items-center justify-center ${
@@ -496,13 +503,6 @@ export default function Home() {
                   title={!currentResult ? 'Generate a communication in brief first to view message review' : undefined}
                 >
                   <span>Decision & Previews</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab('brief')}
-                  className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
-                >
-                  <span>Edit Brief</span>
                 </button>
               </div>
             </div>
