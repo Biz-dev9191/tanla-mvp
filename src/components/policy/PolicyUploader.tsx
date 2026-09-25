@@ -34,9 +34,39 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [structuredDoc, setStructuredDoc] = useState<any | null>(null);
 
+  const examplePolicyPlaceholder = `e.g. Expected Policy Document Structure:
+
+# Customer Communication & Refund Policy
+**Document ID:** POL-2026-01  |  **Version:** 2.1  |  **Status:** Active
+
+# 1. Transactional & Order Guidelines
+- For failed orders with captured payments, immediately initiate auto-refund and cite payment ID.
+- Reassure customer that zero action is required on their part.
+- Prohibit asking customer to re-pay without verified refund status.
+
+# 2. Privacy & Data Protection
+- Never expose full credit card numbers or passwords in customer copy.
+- Always mask payment cards to the last 4 digits (e.g. **** 4012).
+
+# 3. Financial Commitments & Escalation
+- All goodwill credit vouchers or compensation exceeding $25.00 require human supervisor approval.
+- Escalate to supervisor review whenever a billing dispute or legal threat is detected.
+
+# 4. Attention Fatigue & Frequency Limits
+- Maximum 3 refund-related transactional communications within 24 hours.
+- Suppress promotional campaigns if customer received 2 or more messages today.`;
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const fileExt = '.' + (file.name.split('.').pop() || '').toLowerCase();
+    if (!['.txt', '.md', '.md5'].includes(fileExt)) {
+      setErrorMessage(`Invalid file format "${file.name}". Only text (.txt) and markdown (.md, .md5) files are supported.`);
+      setStatusMessage(null);
+      e.target.value = '';
+      return;
+    }
 
     setFileName(file.name);
     const reader = new FileReader();
@@ -96,35 +126,41 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Upload File Box */}
+        {/* Upload File Box - Restricted to .txt and .md / .md5 */}
         <div className="border-2 border-dashed border-aurora-neutral-300 rounded-lg p-4 text-center hover:border-aurora-primary transition flex flex-col items-center justify-center bg-aurora-neutral-100">
           <FileText strokeWidth={1.5} className="w-8 h-8 text-aurora-primary mb-2" />
           <span className="text-xs font-bold text-aurora-neutral-900 block mb-1">Upload Policy Document</span>
-          <span className="text-[10px] text-aurora-neutral-500 mb-3 font-mono">TXT, MD, JSON, CSV</span>
+          <span className="text-[10px] text-aurora-neutral-500 mb-3 font-mono font-semibold">TXT, MD (.txt, .md, .md5)</span>
           
           <label className="px-3 py-1.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded text-xs font-semibold cursor-pointer shadow-sm">
             <span>Browse File</span>
-            <input type="file" accept=".txt,.md,.json,.csv,.doc" onChange={handleFileUpload} className="hidden" />
+            <input type="file" accept=".txt,.md,.md5" onChange={handleFileUpload} className="hidden" />
           </label>
           {fileName && <span className="text-[10px] font-mono text-aurora-primary mt-2 font-bold">{fileName}</span>}
         </div>
 
-        {/* Text Paste Box */}
+        {/* Text Paste Box with e.g. Structure Format */}
         <div className="md:col-span-2 space-y-2">
+          <div className="flex items-center justify-between text-[11px] text-aurora-neutral-500 font-medium">
+            <span>Paste company policy guidelines or use format below:</span>
+            <span className="text-[10px] font-mono bg-aurora-neutral-200 text-aurora-neutral-700 px-2 py-0.5 rounded">
+              Format: # Section &gt; - Directives
+            </span>
+          </div>
           <textarea
-            rows={4}
+            rows={7}
             value={policyText}
             onChange={(e) => {
               setPolicyText(e.target.value);
               if (errorMessage) setErrorMessage(null);
             }}
-            placeholder="Or paste company policy guidelines, restrictions, required disclosures, and escalation rules here..."
-            className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-sans leading-relaxed"
+            placeholder={examplePolicyPlaceholder}
+            className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-mono leading-relaxed"
           />
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
             <span className="text-[11px] text-aurora-neutral-500">
-              Converts policy text into a Structured Document model first, then constructs the Policy Tree hierarchy.
+              Converts text into a Structured Document model first, then constructs the Policy Tree.
             </span>
             <button
               type="button"
