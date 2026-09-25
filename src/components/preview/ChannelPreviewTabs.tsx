@@ -30,9 +30,9 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
 }) => {
   const [activeChannel, setActiveChannel] = useState<PreferredChannel>(recommendedChannel);
   const [selectedChannels, setSelectedChannels] = useState<PreferredChannel[]>([
+    'Email',
     'WhatsApp',
     'SMS',
-    'Email',
     'Voice',
   ]);
   const [isSending, setIsSending] = useState(false);
@@ -47,9 +47,9 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
   const isApprovalPending = Boolean(humanApprovalRequired && humanApprovalStatus !== 'Approved');
 
   const channels = [
+    { id: 'Email', label: 'Email', icon: Mail, isLive: true },
     { id: 'WhatsApp', label: 'WhatsApp', icon: MessageSquare, isLive: false },
     { id: 'SMS', label: 'SMS', icon: Smartphone, isLive: false },
-    { id: 'Email', label: 'Email', icon: Mail, isLive: true },
     { id: 'Voice', label: 'Voice', icon: PhoneCall, isLive: false },
   ] as const;
 
@@ -287,20 +287,17 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               {isSending ? (
                 <>
                   <Loader2 strokeWidth={1.5} className="w-4 h-4 animate-spin text-white" />
-                  <span>Dispatching Selected...</span>
+                  <span>Dispatching...</span>
                 </>
               ) : isApprovalPending ? (
                 <>
                   <Lock strokeWidth={1.5} className="w-4 h-4 text-aurora-neutral-500" />
-                  <span>Send to Selected Channels (Locked)</span>
+                  <span>Send to Selected (Locked)</span>
                 </>
               ) : (
                 <>
                   <SendHorizontal strokeWidth={1.5} className="w-4 h-4" />
-                  <span>
-                    Send to Selected {selectedChannels.length === 1 ? 'Channel' : 'Channels'}
-                    {selectedChannels.length > 0 ? ` (${selectedChannels.length})` : ''}
-                  </span>
+                  <span>Send to Selected ({selectedChannels.length})</span>
                 </>
               )}
             </button>

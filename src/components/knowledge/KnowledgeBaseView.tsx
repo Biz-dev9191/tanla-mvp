@@ -200,11 +200,11 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-              Knowledge Base & Governance
+              Knowledge Rules
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-            Knowledge Base & Agent Governance
+            Knowledge Rules
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
             The central guide for AI agent governance rules, customer personas, multi-agent execution pipeline, channel guidelines, and scoring formulas.
@@ -235,7 +235,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
               }`}
               title={!hasActiveRun ? 'Generate a communication in brief first to view message review' : undefined}
             >
-              <span>Go to Decision & Previews</span>
+              <span>Decision & Previews</span>
               <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
             </button>
           )}

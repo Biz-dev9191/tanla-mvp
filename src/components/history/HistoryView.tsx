@@ -23,7 +23,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             Audit History
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-            Communication Dispatch History
+            Audit History
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-2xl leading-relaxed">
             Review all messages sent to customers, delivery channels, and decision logs.
@@ -47,7 +47,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             onClick={onNewRun}
             className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold shadow-sm transition flex items-center space-x-1.5"
           >
-            <span>Create New Communication</span>
+            <span>New Communication</span>
             <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
           </button>
         </div>

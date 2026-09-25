@@ -376,7 +376,7 @@ export default function Home() {
                       </span>
                     </div>
                     <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-                      Communication Decision & Previews
+                      Decision & Previews
                     </h1>
                     <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
                       Review AI decisions, multi-channel message previews, safety guardrail checks, and customer response simulations.
@@ -387,7 +387,7 @@ export default function Home() {
                     onClick={() => setActiveTab('brief')}
                     className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 self-start sm:self-auto"
                   >
-                    <span>Edit Input Brief</span>
+                    <span>Edit Brief</span>
                   </button>
                 </div>
 
@@ -479,7 +479,7 @@ export default function Home() {
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
-                  Policy Tree & Governance Rules
+                  Policy Governance Rules
                 </h1>
                 <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
                   View governance rules or upload custom policy documents to dynamically steer agent communications.
@@ -507,7 +507,7 @@ export default function Home() {
                   }`}
                   title={!currentResult ? 'Generate a communication in brief first to view message review' : undefined}
                 >
-                  <span>Go to Decision & Previews</span>
+                  <span>Decision & Previews</span>
                   <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
                 </button>
               </div>

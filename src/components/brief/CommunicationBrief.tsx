@@ -1022,16 +1022,16 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           )}
         </div>
 
-        {/* ACTION BUTTONS (Configure Policy Rules + Primary Submit CTA) */}
+        {/* ACTION BUTTONS (Policy Rules + Primary Submit CTA) */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           {onNavigateToPolicyTree ? (
             <button
               type="button"
               onClick={onNavigateToPolicyTree}
-              className="w-full sm:w-auto px-5 py-3.5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-lg text-xs font-bold shadow-2xs transition flex items-center justify-center space-x-2"
+              className="w-full sm:w-auto px-5 py-3 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-lg text-xs font-bold shadow-2xs transition flex items-center justify-center space-x-2"
             >
               <GitBranch strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-              <span>Configure Policy Rules</span>
+              <span>Policy Rules</span>
             </button>
           ) : (
             <div />
@@ -1040,16 +1040,16 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full sm:w-auto px-8 py-3.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-sm font-bold shadow-aurora-md flex items-center justify-center space-x-2 transition-all transform active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-auto px-7 py-3 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-sm font-bold shadow-aurora-md flex items-center justify-center space-x-2 transition-all transform active:scale-95 disabled:opacity-50"
           >
             {isLoading ? (
               <span className="flex items-center space-x-2">
                 <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Generating Governed Communication...</span>
+                <span>Generating...</span>
               </span>
             ) : (
               <span className="flex items-center space-x-2">
-                <span>Generate Communication & Previews</span>
+                <span>Generate Response</span>
                 <ArrowRight strokeWidth={1.75} className="w-4 h-4" />
               </span>
             )}
