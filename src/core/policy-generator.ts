@@ -8,7 +8,7 @@ export interface StructuredPolicyClause {
   title: string;
   statement: string;
   directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE';
-  category: 'transactional' | 'privacy' | 'frequency' | 'financial' | 'channel';
+  category: 'transactional' | 'privacy' | 'frequency' | 'financial' | 'channel' | 'governance';
   allowedActions: string[];
   prohibitedActions: string[];
   escalationRequired: boolean;
@@ -19,14 +19,16 @@ export interface StructuredPolicySection {
   sectionId: string;
   sectionNumber: string;
   title: string;
-  category: 'transactional' | 'privacy' | 'frequency' | 'financial' | 'channel';
+  category: 'transactional' | 'privacy' | 'frequency' | 'financial' | 'channel' | 'governance';
   description: string;
   clauses: StructuredPolicyClause[];
 }
 
 export interface StructuredPolicyDocument {
   title: string;
+  documentId?: string;
   version: string;
+  effectiveDate?: string;
   effectiveScope: string;
   rawWordCount: number;
   sections: StructuredPolicySection[];
@@ -53,7 +55,7 @@ const POLICY_DIRECTIVE_KEYWORDS = [
   'privacy', 'pii', 'gdpr', 'mask', 'masking', 'password', 'card', 'credential',
   'refund', 'compensation', 'credit', 'voucher', 'waiver', 'liability', 'dispute',
   'fatigue', 'frequency', 'velocity', 'cap', 'suppress', 'suppression',
-  'transaction', 'order', 'payment', 'telemetry', 'channel', 'whatsapp', 'sms', 'email'
+  'transaction', 'order', 'payment', 'telemetry', 'guardrail', 'decision tree'
 ];
 
 /**
@@ -111,8 +113,47 @@ export function validatePolicyDocumentText(text: string): { isValid: boolean; re
 }
 
 /**
+ * Filter out ASCII tree diagrams, code block lines, and pure diagram noise
+ */
+function isDiagramOrNoiseLine(line: string): boolean {
+  const trimmed = line.trim();
+  if (!trimmed) return true;
+  if (trimmed.startsWith('```')) return true;
+  // ASCII tree drawing characters
+  if (/^[│├└─│\s\+\-\|\>]+$/.test(trimmed)) return true;
+  if (trimmed.includes('├──') || trimmed.includes('└──') || trimmed.includes('│')) return true;
+  // Flowchart arrow lines (e.g. "↓" or "→")
+  if (/^[↓→←↑\s]+$/.test(trimmed)) return true;
+  if (trimmed === '↓' || trimmed === '→') return true;
+  return false;
+}
+
+/**
+ * Determine high-level category from section name or text
+ */
+function determineCategory(text: string): 'transactional' | 'privacy' | 'financial' | 'frequency' | 'channel' | 'governance' {
+  const lower = text.toLowerCase();
+  if (lower.includes('privacy') || lower.includes('security') || lower.includes('pii') || lower.includes('gdpr') || lower.includes('mask') || lower.includes('credential')) {
+    return 'privacy';
+  }
+  if (lower.includes('frequency') || lower.includes('fatigue') || lower.includes('cap') || lower.includes('suppress')) {
+    return 'frequency';
+  }
+  if (lower.includes('compensation') || lower.includes('financial') || lower.includes('credit') || lower.includes('voucher') || lower.includes('waiver') || lower.includes('liability')) {
+    return 'financial';
+  }
+  if (lower.includes('channel') || lower.includes('sms') || lower.includes('whatsapp') || lower.includes('email') || lower.includes('tone') || lower.includes('tenor')) {
+    return 'channel';
+  }
+  if (lower.includes('transaction') || lower.includes('refund') || lower.includes('order') || lower.includes('payment') || lower.includes('kyc')) {
+    return 'transactional';
+  }
+  return 'governance';
+}
+
+/**
  * Parses raw enterprise policy text, validates integrity, converts into a Structured Policy Document,
- * and generates a fully-grounded Policy Tree.
+ * and generates a clean, grounded Policy Tree without random words.
  */
 export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseResult {
   // Step 1: Railguard Validation
@@ -128,162 +169,273 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
     };
   }
 
-  const lines = policyText.split('\n').map(l => l.trim()).filter(Boolean);
+  const rawLines = policyText.split('\n');
   const words = policyText.split(/\s+/).filter(Boolean);
 
-  // Extract Document Title & Version
+  // Extract Metadata: Title, Document ID, Version, Date
   let docTitle = 'Enterprise Policy Document';
+  let titleFound = false;
+  let docId: string | undefined = undefined;
   let docVersion = 'v1.0';
-  const titleLine = lines.find(l => l.startsWith('#') || l.toLowerCase().includes('policy') || l.toLowerCase().includes('directive'));
-  if (titleLine) {
-    const cleanTitle = titleLine.replace(/^#+\s*/, '').trim();
-    if (cleanTitle.length > 3 && cleanTitle.length < 80) {
-      docTitle = cleanTitle;
-      const verMatch = cleanTitle.match(/v\d+(?:\.\d+)?/i);
-      if (verMatch) docVersion = verMatch[0];
+  let effectiveDate: string | undefined = undefined;
+
+  for (const line of rawLines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+
+    // Title from primary # header (first top-level non-numbered header)
+    if (!titleFound && trimmed.startsWith('# ') && !/^#\s*\d+[\.\)]/.test(trimmed)) {
+      docTitle = trimmed.replace(/^#+\s*/, '').trim();
+      titleFound = true;
+      const verInTitle = docTitle.match(/v\d+(?:\.\d+)?/i);
+      if (verInTitle) docVersion = verInTitle[0];
+    }
+    // Document ID
+    const idMatch = trimmed.match(/\*\*(?:Document ID|Policy ID):\*\*\s*([A-Za-z0-9_-]+)/i);
+    if (idMatch) docId = idMatch[1].trim();
+
+    // Version
+    const verMatch = trimmed.match(/\*\*(?:Version):\*\*\s*([vV]?\d+(?:\.\d+)?)/i);
+    if (verMatch) docVersion = verMatch[1].trim();
+
+    // Effective Date
+    const dateMatch = trimmed.match(/\*\*(?:Effective Date):\*\*\s*([^\*\n]+)/i);
+    if (dateMatch) effectiveDate = dateMatch[1].trim();
+  }
+
+  // Step 2: Parse into Structural Sections
+  interface RawSection {
+    sectionNumber: string;
+    title: string;
+    rawLines: string[];
+  }
+
+  const sections: RawSection[] = [];
+  let currentSec: RawSection | null = null;
+
+  for (const line of rawLines) {
+    const trimmed = line.trim();
+    if (isDiagramOrNoiseLine(trimmed)) continue;
+
+    // Detect Section Header: e.g. "Section 1.0: ...", "# 1. Purpose", "## 4. Core Principles", "# 7. Payment Successful + Order Failed"
+    const sectionKeywordMatch = trimmed.match(/^(?:Section|Clause|Article|Policy|Part)\s*([\d\w.-]*)[:\s-]*(.*)/i);
+    const headerMatch = trimmed.match(/^(?:#{1,3}\s*)?(\d+(?:\.\d+)?)\.?\s+(.+)$/);
+    const isMarkdownHeader = trimmed.startsWith('# ') || trimmed.startsWith('## ') || trimmed.startsWith('### ');
+
+    if (sectionKeywordMatch && sectionKeywordMatch[2] && sectionKeywordMatch[2].trim().length > 3) {
+      if (currentSec && currentSec.rawLines.length > 0) {
+        sections.push(currentSec);
+      }
+      currentSec = {
+        sectionNumber: sectionKeywordMatch[1] ? sectionKeywordMatch[1].replace(/[:\s]/g, '') : `${sections.length + 1}.0`,
+        title: sectionKeywordMatch[2].replace(/[:*#]/g, '').trim(),
+        rawLines: [],
+      };
+      continue;
+    } else if (headerMatch && (isMarkdownHeader || /^\d+\.\s+[A-Z]/.test(trimmed))) {
+      const secNum = headerMatch[1].trim();
+      const secTitle = headerMatch[2].replace(/^#+\s*/, '').replace(/[:*]/g, '').trim();
+
+      // Avoid false positive on simple numbered list items like "1. Eligible customers receive refunds"
+      const isSubstantiveHeading = isMarkdownHeader || secTitle.length < 50;
+
+      if (isSubstantiveHeading) {
+        if (currentSec && currentSec.rawLines.length > 0) {
+          sections.push(currentSec);
+        }
+        currentSec = {
+          sectionNumber: secNum,
+          title: secTitle,
+          rawLines: [],
+        };
+        continue;
+      }
+    } else if (isMarkdownHeader && !headerMatch) {
+      // Named header like "# Definitions" or "## Required communication"
+      const cleanHeader = trimmed.replace(/^#+\s*/, '').replace(/[:*]/g, '').trim();
+      if (cleanHeader.length > 2 && cleanHeader.length < 60 && !cleanHeader.toLowerCase().includes('document id')) {
+        if (currentSec && currentSec.rawLines.length > 0) {
+          sections.push(currentSec);
+        }
+        currentSec = {
+          sectionNumber: `Sec-${sections.length + 1}`,
+          title: cleanHeader,
+          rawLines: [],
+        };
+        continue;
+      }
+    }
+
+    if (!currentSec) {
+      currentSec = {
+        sectionNumber: '1.0',
+        title: 'General Governance',
+        rawLines: [],
+      };
+    }
+
+    currentSec.rawLines.push(trimmed);
+  }
+
+  if (currentSec && currentSec.rawLines.length > 0) {
+    sections.push(currentSec);
+  }
+
+  // Step 3: Extract Granular Substantive Clauses per Section
+  const structuredSections: StructuredPolicySection[] = [];
+  let globalClauseCount = 0;
+
+  for (const sec of sections) {
+    const secCategory = determineCategory(`${sec.title} ${sec.rawLines.join(' ')}`);
+    const clauses: StructuredPolicyClause[] = [];
+    const secId = `sec-${sec.sectionNumber.replace(/[^a-z0-9]/gi, '-')}`;
+
+    let currentContext = sec.title;
+    let pendingAvoidOrProhibited = false;
+    let pendingListItems: string[] = [];
+
+    const flushListItems = () => {
+      if (pendingListItems.length > 0) {
+        globalClauseCount++;
+        const statement = pendingAvoidOrProhibited
+          ? `Prohibited: The system must strictly avoid and not communicate: ${pendingListItems.join(', ')}.`
+          : `${currentContext}: ${pendingListItems.join('; ')}.`;
+
+        const isEscalation = statement.toLowerCase().includes('supervisor') || statement.toLowerCase().includes('approval') || statement.toLowerCase().includes('escalat');
+        const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = pendingAvoidOrProhibited
+          ? 'PROHIBITIVE'
+          : isEscalation
+          ? 'MANDATORY'
+          : 'MANDATORY';
+
+        clauses.push({
+          clauseId: `POL-${sec.sectionNumber.replace(/[^0-9.]/g, '') || globalClauseCount}-${clauses.length + 1}`,
+          sectionId: secId,
+          sectionTitle: sec.title,
+          title: pendingAvoidOrProhibited ? `Prohibited in ${sec.title}` : `${sec.title} Requirements`,
+          statement,
+          directive,
+          category: secCategory,
+          allowedActions: pendingAvoidOrProhibited
+            ? ['Adhere strictly to verified facts without unapproved commitments']
+            : [statement],
+          prohibitedActions: pendingAvoidOrProhibited
+            ? pendingListItems
+            : ['Do not invent unverified timelines or unapproved outcomes'],
+          escalationRequired: isEscalation,
+        });
+
+        pendingListItems = [];
+        pendingAvoidOrProhibited = false;
+      }
+    };
+
+    for (let i = 0; i < sec.rawLines.length; i++) {
+      const line = sec.rawLines[i];
+      const lower = line.toLowerCase();
+
+      // Check for subheadings like "### 4.1 Accuracy" or "### Required communication" or "### Prohibited"
+      if (line.startsWith('###') || line.startsWith('##') || line.startsWith('**Required') || line.startsWith('**Prohibited') || line.startsWith('### Prohibited') || line.startsWith('Avoid:')) {
+        flushListItems();
+        currentContext = line.replace(/^[#*:]+\s*/, '').replace(/[:*#]/g, '').trim();
+        pendingAvoidOrProhibited = lower.includes('prohibit') || lower.includes('avoid') || lower.includes('never');
+        continue;
+      }
+
+      if (lower.startsWith('avoid:') || lower.startsWith('prohibited:')) {
+        flushListItems();
+        currentContext = `${sec.title} Restrictions`;
+        pendingAvoidOrProhibited = true;
+        continue;
+      }
+
+      // Check for bullet list items
+      const isBullet = line.startsWith('* ') || line.startsWith('- ') || /^\d+\.\s+/.test(line);
+
+      if (isBullet) {
+        const cleanItem = line.replace(/^[-*\d.)]+\s*/, '').trim();
+
+        // If the item is just a few words (like "* refund status" or "* clear"), accumulate it into the context
+        if (cleanItem.split(/\s+/).length < 5) {
+          pendingListItems.push(cleanItem);
+          continue;
+        }
+
+        // If it's a substantive sentence or rule (>= 5 words)
+        globalClauseCount++;
+        const isEscalation = cleanItem.toLowerCase().includes('supervisor') || cleanItem.toLowerCase().includes('approval') || cleanItem.toLowerCase().includes('escalat');
+        const isProhibitive = pendingAvoidOrProhibited || cleanItem.toLowerCase().startsWith('do not') || cleanItem.toLowerCase().startsWith('never') || cleanItem.toLowerCase().startsWith('prohibit');
+        const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = isProhibitive
+          ? 'PROHIBITIVE'
+          : isEscalation || cleanItem.toLowerCase().includes('must') || cleanItem.toLowerCase().includes('shall')
+          ? 'MANDATORY'
+          : 'MANDATORY';
+
+        // Extract clean title
+        let clauseTitle = cleanItem.length > 45 ? cleanItem.slice(0, 42) + '...' : cleanItem;
+        const colonSplit = cleanItem.split(/[:—]/);
+        if (colonSplit.length > 1 && colonSplit[0].length < 35 && colonSplit[0].length > 3) {
+          clauseTitle = colonSplit[0].trim();
+        }
+
+        // Parse numeric monetary amount if present
+        const amountMatch = cleanItem.match(/(?:above|over|exceeding|greater than|more than|\$|₹)\s*[\$₹]?(\d+(?:\.\d{1,2})?)/i);
+        const thresholdAmount = amountMatch ? parseFloat(amountMatch[1]) : undefined;
+
+        clauses.push({
+          clauseId: `POL-${sec.sectionNumber.replace(/[^0-9.]/g, '') || globalClauseCount}-${clauses.length + 1}`,
+          sectionId: secId,
+          sectionTitle: sec.title,
+          title: clauseTitle,
+          statement: cleanItem,
+          directive,
+          category: secCategory,
+          allowedActions: isProhibitive
+            ? ['Ground all communication strictly in verified factual telemetry and policy constraints']
+            : [cleanItem],
+          prohibitedActions: isProhibitive
+            ? [cleanItem]
+            : ['Do not invent unverified timelines, unauthorized compensation, or unapproved promises'],
+          escalationRequired: isEscalation,
+          thresholdAmount,
+        });
+      } else if (line.length > 30 && (lower.includes('must') || lower.includes('shall') || lower.includes('prohibit') || lower.includes('require') || lower.includes('never') || lower.includes('escalate'))) {
+        // Substantive standalone paragraph statement
+        globalClauseCount++;
+        const isEscalation = lower.includes('supervisor') || lower.includes('approval') || lower.includes('escalat');
+        const isProhibitive = lower.includes('prohibit') || lower.includes('never') || lower.includes('cannot') || lower.includes('do not');
+        const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = isProhibitive ? 'PROHIBITIVE' : 'MANDATORY';
+
+        clauses.push({
+          clauseId: `POL-${sec.sectionNumber.replace(/[^0-9.]/g, '') || globalClauseCount}-${clauses.length + 1}`,
+          sectionId: secId,
+          sectionTitle: sec.title,
+          title: line.length > 45 ? line.slice(0, 42) + '...' : line,
+          statement: line,
+          directive,
+          category: secCategory,
+          allowedActions: isProhibitive ? ['Strict compliance with documented constraint'] : [line],
+          prohibitedActions: isProhibitive ? [line] : ['Do not make unauthorized commitments'],
+          escalationRequired: isEscalation,
+        });
+      }
+    }
+
+    flushListItems();
+
+    if (clauses.length > 0) {
+      structuredSections.push({
+        sectionId: secId,
+        sectionNumber: sec.sectionNumber.startsWith('Sec') ? sec.sectionNumber : `Section ${sec.sectionNumber}`,
+        title: sec.title,
+        category: secCategory,
+        description: `Operational rules and compliance constraints governing ${sec.title}`,
+        clauses,
+      });
     }
   }
 
-  // Categories registry
-  const categoryDefinitions: {
-    [key in 'transactional' | 'privacy' | 'financial' | 'frequency' | 'channel']: {
-      id: string;
-      title: string;
-      description: string;
-      clauses: StructuredPolicyClause[];
-    };
-  } = {
-    transactional: {
-      id: 'sec-transactional',
-      title: 'Transactional Communications & Service Protocols',
-      description: 'Order fulfillment, payment handling, inventory timeouts, and transactional notifications',
-      clauses: [],
-    },
-    privacy: {
-      id: 'sec-privacy',
-      title: 'Privacy, Data Protection & Credential Masking',
-      description: 'PII safeguarding, payment card redaction, credential masking, and GDPR/compliance rules',
-      clauses: [],
-    },
-    financial: {
-      id: 'sec-financial',
-      title: 'Financial Governance, Compensation & Approval Gates',
-      description: 'Discretionary credits, goodwill compensation, monetary thresholds, and supervisor authorizations',
-      clauses: [],
-    },
-    frequency: {
-      id: 'sec-frequency',
-      title: 'Fatigue Management, Velocity & Suppression Limits',
-      description: 'Customer attention frequency caps, rolling 24-hour limits, and notification suppression triggers',
-      clauses: [],
-    },
-    channel: {
-      id: 'sec-channel',
-      title: 'Channel Guidelines & Formatting Bounds',
-      description: 'SMS character density, WhatsApp structure, Email formal layout, and Quiet Hours compliance',
-      clauses: [],
-    },
-  };
-
-  let currentCategoryKey: 'transactional' | 'privacy' | 'financial' | 'frequency' | 'channel' = 'transactional';
-  let currentSectionTitle = 'General Governance';
-  let currentSectionId = 'sec-1';
-  let clauseIndex = 0;
-
-  lines.forEach((line) => {
-    const lower = line.toLowerCase();
-
-    // Check for explicit Section Header (e.g., "1. Transactional Payments" or "Section 2.0: Privacy")
-    const sectionMatch = line.match(/^(?:#+\s*|\b(?:Section|Clause|Article|Policy|Part)\s*[\d\w.-]*[:\s-]*|\d+[\.\)]\s+)(.*)/i);
-    const isHeaderLine = line.startsWith('#') || /^\d+[\.\)]\s+[A-Za-z]/.test(line) || /^section\b/i.test(line);
-
-    if (isHeaderLine && sectionMatch && sectionMatch[1]) {
-      const detectedHeader = sectionMatch[1].replace(/[:*#]/g, '').trim();
-      if (detectedHeader.length > 3) {
-        currentSectionTitle = detectedHeader;
-        currentSectionId = `sec-${detectedHeader.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
-      }
-    }
-
-    // Determine target category
-    if (lower.includes('privacy') || lower.includes('security') || lower.includes('pii') || lower.includes('gdpr') || lower.includes('mask') || lower.includes('password') || lower.includes('credential')) {
-      currentCategoryKey = 'privacy';
-    } else if (lower.includes('frequency') || lower.includes('fatigue') || lower.includes('limit') || lower.includes('cap') || lower.includes('suppress') || lower.includes('velocity')) {
-      currentCategoryKey = 'frequency';
-    } else if (lower.includes('compensation') || lower.includes('discount') || lower.includes('refund') || lower.includes('credit') || lower.includes('voucher') || lower.includes('waiver') || lower.includes('liability')) {
-      currentCategoryKey = 'financial';
-    } else if (lower.includes('sms') || lower.includes('whatsapp') || lower.includes('character') || lower.includes('quiet hour') || lower.includes('format') || lower.includes('channel')) {
-      currentCategoryKey = 'channel';
-    } else if (lower.includes('transaction') || lower.includes('order') || lower.includes('payment') || lower.includes('service') || lower.includes('application') || lower.includes('kyc')) {
-      currentCategoryKey = 'transactional';
-    }
-
-    // Identify policy clauses: Bullet points, numbered statements, or lines with modal directives
-    const isClauseLine = line.startsWith('-') || line.startsWith('*') || /^\d+\.\d+/.test(line) || /^\d+[\.\)]\s+[^A-Z]/.test(line) ||
-      (lower.includes('must') || lower.includes('prohibit') || lower.includes('require') || lower.includes('shall') || lower.includes('never') || lower.includes('allow'));
-
-    if (isClauseLine) {
-      const cleanStatement = line.replace(/^[-*\d.)]+\s*/, '').trim();
-      if (cleanStatement.length < 8) return;
-
-      clauseIndex++;
-      const clauseId = `POL-DOC-${clauseIndex}`;
-
-      // Escalation checks
-      const isEscalation = lower.includes('supervisor') || lower.includes('approval') || lower.includes('escalat') ||
-        lower.includes('compensation') || lower.includes('goodwill') || lower.includes('credit');
-
-      // Directive classification
-      const isProhibitive = lower.includes('prohibit') || lower.includes('never') || lower.includes('do not') || lower.includes('forbidden') || lower.includes('cannot');
-      const isMandatory = isEscalation || lower.includes('must') || lower.includes('shall') || lower.includes('require') || lower.includes('strictly');
-      const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = isProhibitive ? 'PROHIBITIVE' : isMandatory ? 'MANDATORY' : 'PERMISSIVE';
-
-      // Parse numerical amount threshold if specified
-      const amountMatch = cleanStatement.match(/(?:above|over|exceeding|greater than|more than|\$)\s*\$?(\d+(?:\.\d{1,2})?)/i);
-      const thresholdAmount = amountMatch ? parseFloat(amountMatch[1]) : undefined;
-
-      // Extract concise clause title
-      let clauseTitle = cleanStatement.length > 50 ? cleanStatement.slice(0, 48) + '...' : cleanStatement;
-      const colonSplit = cleanStatement.split(':');
-      if (colonSplit.length > 1 && colonSplit[0].length < 40) {
-        clauseTitle = colonSplit[0].trim();
-      }
-
-      const clause: StructuredPolicyClause = {
-        clauseId,
-        sectionId: currentSectionId,
-        sectionTitle: currentSectionTitle,
-        title: clauseTitle,
-        statement: cleanStatement,
-        directive,
-        category: currentCategoryKey,
-        allowedActions: isProhibitive
-          ? ['Ground all communication strictly in verified factual telemetry and policy constraints']
-          : [cleanStatement],
-        prohibitedActions: isProhibitive
-          ? [cleanStatement]
-          : ['Do not invent unverified settlement dates or unauthorized compensation promises'],
-        escalationRequired: isEscalation,
-        thresholdAmount,
-      };
-
-      categoryDefinitions[currentCategoryKey].clauses.push(clause);
-    }
-  });
-
-  // Collect all structured clauses across active categories
-  const activeSections: StructuredPolicySection[] = Object.entries(categoryDefinitions)
-    .filter(([_, cat]) => cat.clauses.length > 0)
-    .map(([catKey, cat], idx) => ({
-      sectionId: cat.id,
-      sectionNumber: `Section ${idx + 1}.0`,
-      title: cat.title,
-      category: catKey as any,
-      description: cat.description,
-      clauses: cat.clauses,
-    }));
-
-  const allStructuredClauses = activeSections.flatMap(s => s.clauses);
+  const allStructuredClauses = structuredSections.flatMap(s => s.clauses);
 
   // If no granular clauses were extracted from candidate lines, double check validity
   if (allStructuredClauses.length === 0) {
@@ -297,23 +449,25 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
     };
   }
 
-  // Step 2: Build Structured Policy Document
+  // Step 4: Build Structured Policy Document
   const structuredDocument: StructuredPolicyDocument = {
     title: docTitle,
+    documentId: docId,
     version: docVersion,
-    effectiveScope: 'Enterprise Outbound Communication Channels',
+    effectiveDate,
+    effectiveScope: 'Customer-facing transactional communications and refund orchestration',
     rawWordCount: words.length,
-    sections: activeSections,
+    sections: structuredSections,
     totalClauses: allStructuredClauses.length,
     escalationClauseCount: allStructuredClauses.filter(c => c.escalationRequired).length,
     parsedAt: new Date().toISOString(),
   };
 
-  // Step 3: Build Flat Policy Rules for Orchestrator Ingestion
+  // Step 5: Build Flat Policy Rules for Orchestrator Ingestion
   const flatRules: PolicyRule[] = allStructuredClauses.map(clause => ({
     id: clause.clauseId,
-    nodePath: `Custom Governance > ${clause.sectionTitle} > ${clause.title}`,
-    category: clause.category as any,
+    nodePath: `${docTitle} > ${clause.sectionTitle} > ${clause.title}`,
+    category: (clause.category === 'governance' ? 'transactional' : clause.category) as any,
     title: clause.title,
     rule: clause.statement,
     condition: clause.thresholdAmount ? `amount_check_threshold_${clause.thresholdAmount}` : 'parsed_document_clause',
@@ -323,10 +477,10 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
     priority: clause.escalationRequired ? 'critical' : 'high',
   }));
 
-  // Step 4: Construct Deterministic Policy Tree from the Structured Document
-  const treeChildren: PolicyTreeNode[] = activeSections.map(section => ({
+  // Step 6: Construct Clean Hierarchical Policy Tree from the Structured Document
+  const treeChildren: PolicyTreeNode[] = structuredSections.map(section => ({
     id: section.sectionId,
-    name: section.title,
+    name: `${section.sectionNumber}: ${section.title}`,
     description: section.description,
     category: 'category',
     children: section.clauses.map(c => ({
@@ -343,7 +497,7 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
   const tree: PolicyTreeNode = {
     id: 'custom-root',
     name: `${structuredDocument.title} (${structuredDocument.version})`,
-    description: `Grounding tree created from structured policy document (${structuredDocument.totalClauses} active clauses across ${activeSections.length} sections)`,
+    description: `${structuredDocument.documentId ? `[${structuredDocument.documentId}] ` : ''}Policy Tree generated from structured document (${structuredDocument.totalClauses} active clauses across ${structuredSections.length} sections)`,
     category: 'root',
     children: treeChildren,
   };
@@ -353,6 +507,6 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
     structuredDocument,
     tree,
     rules: flatRules,
-    summary: `Structured document parsed: ${structuredDocument.totalClauses} clauses across ${activeSections.length} sections (${structuredDocument.escalationClauseCount} escalation gates). Policy tree constructed successfully.`,
+    summary: `Structured document parsed: ${structuredDocument.totalClauses} clauses across ${structuredSections.length} sections (${structuredDocument.escalationClauseCount} escalation gates). Policy tree constructed successfully.`,
   };
 }
