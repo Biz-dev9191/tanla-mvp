@@ -372,53 +372,55 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
       <div className="space-y-2.5 pt-1">
         {/* Compact Simulation Actions Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-          <div className="flex flex-wrap items-center gap-2">
+          {/* Active Persona Badge - Left Aligned */}
+          <div className="flex items-center space-x-2 bg-aurora-neutral-100 px-3 py-1.5 rounded-lg border border-aurora-neutral-200 text-xs text-aurora-neutral-600">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse flex-shrink-0" />
+            <span>Active Persona: <strong className="text-aurora-neutral-900 font-semibold">{PERSONAS.find((p) => p.id === selectedPersona)?.name}</strong></span>
+          </div>
+
+          {/* Simulator Action Buttons - Right Aligned */}
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:justify-end">
             {/* Button 1: Autonomous Persona Simulation */}
             <button
               type="button"
               onClick={() => handleSimulateCustomerTurn()}
               disabled={isLoading}
-              className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-xs font-bold flex items-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50"
+              className="w-full sm:w-56 h-10 px-4 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed flex-shrink-0"
             >
               {isLoading && loadingAction === 'customer' ? (
                 <>
-                  <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
-                  <span>Simulating Reaction...</span>
+                  <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
+                  <span className="truncate">Simulating Reaction...</span>
                 </>
               ) : (
                 <>
-                  <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5 text-sky-200" />
-                  <span>
+                  <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5 text-sky-200 flex-shrink-0" />
+                  <span className="truncate">
                     {turns.length === 0 ? 'Simulate Customer Response' : 'Simulate Customer Follow-Up'}
                   </span>
                 </>
               )}
             </button>
 
-            {/* Button 2: Generate Automated Agent Reply */}
+            {/* Button 2: Generate Automated Agent Reply (Black) */}
             <button
               type="button"
               onClick={() => handleGenerateAutomatedAgentReply()}
               disabled={isLoading || lastSpeaker !== 'customer'}
-              className="px-4 py-2 bg-aurora-neutral-900 hover:bg-black text-white rounded-lg text-xs font-bold flex items-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-40"
+              className="w-full sm:w-56 h-10 px-4 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-40 cursor-pointer disabled:cursor-not-allowed flex-shrink-0"
             >
               {isLoading && loadingAction === 'agent' ? (
                 <>
-                  <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
-                  <span>Generating Reply...</span>
+                  <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin flex-shrink-0" />
+                  <span className="truncate">Generating Reply...</span>
                 </>
               ) : (
                 <>
-                  <Bot strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-300" />
-                  <span>Generate Agent Reply</span>
+                  <Bot strokeWidth={1.5} className="w-3.5 h-3.5 text-neutral-300 flex-shrink-0" />
+                  <span className="truncate">Generate Agent Reply</span>
                 </>
               )}
             </button>
-          </div>
-
-          <div className="text-[11px] text-aurora-neutral-500 font-mono hidden sm:flex items-center space-x-1.5 bg-aurora-neutral-100 px-2.5 py-1 rounded-md border border-aurora-neutral-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span>Active Persona: <strong className="text-aurora-neutral-800 font-sans">{PERSONAS.find((p) => p.id === selectedPersona)?.name}</strong></span>
           </div>
         </div>
 
