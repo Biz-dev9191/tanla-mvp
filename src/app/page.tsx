@@ -409,7 +409,7 @@ export default function Home() {
                   humanApprovalStatus={currentResult.humanApprovalStatus}
                 />
 
-                {/* 2. Customer Turnaround & Sentiment Simulator */}
+                {/* 2. Customer Chat Simulator */}
                 <CustomerResponseSimulator
                   customer={currentResult.customer}
                   event={currentResult.event}
