@@ -104,6 +104,7 @@ export interface PolicyRule {
   prohibitedActions: string[];
   escalationRequired: boolean;
   priority: 'low' | 'medium' | 'high' | 'critical';
+  thresholdAmount?: number;
 }
 
 export interface CommunicationStrategy {

@@ -1,4 +1,5 @@
 import { CustomerProfile, BusinessEvent, BusinessObjective, PolicyRule, ClauseCitation, AgentExecutionStep } from '../types';
+import { extractThresholdFromText } from '../policy-generator';
 
 export interface PolicyAnalysisOutput {
   appliedPolicyPath: string[];
@@ -34,15 +35,36 @@ export function runPolicyAgent(
       `[Step 1 - Custom Policy Ingestion] Evaluated ${customRules?.length || 0} custom compliance rules provided by user.`
     );
 
-    // Extract numeric amount from event if present
-    const numAmountMatch = event.amount ? event.amount.match(/\$?(\d+(?:\.\d{1,2})?)/) : null;
-    const eventNumericAmount = numAmountMatch ? parseFloat(numAmountMatch[1]) : 0;
+    // Extract numeric amount from event if present (from event.amount, description, or telemetry)
+    const numAmountMatch = event.amount ? event.amount.match(/[\$₹]?\s*(\d+(?:\.\d{1,2})?)/) : null;
+    let eventNumericAmount = numAmountMatch ? parseFloat(numAmountMatch[1]) : 0;
+    if (eventNumericAmount === 0) {
+      const textToSearch = `${event.title} ${event.description} ${(event.verifiedFacts || []).join(' ')}`;
+      const fallbackMatch = textToSearch.match(/[\$₹]\s*(\d+(?:\.\d{1,2})?)/);
+      if (fallbackMatch) {
+        eventNumericAmount = parseFloat(fallbackMatch[1]);
+      }
+    }
 
     let customEscalationRequired = false;
     let customApprovalReason: string | undefined = undefined;
 
-    // Build clause citations and check dynamic amount thresholds
+    // Build clause citations and check dynamic amount thresholds & conditional escalation gates
     customRules?.forEach((rule, idx) => {
+      const ruleThreshold = rule.thresholdAmount !== undefined
+        ? rule.thresholdAmount
+        : extractThresholdFromText(`${rule.title} ${rule.rule} ${rule.condition}`);
+      const isThresholdRule = ruleThreshold !== undefined;
+      const ruleTextLower = `${rule.title} ${rule.rule} ${rule.condition}`.toLowerCase();
+
+      const mentionsSupervisorOrApproval =
+        rule.escalationRequired ||
+        ruleTextLower.includes('supervisor') ||
+        ruleTextLower.includes('approval') ||
+        ruleTextLower.includes('escalat') ||
+        ruleTextLower.includes('manual review') ||
+        ruleTextLower.includes('authori');
+
       clauseCitations.push({
         clauseId: rule.id || `CUSTOM-POL-${idx + 1}`,
         sourceDocument: "Custom Enterprise Policy Document",
@@ -50,7 +72,7 @@ export function runPolicyAgent(
         title: rule.title || rule.rule.slice(0, 50),
         excerpt: rule.rule,
         relevanceScore: 0.95,
-        directiveType: rule.escalationRequired
+        directiveType: mentionsSupervisorOrApproval
           ? "MANDATORY"
           : (rule.prohibitedActions && rule.prohibitedActions.length > 0)
           ? "PROHIBITIVE"
@@ -58,21 +80,97 @@ export function runPolicyAgent(
         complianceRequirement: rule.rule,
       });
 
-      // Check for explicit escalation in rule definition
-      if (rule.escalationRequired) {
-        customEscalationRequired = true;
-        customApprovalReason = `Human supervisor review required by custom policy clause '${rule.title || rule.id}'.`;
-      }
+      if (isThresholdRule) {
+        // Dynamic amount threshold logic:
+        const threshold = ruleThreshold!;
+        if (eventNumericAmount > 0) {
+          if (eventNumericAmount > threshold) {
+            // Amount exceeds autonomous limit -> Escalation triggered
+            customEscalationRequired = true;
+            customApprovalReason = `Event amount ($${eventNumericAmount.toFixed(2)}) exceeds custom policy autonomous limit ($${threshold.toFixed(2)}) defined in '${rule.title || rule.id}'. Supervisor approval required.`;
+            chainOfThought.push(
+              `[Custom Threshold Trigger] Event amount $${eventNumericAmount} exceeds rule threshold of $${threshold} in '${rule.title || rule.id}'. Human supervisor intervention required.`
+            );
+          } else {
+            // Amount is within autonomous limit -> Autonomous execution approved
+            chainOfThought.push(
+              `[Custom Threshold Satisfied] Event amount $${eventNumericAmount} is within autonomous limit ($${threshold}) in '${rule.title || rule.id}'. Approved for autonomous execution.`
+            );
+          }
+        }
+      } else if (mentionsSupervisorOrApproval) {
+        // Non-threshold escalation clause: verify if event context satisfies the specific escalation condition
+        const isCompensationRule =
+          ruleTextLower.includes('goodwill') ||
+          ruleTextLower.includes('compensation') ||
+          ruleTextLower.includes('voucher') ||
+          ruleTextLower.includes('fee credit') ||
+          ruleTextLower.includes('credit');
 
-      // Check for dynamic amount threshold in rule text (e.g. "above $50" or "over $100" or "exceeding $75")
-      const ruleThresholdMatch = rule.rule.match(/(?:above|over|exceeding|greater than|more than)\s*\$?(\d+(?:\.\d{1,2})?)/i);
-      if (ruleThresholdMatch && eventNumericAmount > 0) {
-        const threshold = parseFloat(ruleThresholdMatch[1]);
-        if (eventNumericAmount > threshold) {
+        const isDisputeRule =
+          ruleTextLower.includes('dispute') ||
+          ruleTextLower.includes('complaint') ||
+          ruleTextLower.includes('legal') ||
+          ruleTextLower.includes('breach') ||
+          ruleTextLower.includes('unresolved');
+
+        const isExceptionRule =
+          ruleTextLower.includes('exception') ||
+          ruleTextLower.includes('manual review') ||
+          ruleTextLower.includes('pending approval') ||
+          ruleTextLower.includes('cannot be determined') ||
+          ruleTextLower.includes('failed refund') ||
+          ruleTextLower.includes('unknown');
+
+        const isBlanketMandate =
+          ruleTextLower.includes('all refunds') ||
+          ruleTextLower.includes('every refund') ||
+          ruleTextLower.includes('all communications') ||
+          ruleTextLower.includes('every communication') ||
+          ruleTextLower.includes('mandatory supervisor review for all');
+
+        let conditionApplies = false;
+        let matchedConditionName = '';
+
+        if (isBlanketMandate) {
+          conditionApplies = true;
+          matchedConditionName = 'Blanket policy mandate';
+        } else if (isCompensationRule) {
+          const eventHasCredit =
+            (event.amount && /credit|voucher|waiver/i.test(event.amount)) ||
+            /goodwill|voucher|credit|compensation/i.test(event.title + ' ' + event.description);
+          if (eventHasCredit) {
+            conditionApplies = true;
+            matchedConditionName = 'Discretionary compensation or goodwill credit request';
+          }
+        } else if (isDisputeRule) {
+          const eventIsDispute =
+            event.eventType === 'customer_complaint' ||
+            /dispute|complaint|legal|breach|unresolved/i.test(event.title + ' ' + event.description);
+          if (eventIsDispute) {
+            conditionApplies = true;
+            matchedConditionName = 'Customer dispute or complaint escalation';
+          }
+        } else if (isExceptionRule) {
+          const eventIsException =
+            event.resolutionStatus === 'Pending Approval' ||
+            event.resolutionStatus === 'Requires Customer Action' ||
+            /exception|manual review|conflict|unknown/i.test(event.title + ' ' + event.description);
+          if (eventIsException) {
+            conditionApplies = true;
+            matchedConditionName = 'Unresolved exception or pending approval status';
+          }
+        }
+
+        if (conditionApplies) {
           customEscalationRequired = true;
-          customApprovalReason = `Event amount ($${eventNumericAmount.toFixed(2)}) exceeds custom policy autonomous limit ($${threshold.toFixed(2)}) defined in '${rule.title || rule.id}'. Supervisor approval required.`;
+          customApprovalReason = `Human supervisor review required by custom policy clause '${rule.title || rule.id}': ${matchedConditionName}.`;
           chainOfThought.push(
-            `[Custom Threshold Trigger] Event amount $${eventNumericAmount} exceeds rule threshold of $${threshold}. Human intervention required.`
+            `[Custom Escalation Trigger] Clause '${rule.title || rule.id}' condition triggered (${matchedConditionName}). Human intervention required.`
+          );
+        } else {
+          chainOfThought.push(
+            `[Custom Clause Evaluated] Clause '${rule.title || rule.id}' condition not triggered for routine verified event.`
           );
         }
       }

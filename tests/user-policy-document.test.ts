@@ -1,6 +1,6 @@
 import { parsePolicyDocumentText, validatePolicyDocumentText } from '../src/core/policy-generator';
 
-const userDocumentText = `# Refund & Customer Communication Policy
+export const userDocumentText = `# Refund & Customer Communication Policy
 
 **Document ID:** REF-COM-001
 **Version:** 2.1

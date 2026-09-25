@@ -173,6 +173,50 @@ function determineCategory(text: string): 'transactional' | 'privacy' | 'financi
 }
 
 /**
+ * Accurately extracts a monetary threshold amount from policy clause text
+ */
+export function extractThresholdFromText(text: string): number | undefined {
+  // 1. Matches: "above $500", "over $500", "exceeding $500", "greater than $500", "more than $500", "exceeds $500"
+  const exceedsMatch = text.match(/(?:above|over|exceeding|greater than|more than|exceeds)\s*[\$₹]?\s*(\d+(?:\.\d{1,2})?)/i);
+  if (exceedsMatch) return parseFloat(exceedsMatch[1]);
+
+  // 2. Matches: "$500 or more", "$500 and above", "$500 and over"
+  const orMoreMatch = text.match(/[\$₹]\s*(\d+(?:\.\d{1,2})?)\s*(?:or more|and above|and over)/i);
+  if (orMoreMatch) return parseFloat(orMoreMatch[1]);
+
+  // 3. Matches: "up to $500", "limit of $500", "cap of $500", "maximum of $500", "capped at $500", "under $500", "below $500"
+  const capMatch = text.match(/(?:up to|limit of|cap of|maximum of|capped at|under|below|limit is|cap is|maximum is)\s*[\$₹]?\s*(\d+(?:\.\d{1,2})?)/i);
+  if (capMatch) return parseFloat(capMatch[1]);
+
+  // 4. Matches: "threshold: $500", "limit: $500", "cap: $500", "amount: $500"
+  const directMatch = text.match(/(?:threshold|limit|cap|maximum|max|amount)[\s:]*[\$₹]\s*(\d+(?:\.\d{1,2})?)/i);
+  if (directMatch) return parseFloat(directMatch[1]);
+
+  // 5. Matches currency amount if in context of supervisor, approval, authorization, refund, dispute, compensation, limit, cap
+  if (/(?:supervisor|approval|authori[zs]ation|refund|dispute|compensation|limit|cap)/i.test(text)) {
+    const plainMatch = text.match(/[\$₹]\s*(\d+(?:\.\d{1,2})?)/);
+    if (plainMatch) return parseFloat(plainMatch[1]);
+  }
+
+  return undefined;
+}
+
+/**
+ * Checks if a clause statement specifies an escalation requirement
+ */
+export function isEscalationDirective(text: string): boolean {
+  const lower = text.toLowerCase();
+  // Check for negative context first
+  if (lower.includes('without supervisor') || lower.includes('without approval') || lower.includes('no supervisor') || lower.includes('no approval')) {
+    if (lower.includes('above') || lower.includes('exceeding') || lower.includes('over') || lower.includes('requires approval') || lower.includes('require approval')) {
+      return true;
+    }
+    return false;
+  }
+  return lower.includes('supervisor') || lower.includes('approval') || lower.includes('escalat') || lower.includes('human review');
+}
+
+/**
  * Parses raw enterprise policy text, validates integrity, converts into a Structured Policy Document,
  * and generates a clean, grounded Policy Tree without random words.
  */
@@ -322,7 +366,8 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
           ? `Prohibited: The system must strictly avoid and not communicate: ${pendingListItems.join(', ')}.`
           : `${currentContext}: ${pendingListItems.join('; ')}.`;
 
-        const isEscalation = statement.toLowerCase().includes('supervisor') || statement.toLowerCase().includes('approval') || statement.toLowerCase().includes('escalat');
+        const isEscalation = isEscalationDirective(statement);
+        const thresholdAmount = extractThresholdFromText(statement);
         const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = pendingAvoidOrProhibited
           ? 'PROHIBITIVE'
           : isEscalation
@@ -344,6 +389,7 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
             ? pendingListItems
             : ['Do not invent unverified timelines or unapproved outcomes'],
           escalationRequired: isEscalation,
+          thresholdAmount,
         });
 
         pendingListItems = [];
@@ -384,7 +430,7 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
 
         // If it's a substantive sentence or rule (>= 5 words)
         globalClauseCount++;
-        const isEscalation = cleanItem.toLowerCase().includes('supervisor') || cleanItem.toLowerCase().includes('approval') || cleanItem.toLowerCase().includes('escalat');
+        const isEscalation = isEscalationDirective(cleanItem);
         const isProhibitive = pendingAvoidOrProhibited || cleanItem.toLowerCase().startsWith('do not') || cleanItem.toLowerCase().startsWith('never') || cleanItem.toLowerCase().startsWith('prohibit');
         const isPermissive = cleanItem.toLowerCase().startsWith('permit') || cleanItem.toLowerCase().startsWith('allow') || cleanItem.toLowerCase().includes('permitted to') || cleanItem.toLowerCase().includes('allowed to') || cleanItem.toLowerCase().includes('may provide');
         const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = isProhibitive
@@ -401,8 +447,7 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
         }
 
         // Parse numeric monetary amount if present
-        const amountMatch = cleanItem.match(/(?:above|over|exceeding|greater than|more than|\$|₹)\s*[\$₹]?(\d+(?:\.\d{1,2})?)/i);
-        const thresholdAmount = amountMatch ? parseFloat(amountMatch[1]) : undefined;
+        const thresholdAmount = extractThresholdFromText(cleanItem);
 
         clauses.push({
           clauseId: `POL-${sec.sectionNumber.replace(/[^0-9.]/g, '') || globalClauseCount}-${clauses.length + 1}`,
@@ -424,9 +469,10 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
       } else if (line.length > 30 && (lower.includes('must') || lower.includes('shall') || lower.includes('prohibit') || lower.includes('require') || lower.includes('never') || lower.includes('escalate'))) {
         // Substantive standalone paragraph statement
         globalClauseCount++;
-        const isEscalation = lower.includes('supervisor') || lower.includes('approval') || lower.includes('escalat');
+        const isEscalation = isEscalationDirective(line);
         const isProhibitive = lower.includes('prohibit') || lower.includes('never') || lower.includes('cannot') || lower.includes('do not');
         const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = isProhibitive ? 'PROHIBITIVE' : 'MANDATORY';
+        const thresholdAmount = extractThresholdFromText(line);
 
         clauses.push({
           clauseId: `POL-${sec.sectionNumber.replace(/[^0-9.]/g, '') || globalClauseCount}-${clauses.length + 1}`,
@@ -439,6 +485,7 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
           allowedActions: isProhibitive ? ['Strict compliance with documented constraint'] : [line],
           prohibitedActions: isProhibitive ? [line] : ['Do not make unauthorized commitments'],
           escalationRequired: isEscalation,
+          thresholdAmount,
         });
       }
     }
@@ -497,6 +544,7 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
     prohibitedActions: clause.prohibitedActions,
     escalationRequired: clause.escalationRequired,
     priority: clause.escalationRequired ? 'critical' : 'high',
+    thresholdAmount: clause.thresholdAmount,
   }));
 
   // Step 6: Construct Clean Hierarchical Policy Tree from the Structured Document

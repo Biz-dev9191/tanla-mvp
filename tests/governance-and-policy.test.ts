@@ -1,6 +1,7 @@
 import { orchestrateCommunication } from '../src/core/orchestrator';
 import { CustomerProfile, BusinessEvent, BusinessObjective, PolicyRule } from '../src/core/types';
 import { parsePolicyDocumentText } from '../src/core/policy-generator';
+import { userDocumentText } from './user-policy-document.test';
 
 interface TestResult {
   name: string;
@@ -382,6 +383,248 @@ async function main() {
       assert(!result.messages.sms.body.includes('!'), 'SMS body has 0 exclamation marks', details);
       assert(!result.messages.whatsapp.body.includes('!'), 'WhatsApp body has 0 exclamation marks', details);
       assert(!result.messages.voice.body.includes('!'), 'Voice script has 0 exclamation marks', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 4: High Threshold ($500) Policy with Routine Small Amount ($25)
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 4: High Threshold ($500) Policy with Small Amount ($25.00) Executes Autonomously Without Escalation',
+    'Dynamic Policy Modification',
+    async (details) => {
+      const event: BusinessEvent = {
+        id: 'EVT-MOD-04',
+        eventType: 'payment_successful_order_failed',
+        title: 'Order provisioning failed for small $25 transaction',
+        description: 'Auto-refund initiated for $25.00.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_551 ($25.00)', 'Auto-refund initiated to card ending 4012'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_551',
+        amount: '$25.00',
+      };
+      const objective: BusinessObjective = { primary: 'resolve_issue' };
+
+      // High threshold policy ($500 limit)
+      const highLimitRules: PolicyRule[] = [
+        {
+          id: 'CUSTOM-POL-HIGH',
+          nodePath: 'Custom Governance > Financial Controls > High Limit Refund Policy',
+          category: 'financial',
+          title: 'Autonomous Refund Cap up to $500',
+          rule: 'Refunds exceeding $500.00 require human supervisor authorization prior to dispatch.',
+          condition: 'amount_check_threshold_500',
+          allowedActions: ['Process refunds up to $500.00 autonomously'],
+          prohibitedActions: ['Do not auto-dispatch refunds exceeding $500.00 without supervisor approval'],
+          escalationRequired: true,
+          thresholdAmount: 500,
+          priority: 'critical',
+        },
+      ];
+
+      const result = await orchestrateCommunication(
+        baseCustomer,
+        event,
+        objective,
+        undefined,
+        highLimitRules
+      );
+
+      assert(result.strategy.decision === 'SEND', 'Decision is SEND for $25.00 <= $500.00 limit', details);
+      assert(result.strategy.humanApprovalRequired === false, 'humanApprovalRequired is false', details);
+      assert(result.humanApprovalStatus === 'Not Required', 'humanApprovalStatus is Not Required', details);
+      assert(result.guardrails.status === 'PASS', 'Guardrails status is PASS', details);
+      assert(!result.messages.whatsapp.body.includes('!'), 'WhatsApp has zero exclamation marks', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 5: Dynamic Threshold Update from High ($1000) to Low ($500) on Same $750 Transaction
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 5: Dynamic Threshold Update from $1000 Cap (Autonomous) to $500 Cap (Escalates) on Same $750 Transaction',
+    'Dynamic Policy Modification',
+    async (details) => {
+      const event: BusinessEvent = {
+        id: 'EVT-MOD-05',
+        eventType: 'payment_successful_order_failed',
+        title: 'Order provisioning failed for $750 transaction',
+        description: 'Auto-refund initiated for $750.00.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_750 ($750.00)', 'Auto-refund initiated'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_750',
+        amount: '$750.00',
+      };
+      const objective: BusinessObjective = { primary: 'resolve_issue' };
+
+      // Phase 1: High Cap ($1000) -> $750 is within limit
+      const highLimit1000: PolicyRule[] = [
+        {
+          id: 'CUSTOM-CAP-1000',
+          nodePath: 'Custom Governance > Financial Controls > $1000 Cap',
+          category: 'financial',
+          title: '$1000 Refund Autonomous Limit',
+          rule: 'Refunds exceeding $1000.00 require human supervisor approval.',
+          condition: 'amount_check_threshold_1000',
+          allowedActions: ['Autonomous dispatch under $1000.00'],
+          prohibitedActions: ['Do not auto-dispatch refunds exceeding $1000.00'],
+          escalationRequired: true,
+          thresholdAmount: 1000,
+          priority: 'critical',
+        },
+      ];
+
+      const res1 = await orchestrateCommunication(baseCustomer, event, objective, undefined, highLimit1000);
+      assert(res1.strategy.decision === 'SEND', 'Phase 1: Decision is SEND under $1000 threshold', details);
+      assert(res1.strategy.humanApprovalRequired === false, 'Phase 1: humanApprovalRequired is false', details);
+      assert(res1.humanApprovalStatus === 'Not Required', 'Phase 1: humanApprovalStatus is Not Required', details);
+
+      // Phase 2: Policy modified to lower cap ($500) -> $750 now exceeds limit
+      const lowLimit500: PolicyRule[] = [
+        {
+          id: 'CUSTOM-CAP-500',
+          nodePath: 'Custom Governance > Financial Controls > $500 Cap',
+          category: 'financial',
+          title: '$500 Refund Autonomous Limit',
+          rule: 'Refunds exceeding $500.00 require human supervisor approval.',
+          condition: 'amount_check_threshold_500',
+          allowedActions: ['Autonomous dispatch under $500.00'],
+          prohibitedActions: ['Do not auto-dispatch refunds exceeding $500.00'],
+          escalationRequired: true,
+          thresholdAmount: 500,
+          priority: 'critical',
+        },
+      ];
+
+      const res2 = await orchestrateCommunication(baseCustomer, event, objective, undefined, lowLimit500);
+      assert(res2.strategy.decision === 'ESCALATE', 'Phase 2: Decision transitions to ESCALATE under $500 threshold', details);
+      assert(res2.strategy.humanApprovalRequired === true, 'Phase 2: humanApprovalRequired is true', details);
+      assert(res2.humanApprovalStatus === 'Pending', 'Phase 2: humanApprovalStatus is Pending', details);
+      assert(res2.strategy.approvalReason?.includes('exceeds') === true, 'Phase 2: Approval reason cites amount exceeding limit', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 6: Multi-Clause Raw Document Ingestion with $500 Limit and Multi-Scenario Events
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 6: Ingestion of Raw Policy Document with $500 Limit Tested Against Multi-Scenario Events',
+    'Dynamic Policy Modification',
+    async (details) => {
+      const docText = `
+        # Enterprise Customer Communication & Refund Policy
+        **Document ID:** POL-2026-MULTI  |  **Version:** 3.0  |  **Status:** Active
+
+        # 1. Transactional & Order Guidelines
+        - For failed orders with captured payments, immediately initiate auto-refund and cite payment ID.
+        - Reassure customer that zero action is required on their part.
+        - Automated refunds up to $500.00 are processed autonomously without supervisor intervention.
+        - Refunds exceeding $500.00 require human supervisor approval before dispatch.
+
+        # 2. Privacy & Data Protection
+        - Always mask payment cards to the last 4 digits (e.g. **** 4012).
+        - Zero exclamation marks are permitted in customer copy.
+
+        # 3. Dispute Escalations
+        - Customer complaints or billing disputes must be escalated to human supervisor review.
+      `;
+
+      const parsed = parsePolicyDocumentText(docText);
+      assert(parsed.isValid === true, 'Parsed multi-clause document successfully', details);
+      assert(parsed.rules.length >= 4, `Extracted ${parsed.rules.length} active governance rules`, details);
+
+      // Scenario 6A: Small $35 auto-refund -> Autonomous
+      const eventSmall: BusinessEvent = {
+        id: 'EVT-6A',
+        eventType: 'payment_successful_order_failed',
+        title: 'Small order failure $35',
+        description: 'Auto-refund initiated for $35.00.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_6A ($35.00)', 'Auto-refund initiated'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_6A',
+        amount: '$35.00',
+      };
+      const resSmall = await orchestrateCommunication(baseCustomer, eventSmall, { primary: 'resolve_issue' }, undefined, parsed.rules, docText);
+      assert(resSmall.strategy.decision === 'SEND', 'Scenario 6A ($35): Decision is SEND', details);
+      assert(resSmall.strategy.humanApprovalRequired === false, 'Scenario 6A: humanApprovalRequired is false', details);
+      assert(resSmall.humanApprovalStatus === 'Not Required', 'Scenario 6A: humanApprovalStatus is Not Required', details);
+
+      // Scenario 6B: Large $650 auto-refund -> Exceeds $500 threshold
+      const eventLarge: BusinessEvent = {
+        id: 'EVT-6B',
+        eventType: 'payment_successful_order_failed',
+        title: 'Large order failure $650',
+        description: 'Order failed for $650.00 purchase.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_6B ($650.00)', 'Order provisioning failed'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_6B',
+        amount: '$650.00',
+      };
+      const resLarge = await orchestrateCommunication(baseCustomer, eventLarge, { primary: 'resolve_issue' }, undefined, parsed.rules, docText);
+      assert(resLarge.strategy.decision === 'ESCALATE', 'Scenario 6B ($650): Decision is ESCALATE', details);
+      assert(resLarge.strategy.humanApprovalRequired === true, 'Scenario 6B: humanApprovalRequired is true', details);
+      assert(resLarge.humanApprovalStatus === 'Pending', 'Scenario 6B: humanApprovalStatus is Pending', details);
+      assert(resLarge.strategy.approvalReason?.includes('exceeds') === true, 'Scenario 6B: Approval reason cites threshold breach', details);
+
+      // Scenario 6C: Dispute event with small amount ($15) -> Escalates due to dispute clause
+      const eventDispute: BusinessEvent = {
+        id: 'EVT-6C',
+        eventType: 'customer_complaint',
+        title: 'Customer complaint regarding incorrect charge of $15',
+        description: 'Customer dispute regarding billing charge. Supervisor review requested.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Dispute logged', 'Disputed charge $15.00'],
+        resolutionStatus: 'Pending Approval',
+        amount: '$15.00',
+      };
+      const resDispute = await orchestrateCommunication(baseCustomer, eventDispute, { primary: 'retain_customer' }, undefined, parsed.rules, docText);
+      assert(resDispute.strategy.decision === 'ESCALATE', 'Scenario 6C (Dispute): Decision is ESCALATE', details);
+      assert(resDispute.strategy.humanApprovalRequired === true, 'Scenario 6C: humanApprovalRequired is true', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 7: Full 98-Clause Enterprise Policy (REF-COM-001) with Routine $25 Auto-Refund
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 7: Full 98-Clause Enterprise Policy (REF-COM-001) Executes Small $25.00 Routine Refund Autonomously',
+    'Dynamic Policy Modification',
+    async (details) => {
+      const parsed = parsePolicyDocumentText(userDocumentText);
+      assert(parsed.isValid === true, 'Parsed REF-COM-001 successfully', details);
+      assert(parsed.rules.length > 50, `Parsed full policy tree with ${parsed.rules.length} clauses`, details);
+
+      const event: BusinessEvent = {
+        id: 'EVT-USER-POL-01',
+        eventType: 'payment_successful_order_failed',
+        title: 'Order provisioning failed after successful payment',
+        description: 'Auto-refund initiated for $25.00 per policy REF-COM-001 Section 7.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_9981 ($25.00)', 'Order ORD_9981 failed', 'Auto-refund initiated'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_9981',
+        orderId: 'ORD_9981',
+        amount: '$25.00',
+      };
+
+      const result = await orchestrateCommunication(
+        baseCustomer,
+        event,
+        { primary: 'resolve_issue' },
+        undefined,
+        parsed.rules,
+        userDocumentText
+      );
+
+      assert(result.strategy.decision === 'SEND', 'Routine refund under REF-COM-001 is SEND', details);
+      assert(result.strategy.humanApprovalRequired === false, 'humanApprovalRequired is false for verified routine refund', details);
+      assert(result.humanApprovalStatus === 'Not Required', 'humanApprovalStatus is Not Required', details);
+      assert(result.guardrails.status === 'PASS', 'Guardrails status is PASS', details);
+      assert(!result.messages.whatsapp.body.includes('!'), 'WhatsApp message has zero exclamation marks', details);
     }
   );
 
