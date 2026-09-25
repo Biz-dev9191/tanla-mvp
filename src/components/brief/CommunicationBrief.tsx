@@ -1031,7 +1031,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               className="w-full sm:w-52 h-11 px-5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-900 rounded-lg text-sm font-bold shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm flex items-center justify-center space-x-2"
             >
               <GitBranch strokeWidth={1.75} className="w-4 h-4 text-aurora-primary" />
-              <span>Policy Rules</span>
+              <span>Add Policy Rules</span>
             </button>
           ) : (
             <div />
