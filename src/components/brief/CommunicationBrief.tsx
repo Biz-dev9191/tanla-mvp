@@ -499,15 +499,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                 </select>
               </div>
             </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-aurora-neutral-200/80 text-[11px] text-aurora-neutral-600">
-              <span>
-                Selected Scenario: <strong className="text-aurora-neutral-900">{structCustomerName}</strong> (Cohort: <span className="font-mono text-aurora-primary">{structAgeGroup}</span>) • <strong className="text-aurora-neutral-900">{structEventType.replace(/_/g, ' ')}</strong> • <strong className="text-aurora-neutral-900">{structPrimaryObjective.replace(/_/g, ' ')}</strong>
-              </span>
-              <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded font-bold">
-                Live Synced Below
-              </span>
-            </div>
           </div>
         )}
       </div>

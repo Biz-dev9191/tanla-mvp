@@ -280,14 +280,9 @@ export default function Home() {
       <main className="flex-1 pb-16">
         {/* HOME VIEW: ONLY HERO SECTION */}
         {activeTab === 'home' && (
-          <div className="py-16 sm:py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto my-auto flex flex-col justify-center items-center text-center">
+          <div className="pt-8 pb-14 sm:pt-12 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto flex flex-col justify-center items-center text-center">
             <div className="space-y-6 max-w-3xl">
-              <div className="inline-flex items-center space-x-2 px-3 py-1 bg-aurora-primary-light border border-aurora-primary/10 rounded-full text-xs font-semibold text-aurora-primary">
-                <Sparkles strokeWidth={1.5} className="w-4 h-4" />
-                <span>Enterprise Agentic Communication Layer</span>
-              </div>
-
-              <h1 className="text-4xl sm:text-6xl font-bold tracking-tight text-aurora-neutral-900 leading-tight">
+              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-aurora-neutral-900 leading-tight">
                 From customer event to the right conversation.
               </h1>
 
@@ -296,7 +291,7 @@ export default function Home() {
               </p>
 
               {/* ONLY Get Started CTA */}
-              <div className="pt-4">
+              <div className="pt-2">
                 <button
                   type="button"
                   onClick={() => setActiveTab('brief')}
@@ -308,7 +303,7 @@ export default function Home() {
               </div>
 
               {/* Minimal Trust Indicator Badges */}
-              <div className="pt-12 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left border-t border-aurora-neutral-200 text-xs font-medium text-aurora-neutral-700">
+              <div className="pt-8 sm:pt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left border-t border-aurora-neutral-200 text-xs font-medium text-aurora-neutral-700">
                 <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
                   <div className="font-bold text-aurora-neutral-900">Context Grounded</div>
                   <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Dual-mode brief input</p>
