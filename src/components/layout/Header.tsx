@@ -108,36 +108,38 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
               </div>
             </div>
 
-            {/* Right: Direct Navigation Links on Top Bar */}
-            <div className="flex items-center space-x-1.5 sm:space-x-2">
-              <button
-                type="button"
-                onClick={() => handleSelectTab('knowledge-base')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
-                  activeTab === 'knowledge-base'
-                    ? 'bg-aurora-primary text-white shadow-2xs font-bold'
-                    : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
-                }`}
-              >
-                <BookOpen strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-                <span className="hidden sm:inline">Knowledge Rules</span>
-                <span className="sm:hidden">Rules</span>
-              </button>
+            {/* Right: Direct Navigation Links on Top Bar (Hidden on Home page) */}
+            {activeTab !== 'home' && (
+              <div className="flex items-center space-x-1.5 sm:space-x-2 animate-fadeIn">
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab('knowledge-base')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
+                    activeTab === 'knowledge-base'
+                      ? 'bg-aurora-primary text-white shadow-2xs font-bold'
+                      : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
+                  }`}
+                >
+                  <BookOpen strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                  <span className="hidden sm:inline">Knowledge Rules</span>
+                  <span className="sm:hidden">Rules</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => handleSelectTab('history')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
-                  activeTab === 'history'
-                    ? 'bg-aurora-primary text-white shadow-2xs font-bold'
-                    : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
-                }`}
-              >
-                <History strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-                <span className="hidden sm:inline">Audit History</span>
-                <span className="sm:hidden">History</span>
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => handleSelectTab('history')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
+                    activeTab === 'history'
+                      ? 'bg-aurora-primary text-white shadow-2xs font-bold'
+                      : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
+                  }`}
+                >
+                  <History strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                  <span className="hidden sm:inline">Audit History</span>
+                  <span className="sm:hidden">History</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>

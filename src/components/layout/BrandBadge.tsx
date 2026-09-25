@@ -5,15 +5,15 @@ export const BrandBadge: React.FC<{ subtitle?: string }> = ({
 }) => {
   return (
     <div className="flex items-center space-x-3 select-none">
-      {/* Aurora Cloud Sunrise Mark (Solid brand color without gradient hue) */}
-      <div className="w-8 h-8 rounded bg-aurora-primary flex items-center justify-center text-white shadow-sm flex-shrink-0">
+      {/* Aurora Cloud Sunrise Mark */}
+      <div className="w-9 h-9 rounded-lg bg-aurora-primary flex items-center justify-center text-white shadow-xs flex-shrink-0">
         <svg
-          width="20"
-          height="20"
+          width="22"
+          height="22"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          strokeWidth="1.5"
+          strokeWidth="1.75"
           strokeLinecap="round"
           strokeLinejoin="round"
         >
@@ -26,7 +26,9 @@ export const BrandBadge: React.FC<{ subtitle?: string }> = ({
       </div>
 
       <div>
-        <span className="font-bold text-base tracking-tight text-aurora-neutral-900">Aurora Cloud</span>
+        <span className="font-extrabold text-lg sm:text-xl tracking-tight text-aurora-neutral-900 leading-none">
+          Aurora Cloud
+        </span>
       </div>
     </div>
   );
