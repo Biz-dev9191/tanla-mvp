@@ -183,9 +183,6 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
           </div>
           <div>
             <h4 className="text-sm font-bold text-aurora-neutral-900">Policy Tree is Currently Empty</h4>
-            <p className="text-xs text-aurora-neutral-600 mt-1 max-w-md mx-auto">
-              Per Agent 3 Governance Policy (PTGAP-2026), policy tree generation was skipped because no custom compliance document was uploaded and no sample tree was requested.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
