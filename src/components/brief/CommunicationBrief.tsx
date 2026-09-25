@@ -402,122 +402,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         </div>
       </div>
 
-      {/* SCENARIO PRESETS SELECTOR BAR (Collapsible - Minimized by default) */}
-      <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all">
-        {/* Toggle Bar / Header */}
-        <div
-          onClick={() => setIsMatrixExpanded(!isMatrixExpanded)}
-          className="p-4 flex items-center justify-between cursor-pointer hover:bg-aurora-neutral-50/80 transition select-none"
-        >
-          <div className="flex items-center space-x-2.5">
-            <div className="p-1.5 rounded-md bg-aurora-primary-light text-aurora-primary">
-              <Layers strokeWidth={1.5} className="w-4 h-4" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
-                  Scenario Presets
-                </h3>
-                {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
-                  <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
-                    Preset Loaded
-                  </span>
-                ) : null}
-              </div>
-              <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
-                {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
-                  <>
-                    Loaded: <strong className="text-aurora-neutral-900">{structCustomerName || 'Custom'}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
-                  </>
-                ) : (
-                  'Choose a pre-configured customer scenario or fill in details manually below'
-                )}
-              </p>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsMatrixExpanded(!isMatrixExpanded);
-            }}
-            className="p-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-700 border border-aurora-neutral-300 rounded-lg shadow-2xs transition"
-            aria-label={isMatrixExpanded ? 'Minimize Presets' : 'Expand Presets'}
-          >
-            {isMatrixExpanded ? (
-              <ChevronUp strokeWidth={2} className="w-4 h-4" />
-            ) : (
-              <ChevronDown strokeWidth={2} className="w-4 h-4" />
-            )}
-          </button>
-        </div>
-
-        {/* Expandable Dropdowns Body */}
-        {isMatrixExpanded && (
-          <div className="p-5 pt-0 space-y-4 border-t border-aurora-neutral-200/70 bg-aurora-neutral-50/40 animate-fadeIn">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
-              {/* Dropdown 1: Customer Profile */}
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
-                  1. Customer Profile Cohort
-                </label>
-                <select
-                  value={selectedCustomerId}
-                  onChange={(e) => handleCustomerChange(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
-                >
-                  <option value="">-- Choose Customer Cohort Preset --</option>
-                  {MATRIX_CUSTOMERS.map((cust) => (
-                    <option key={cust.id} value={cust.id}>
-                      {cust.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dropdown 2: Business Event */}
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
-                  2. Event & Telemetry
-                </label>
-                <select
-                  value={selectedEventId}
-                  onChange={(e) => handleEventChange(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
-                >
-                  <option value="">-- Choose Event & Telemetry Preset --</option>
-                  {MATRIX_EVENTS.map((evt) => (
-                    <option key={evt.id} value={evt.id}>
-                      {evt.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Dropdown 3: Business Objective */}
-              <div className="space-y-1">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
-                  3. Business Objective
-                </label>
-                <select
-                  value={selectedObjectiveId}
-                  onChange={(e) => handleObjectiveChange(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
-                >
-                  <option value="">-- Choose Business Objective Preset --</option>
-                  {MATRIX_OBJECTIVES.map((obj) => (
-                    <option key={obj.id} value={obj.id}>
-                      {obj.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-
       {/* 3-COLUMN BRIEF FORM */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1017,6 +901,122 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               Defines the primary communication goal, call-to-action type, and required customer actions.
             </div>
           </div>
+        </div>
+
+        {/* PREFILLED TEST SCENARIOS (Positioned below the 3 columns) */}
+        <div className="bg-aurora-neutral-0 rounded-xl border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all">
+          {/* Toggle Bar / Header */}
+          <div
+            onClick={() => setIsMatrixExpanded(!isMatrixExpanded)}
+            className="p-4 flex items-center justify-between cursor-pointer hover:bg-aurora-neutral-50/80 transition select-none"
+          >
+            <div className="flex items-center space-x-2.5">
+              <div className="p-1.5 rounded-md bg-aurora-primary-light text-aurora-primary">
+                <Layers strokeWidth={1.5} className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
+                    Prefilled Test Scenarios
+                  </h3>
+                  {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
+                    <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
+                      Scenario Loaded
+                    </span>
+                  ) : null}
+                </div>
+                <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
+                  {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
+                    <>
+                      Loaded: <strong className="text-aurora-neutral-900">{structCustomerName || 'Custom'}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
+                    </>
+                  ) : (
+                    'Choose a prefilled test scenario to automatically populate the 3 columns above'
+                  )}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsMatrixExpanded(!isMatrixExpanded);
+              }}
+              className="p-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-700 border border-aurora-neutral-300 rounded-lg shadow-2xs transition"
+              aria-label={isMatrixExpanded ? 'Minimize Scenarios' : 'Expand Scenarios'}
+            >
+              {isMatrixExpanded ? (
+                <ChevronUp strokeWidth={2} className="w-4 h-4" />
+              ) : (
+                <ChevronDown strokeWidth={2} className="w-4 h-4" />
+              )}
+            </button>
+          </div>
+
+          {/* Expandable Dropdowns Body */}
+          {isMatrixExpanded && (
+            <div className="p-5 pt-0 space-y-4 border-t border-aurora-neutral-200/70 bg-aurora-neutral-50/40 animate-fadeIn">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-4">
+                {/* Dropdown 1: Customer Profile */}
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+                    1. Customer Profile Cohort
+                  </label>
+                  <select
+                    value={selectedCustomerId}
+                    onChange={(e) => handleCustomerChange(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+                  >
+                    <option value="">-- Choose Customer Cohort Preset --</option>
+                    {MATRIX_CUSTOMERS.map((cust) => (
+                      <option key={cust.id} value={cust.id}>
+                        {cust.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Dropdown 2: Business Event */}
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+                    2. Event & Telemetry
+                  </label>
+                  <select
+                    value={selectedEventId}
+                    onChange={(e) => handleEventChange(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+                  >
+                    <option value="">-- Choose Event & Telemetry Preset --</option>
+                    {MATRIX_EVENTS.map((evt) => (
+                      <option key={evt.id} value={evt.id}>
+                        {evt.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Dropdown 3: Business Objective */}
+                <div className="space-y-1">
+                  <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-700">
+                    3. Business Objective
+                  </label>
+                  <select
+                    value={selectedObjectiveId}
+                    onChange={(e) => handleObjectiveChange(e.target.value)}
+                    className="w-full p-2.5 bg-white border border-aurora-neutral-300 rounded-lg text-xs font-semibold text-aurora-neutral-900 focus:ring-1 focus:ring-aurora-primary shadow-2xs"
+                  >
+                    <option value="">-- Choose Business Objective Preset --</option>
+                    {MATRIX_OBJECTIVES.map((obj) => (
+                      <option key={obj.id} value={obj.id}>
+                        {obj.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* PRIMARY SUBMIT CTA */}
