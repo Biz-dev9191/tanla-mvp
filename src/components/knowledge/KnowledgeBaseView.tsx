@@ -538,7 +538,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                   No Policy Document Shared
                 </h3>
                 <p className="text-xs text-aurora-neutral-600 leading-relaxed">
-                  The Policy Tree and Governance Rule Matrix are generated dynamically only when a compliance or policy document is uploaded or shared. No policy document has been shared in this session yet.
+                  The Policy Tree is generated dynamically only when a compliance or policy document is uploaded or shared. No policy document has been shared in this session yet.
                 </p>
               </div>
               {onNavigateToPolicyTree && (
@@ -639,7 +639,20 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                     </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {activeSections.map((sec: any, idx: number) => {
+                    {activeSections
+                      .filter((sec: any) => {
+                        if (!policySearch.trim()) return true;
+                        const q = policySearch.toLowerCase();
+                        return (
+                          sec.title.toLowerCase().includes(q) ||
+                          (sec.description && sec.description.toLowerCase().includes(q)) ||
+                          sec.clauses.some((cl: any) =>
+                            cl.title.toLowerCase().includes(q) ||
+                            cl.statement.toLowerCase().includes(q)
+                          )
+                        );
+                      })
+                      .map((sec: any, idx: number) => {
                       const categoryColors: Record<string, { bg: string; dot: string; border: string }> = {
                         transactional: { bg: 'bg-emerald-50/50', dot: 'bg-emerald-500', border: 'border-emerald-200' },
                         privacy: { bg: 'bg-purple-50/50', dot: 'bg-purple-500', border: 'border-purple-200' },
@@ -680,7 +693,7 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                               ))}
                               {sec.clauses.length > 3 && (
                                 <div className="text-[10px] text-aurora-neutral-400 font-mono">
-                                  +{sec.clauses.length - 3} more clauses in matrix below
+                                  +{sec.clauses.length - 3} more clauses
                                 </div>
                               )}
                             </div>
@@ -691,101 +704,6 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                   </div>
                 </div>
               )}
-
-              {/* Dynamic Active Rules Breakdown Table */}
-              <div className="bg-white rounded-xl border border-aurora-neutral-200 shadow-sm p-6 space-y-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-aurora-neutral-900">
-                      Active Policy Rules Matrix ({activeRulesList.length})
-                    </h3>
-                    <p className="text-xs text-aurora-neutral-500">
-                      Dynamic rule definitions, enforcement constraints, and supervisor escalation gates extracted from the shared document.
-                    </p>
-                  </div>
-                  {policySearch.trim() && (
-                    <span className="text-xs text-aurora-neutral-500 font-mono">
-                      Filtered by: &quot;{policySearch}&quot;
-                    </span>
-                  )}
-                </div>
-
-                <div className="border border-aurora-neutral-200 rounded-lg overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left text-xs">
-                      <thead className="bg-aurora-neutral-50 text-aurora-neutral-600 font-bold border-b border-aurora-neutral-200">
-                        <tr>
-                          <th className="p-3 w-28 whitespace-nowrap">Rule Code</th>
-                          <th className="p-3 w-48">Rule Name &amp; Description</th>
-                          <th className="p-3">Permitted Actions (Directives)</th>
-                          <th className="p-3">Prohibited Claims (Constraints)</th>
-                          <th className="p-3 w-32 text-center whitespace-nowrap">Supervisor Gate</th>
-                          <th className="p-3 w-24 text-center whitespace-nowrap">Enforcement</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-aurora-neutral-200">
-                        {activeRulesList
-                          .filter((r: any) => {
-                            if (!policySearch.trim()) return true;
-                            const q = policySearch.toLowerCase();
-                            return (
-                              r.ruleCode.toLowerCase().includes(q) ||
-                              r.name.toLowerCase().includes(q) ||
-                              (r.description && r.description.toLowerCase().includes(q)) ||
-                              (r.action && r.action.toLowerCase().includes(q)) ||
-                              (r.prohibition && r.prohibition.toLowerCase().includes(q)) ||
-                              (r.category && r.category.toLowerCase().includes(q))
-                            );
-                          })
-                          .map((rule: any) => (
-                            <tr key={rule.ruleCode} className="hover:bg-aurora-neutral-50/70 transition">
-                              <td className="p-3 font-mono font-bold text-aurora-primary whitespace-nowrap align-top">
-                                {rule.ruleCode}
-                              </td>
-                              <td className="p-3 align-top">
-                                <span className="font-semibold text-aurora-neutral-900 block">{rule.name}</span>
-                                {rule.description && rule.description !== rule.name && (
-                                  <span className="text-aurora-neutral-600 text-[11px] block mt-0.5 leading-snug">{rule.description}</span>
-                                )}
-                                <span className="text-[10px] font-mono text-aurora-neutral-500 block mt-1 uppercase">
-                                  Category: {rule.category}
-                                </span>
-                              </td>
-                              <td className="p-3 text-emerald-950 bg-emerald-50/20 align-top leading-snug">
-                                {rule.action || 'Standard compliance'}
-                              </td>
-                              <td className="p-3 text-red-950 bg-red-50/20 align-top leading-snug">
-                                {rule.prohibition || 'None'}
-                              </td>
-                              <td className="p-3 text-center align-top whitespace-nowrap">
-                                {rule.requiresHumanSupervisor || rule.escalationThreshold !== undefined ? (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                                    Mandatory {rule.escalationThreshold !== undefined ? `(>$${rule.escalationThreshold})` : 'Gate'}
-                                  </span>
-                                ) : (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-aurora-neutral-100 text-aurora-neutral-600">
-                                    Autonomous
-                                  </span>
-                                )}
-                              </td>
-                              <td className="p-3 text-center align-top whitespace-nowrap">
-                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                  rule.enforcementLevel === 'PROHIBITIVE'
-                                    ? 'bg-red-100 text-red-700'
-                                    : rule.enforcementLevel === 'MANDATORY'
-                                    ? 'bg-aurora-primary-light text-aurora-primary'
-                                    : 'bg-aurora-neutral-200 text-aurora-neutral-700'
-                                }`}>
-                                  {rule.enforcementLevel || 'MANDATORY'}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
 
               {/* Interactive Policy Tree Decision Hierarchy */}
               {customPolicyTree && (
