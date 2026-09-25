@@ -386,7 +386,7 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('policy-tree')}
-                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
+                      className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center cursor-pointer"
                     >
                       <span>Add Policy Rules</span>
                     </button>
