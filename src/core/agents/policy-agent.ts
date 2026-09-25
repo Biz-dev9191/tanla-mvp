@@ -34,12 +34,56 @@ export function runPolicyAgent(
       `[Step 1 - Custom Policy Ingestion] Evaluated ${customRules?.length || 0} custom compliance rules provided by user.`
     );
 
+    // Extract numeric amount from event if present
+    const numAmountMatch = event.amount ? event.amount.match(/\$?(\d+(?:\.\d{1,2})?)/) : null;
+    const eventNumericAmount = numAmountMatch ? parseFloat(numAmountMatch[1]) : 0;
+
+    let customEscalationRequired = false;
+    let customApprovalReason: string | undefined = undefined;
+
+    // Build clause citations and check dynamic amount thresholds
+    customRules?.forEach((rule, idx) => {
+      clauseCitations.push({
+        clauseId: rule.id || `CUSTOM-POL-${idx + 1}`,
+        sourceDocument: "Custom Enterprise Policy Document",
+        section: rule.nodePath || `Section ${idx + 1}`,
+        title: rule.title || rule.rule.slice(0, 50),
+        excerpt: rule.rule,
+        relevanceScore: 0.95,
+        directiveType: rule.escalationRequired
+          ? "MANDATORY"
+          : (rule.prohibitedActions && rule.prohibitedActions.length > 0)
+          ? "PROHIBITIVE"
+          : "PERMISSIVE",
+        complianceRequirement: rule.rule,
+      });
+
+      // Check for explicit escalation in rule definition
+      if (rule.escalationRequired) {
+        customEscalationRequired = true;
+        customApprovalReason = `Human supervisor review required by custom policy clause '${rule.title || rule.id}'.`;
+      }
+
+      // Check for dynamic amount threshold in rule text (e.g. "above $50" or "over $100" or "exceeding $75")
+      const ruleThresholdMatch = rule.rule.match(/(?:above|over|exceeding|greater than|more than)\s*\$?(\d+(?:\.\d{1,2})?)/i);
+      if (ruleThresholdMatch && eventNumericAmount > 0) {
+        const threshold = parseFloat(ruleThresholdMatch[1]);
+        if (eventNumericAmount > threshold) {
+          customEscalationRequired = true;
+          customApprovalReason = `Event amount ($${eventNumericAmount.toFixed(2)}) exceeds custom policy autonomous limit ($${threshold.toFixed(2)}) defined in '${rule.title || rule.id}'. Supervisor approval required.`;
+          chainOfThought.push(
+            `[Custom Threshold Trigger] Event amount $${eventNumericAmount} exceeds rule threshold of $${threshold}. Human intervention required.`
+          );
+        }
+      }
+    });
+
     const allowedActions: string[] = Array.from(new Set(appliedPolicies.flatMap(p => p.allowedActions || [])));
     const prohibitedActions: string[] = Array.from(new Set(appliedPolicies.flatMap(p => p.prohibitedActions || [])));
-    const humanApprovalRequired = appliedPolicies.some(p => p.escalationRequired);
-    const approvalReason = humanApprovalRequired
+    const humanApprovalRequired = customEscalationRequired;
+    const approvalReason = customApprovalReason || (humanApprovalRequired
       ? "Requires supervisor review due to custom policy escalation condition."
-      : undefined;
+      : undefined);
 
     const duration = Date.now() - startTime + 45;
 
@@ -47,7 +91,9 @@ export function runPolicyAgent(
       agentId: 'policy',
       agentName: 'Enterprise Policy & Compliance Agent',
       status: humanApprovalRequired ? 'escalated' : 'completed',
-      summary: `Applied ${appliedPolicies.length} custom policy rules`,
+      summary: humanApprovalRequired
+        ? `Flagged: Human supervisor authorization required under custom policy`
+        : `Applied ${appliedPolicies.length} custom policy rules (Passed autonomously)`,
       details: [
         `Custom policy rules evaluated against event '${event.title}'.`,
         `Enforced ${allowedActions.length} permitted actions and ${prohibitedActions.length} prohibited constraints.`,

@@ -587,6 +587,8 @@ export async function orchestrateCommunication(
     `Autonomous Reflection: Verified across ${revisionLoop + 1} validation cycles with ZERO exclamation marks and zero customer friction.`,
   ];
 
+  const isHumanApprovalNeeded = stratOutput.strategy.humanApprovalRequired || guardrailOutput.evaluation.status === 'ESCALATE';
+
   return {
     id: `ORCH-${Date.now()}`,
     timestamp: new Date().toISOString(),
@@ -599,7 +601,12 @@ export async function orchestrateCommunication(
     appliedPolicies: policyOutput.appliedPolicies,
     clauseCitations: policyOutput.clauseCitations,
     reflectionLoops: reflectionLoops.length > 0 ? reflectionLoops : undefined,
-    strategy: stratOutput.strategy,
+    strategy: {
+      ...stratOutput.strategy,
+      humanApprovalRequired: isHumanApprovalNeeded,
+      decision: isHumanApprovalNeeded ? 'ESCALATE' : stratOutput.strategy.decision,
+      approvalReason: stratOutput.strategy.approvalReason || (guardrailOutput.evaluation.status === 'ESCALATE' ? guardrailOutput.evaluation.feedbackForRevision : undefined),
+    },
     messages: msgOutput.messages,
     guardrails: {
       ...guardrailOutput.evaluation,
@@ -610,7 +617,7 @@ export async function orchestrateCommunication(
       templateText: genericTemplateText,
       differences: comparisonDifferences,
     },
-    humanApprovalStatus: stratOutput.strategy.humanApprovalRequired || guardrailOutput.evaluation.status === 'ESCALATE' ? 'Pending' : 'Not Required',
+    humanApprovalStatus: isHumanApprovalNeeded ? 'Pending' : 'Not Required',
     policyTree: policyTreeOutput.activeTree,
   };
 }
