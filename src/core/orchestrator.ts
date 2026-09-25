@@ -522,7 +522,7 @@ export async function orchestrateCommunication(
   steps.push(msgOutput.step);
 
   // Step 7: Critic & Safety Guardrail Initial Evaluation
-  let guardrailOutput = runGuardrailAgent(customer, event, objective, stratOutput.strategy, msgOutput.messages, 0, reflectionLoops);
+  let guardrailOutput = runGuardrailAgent(customer, event, objective, stratOutput.strategy, msgOutput.messages, 0, reflectionLoops, effectivePolicyRules);
 
   // Autonomous Reflection & Revision Loop (Critic -> Generator Feedback)
   let revisionLoop = 0;
@@ -568,7 +568,8 @@ export async function orchestrateCommunication(
       stratOutput.strategy,
       msgOutput.messages,
       revisionLoop,
-      reflectionLoops
+      reflectionLoops,
+      effectivePolicyRules
     );
   }
 

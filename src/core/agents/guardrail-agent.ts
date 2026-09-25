@@ -1,4 +1,5 @@
-import { CustomerProfile, BusinessEvent, BusinessObjective, CommunicationStrategy, ChannelMessage, GuardrailEvaluation, AgentExecutionStep, ReflectionLoopIteration } from '../types';
+import { CustomerProfile, BusinessEvent, BusinessObjective, CommunicationStrategy, ChannelMessage, GuardrailEvaluation, AgentExecutionStep, ReflectionLoopIteration, PolicyRule } from '../types';
+import { policyMentionsFinancialGuardrail } from '../policy-generator';
 
 export interface GuardrailOutput {
   evaluation: GuardrailEvaluation;
@@ -18,7 +19,8 @@ export function runGuardrailAgent(
     voice: ChannelMessage;
   },
   revisionCount: number = 0,
-  reflectionLoops: ReflectionLoopIteration[] = []
+  reflectionLoops: ReflectionLoopIteration[] = [],
+  activePolicyRules?: PolicyRule[]
 ): GuardrailOutput {
   const startTime = Date.now();
   const chainOfThought: string[] = [];
@@ -40,15 +42,27 @@ export function runGuardrailAgent(
   );
 
   // Chain-of-thought 2: Financial Authorization & Compensation Limits
+  // "only if the policy doesnt mention it shouldn't be used as the guardrail"
+  const hasCustomPolicy = Boolean(activePolicyRules && activePolicyRules.length > 0);
+  const financialGuardrailApplicable = hasCustomPolicy
+    ? policyMentionsFinancialGuardrail(activePolicyRules!)
+    : true; // Standard baseline uses POL-FIN-001
+
   const mentionsCompensation = /coupon|voucher|\$\d+\s*credit|free\s*month/i.test(fullText);
-  const unauthorizedCompensation = mentionsCompensation && !event.amount?.toLowerCase().includes('credit');
+  const unauthorizedCompensation =
+    financialGuardrailApplicable &&
+    mentionsCompensation &&
+    !event.amount?.toLowerCase().includes('credit');
+
   if (unauthorizedCompensation) {
     violationCodes.push('UNAUTHORIZED_COMPENSATION');
-    actionableFeedback.push('Monetary goodwill or vouchers detected without prior supervisor approval under POL-FIN-001. Flag for ESCALATION.');
+    actionableFeedback.push('Monetary goodwill or vouchers detected without prior supervisor approval. Flag for ESCALATION.');
   }
 
   chainOfThought.push(
-    `[Check 2 - Financial Liability & Compensation Gate] Discretionary credit scan: ${unauthorizedCompensation ? 'FAILED (Unapproved compensation detected)' : 'PASSED (Within autonomous financial limits)'}.`
+    financialGuardrailApplicable
+      ? `[Check 2 - Financial Liability & Compensation Gate] Discretionary credit scan: ${unauthorizedCompensation ? 'FAILED (Unapproved compensation detected)' : 'PASSED (Within autonomous financial limits)'}.`
+      : `[Check 2 - Financial Liability & Compensation Gate] SKIPPED: Active policy does not specify compensation or coupon guardrails.`
   );
 
   // Chain-of-thought 3: Factual Grounding & Anti-Hallucination

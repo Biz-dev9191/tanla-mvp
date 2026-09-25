@@ -176,29 +176,79 @@ function determineCategory(text: string): 'transactional' | 'privacy' | 'financi
  * Accurately extracts a monetary threshold amount from policy clause text
  */
 export function extractThresholdFromText(text: string): number | undefined {
-  // 1. Matches: "above $500", "over $500", "exceeding $500", "greater than $500", "more than $500", "exceeds $500"
+  // 1. Matches: "greater than or equal to $0", "greater or equal to $0", "equal to or greater than $0", ">= $0", ">= 0"
+  const gteMatch = text.match(/(?:greater\s+(?:than\s+)?or\s+equal\s+to|equal\s+to\s+or\s+greater\s+than|>=\s*|=>\s*)\s*[\$₹]?\s*(\d+(?:\.\d{1,2})?)/i);
+  if (gteMatch) return parseFloat(gteMatch[1]);
+
+  // 2. Matches: "above $500", "over $500", "exceeding $500", "greater than $500", "more than $500", "exceeds $500"
   const exceedsMatch = text.match(/(?:above|over|exceeding|greater than|more than|exceeds)\s*[\$₹]?\s*(\d+(?:\.\d{1,2})?)/i);
   if (exceedsMatch) return parseFloat(exceedsMatch[1]);
 
-  // 2. Matches: "$500 or more", "$500 and above", "$500 and over"
+  // 3. Matches: "$500 or more", "$500 and above", "$500 and over"
   const orMoreMatch = text.match(/[\$₹]\s*(\d+(?:\.\d{1,2})?)\s*(?:or more|and above|and over)/i);
   if (orMoreMatch) return parseFloat(orMoreMatch[1]);
 
-  // 3. Matches: "up to $500", "limit of $500", "cap of $500", "maximum of $500", "capped at $500", "under $500", "below $500"
+  // 4. Matches: "up to $500", "limit of $500", "cap of $500", "maximum of $500", "capped at $500", "under $500", "below $500"
   const capMatch = text.match(/(?:up to|limit of|cap of|maximum of|capped at|under|below|limit is|cap is|maximum is)\s*[\$₹]?\s*(\d+(?:\.\d{1,2})?)/i);
   if (capMatch) return parseFloat(capMatch[1]);
 
-  // 4. Matches: "threshold: $500", "limit: $500", "cap: $500", "amount: $500"
+  // 5. Matches: "threshold: $500", "limit: $500", "cap: $500", "amount: $500"
   const directMatch = text.match(/(?:threshold|limit|cap|maximum|max|amount)[\s:]*[\$₹]\s*(\d+(?:\.\d{1,2})?)/i);
   if (directMatch) return parseFloat(directMatch[1]);
 
-  // 5. Matches currency amount if in context of supervisor, approval, authorization, refund, dispute, compensation, limit, cap
+  // 6. Matches currency amount if in context of supervisor, approval, authorization, refund, dispute, compensation, limit, cap
   if (/(?:supervisor|approval|authori[zs]ation|refund|dispute|compensation|limit|cap)/i.test(text)) {
     const plainMatch = text.match(/[\$₹]\s*(\d+(?:\.\d{1,2})?)/);
     if (plainMatch) return parseFloat(plainMatch[1]);
   }
 
   return undefined;
+}
+
+/**
+ * Detects whether a policy clause or rule specifies that an amount >= $0 (zero or greater) requires approval.
+ * When >= $0 is set in the policy rule, every refund or coupon requires human intervention.
+ */
+export function isZeroOrGreaterThreshold(
+  ruleOrText: PolicyRule | string | { title?: string; rule?: string; statement?: string; condition?: string; thresholdAmount?: number }
+): boolean {
+  if (typeof ruleOrText === 'object' && ruleOrText !== null) {
+    if (ruleOrText.thresholdAmount !== undefined && ruleOrText.thresholdAmount <= 0) {
+      return true;
+    }
+  }
+  const text = typeof ruleOrText === 'string'
+    ? ruleOrText.toLowerCase()
+    : `${ruleOrText.title || ''} ${ruleOrText.rule || ''} ${(ruleOrText as any).statement || ''} ${ruleOrText.condition || ''}`.toLowerCase();
+
+  const patterns = [
+    /greater\s+(?:than\s+)?or\s+equal\s+to\s+[\$₹]?\s*0(?:\.00?)?/i,
+    /equal\s+to\s+or\s+greater\s+than\s+[\$₹]?\s*0(?:\.00?)?/i,
+    />=\s*[\$₹]?\s*0(?:\.00?)?/i,
+    /(?:above|over|exceeding|greater than|more than|exceeds)\s+[\$₹]?\s*0(?:\.00?)?/i,
+    /[\$₹]?\s*0(?:\.00?)?\s+(?:or more|and above|and over)/i,
+    /amount\s+(?:is\s+)?(?:greater\s+than\s+|above\s+|over\s+)?[\$₹]?\s*0(?:\.00?)?/i,
+    /limit\s+(?:is\s+|of\s+)?[\$₹]?\s*0(?:\.00?)?/i,
+    /cap\s+(?:is\s+|of\s+)?[\$₹]?\s*0(?:\.00?)?/i,
+  ];
+
+  return patterns.some(pattern => pattern.test(text));
+}
+
+/**
+ * Checks whether the policy explicitly mentions financial caps, refund limits, coupons, or compensation guardrails.
+ * If the policy does not mention it, it shouldn't be used as a guardrail.
+ */
+export function policyMentionsFinancialGuardrail(rules: PolicyRule[]): boolean {
+  if (!rules || rules.length === 0) return false;
+  return rules.some(rule => {
+    if (rule.thresholdAmount !== undefined) return true;
+    if (isZeroOrGreaterThreshold(rule)) return true;
+    const text = `${rule.title} ${rule.rule} ${rule.condition}`.toLowerCase();
+    const hasNumericAmount = /[\$₹]\s*\d+/.test(text) || extractThresholdFromText(text) !== undefined;
+    const mentionsTopic = /refund|coupon|voucher|credit|compensation|goodwill|fee waiver|settlement|financial liability/i.test(text);
+    return hasNumericAmount || (mentionsTopic && (rule.escalationRequired || /supervisor|approval|escalat|authori|human review/i.test(text)));
+  });
 }
 
 /**

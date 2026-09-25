@@ -1,5 +1,5 @@
 import { CustomerProfile, BusinessEvent, BusinessObjective, PolicyRule, ClauseCitation, AgentExecutionStep } from '../types';
-import { extractThresholdFromText } from '../policy-generator';
+import { extractThresholdFromText, isZeroOrGreaterThreshold, policyMentionsFinancialGuardrail } from '../policy-generator';
 
 export interface PolicyAnalysisOutput {
   appliedPolicyPath: string[];
@@ -49,12 +49,33 @@ export function runPolicyAgent(
     let customEscalationRequired = false;
     let customApprovalReason: string | undefined = undefined;
 
+    // Event classification: refund event or coupon/compensation event
+    const isRefundEvent =
+      event.eventType === 'payment_successful_order_failed' ||
+      event.eventType === 'refund_delayed' ||
+      event.resolutionStatus === 'Refund Initiated' ||
+      /refund/i.test(`${event.title} ${event.description} ${(event.verifiedFacts || []).join(' ')}`);
+
+    const isCouponOrCompensationEvent =
+      (event.amount && /credit|voucher|coupon|waiver/i.test(event.amount)) ||
+      /coupon|voucher|credit|compensation|goodwill|fee waiver/i.test(
+        `${event.title} ${event.description} ${(event.verifiedFacts || []).join(' ')}`
+      );
+
+    const policyMentionsFinancial = policyMentionsFinancialGuardrail(customRules || []);
+    if (!policyMentionsFinancial) {
+      chainOfThought.push(
+        `[Policy Scope Check] Policy does not mention refund/coupon amount limits or financial guardrails. No financial guardrail enforced.`
+      );
+    }
+
     // Build clause citations and check dynamic amount thresholds & conditional escalation gates
     customRules?.forEach((rule, idx) => {
+      const isZeroOrGreater = isZeroOrGreaterThreshold(rule);
       const ruleThreshold = rule.thresholdAmount !== undefined
         ? rule.thresholdAmount
         : extractThresholdFromText(`${rule.title} ${rule.rule} ${rule.condition}`);
-      const isThresholdRule = ruleThreshold !== undefined;
+      const isThresholdRule = !isZeroOrGreater && ruleThreshold !== undefined;
       const ruleTextLower = `${rule.title} ${rule.rule} ${rule.condition}`.toLowerCase();
 
       const mentionsSupervisorOrApproval =
@@ -72,7 +93,7 @@ export function runPolicyAgent(
         title: rule.title || rule.rule.slice(0, 50),
         excerpt: rule.rule,
         relevanceScore: 0.95,
-        directiveType: mentionsSupervisorOrApproval
+        directiveType: (isZeroOrGreater || mentionsSupervisorOrApproval)
           ? "MANDATORY"
           : (rule.prohibitedActions && rule.prohibitedActions.length > 0)
           ? "PROHIBITIVE"
@@ -80,23 +101,48 @@ export function runPolicyAgent(
         complianceRequirement: rule.rule,
       });
 
-      if (isThresholdRule) {
-        // Dynamic amount threshold logic:
+      if (isZeroOrGreater) {
+        // Zero-or-greater rule explicitly set in policy rule:
+        // "ensure that when greater or equal to 0 amount is set in the policy rule every refund/coupon requires human intervention"
+        const ruleAppliesToRefunds = /refund|transaction|payment|order|all outbound|all communication/i.test(ruleTextLower) || !/coupon|voucher|goodwill|fee credit/i.test(ruleTextLower);
+        const ruleAppliesToCoupons = /coupon|voucher|credit|compensation|goodwill|waiver|discount/i.test(ruleTextLower);
+
+        let zeroGreaterConditionTriggered = false;
+        let triggeredType = '';
+
+        if (ruleAppliesToRefunds && isRefundEvent) {
+          zeroGreaterConditionTriggered = true;
+          triggeredType = 'refund';
+        } else if (ruleAppliesToCoupons && isCouponOrCompensationEvent) {
+          zeroGreaterConditionTriggered = true;
+          triggeredType = 'coupon / compensation';
+        } else if (isRefundEvent || isCouponOrCompensationEvent) {
+          zeroGreaterConditionTriggered = true;
+          triggeredType = 'refund / coupon';
+        }
+
+        if (zeroGreaterConditionTriggered) {
+          customEscalationRequired = true;
+          customApprovalReason = `Human supervisor review required by custom policy clause '${rule.title || rule.id}': every ${triggeredType} ($${eventNumericAmount.toFixed(2)} >= $0) requires human intervention.`;
+          chainOfThought.push(
+            `[Zero-Tolerance Policy Gate] Policy clause '${rule.title || rule.id}' sets threshold >= $0. Every ${triggeredType} requires human intervention.`
+          );
+        }
+      } else if (isThresholdRule) {
+        // Dynamic amount threshold logic for thresholds > 0:
         const threshold = ruleThreshold!;
-        if (eventNumericAmount > 0) {
-          if (eventNumericAmount > threshold) {
-            // Amount exceeds autonomous limit -> Escalation triggered
-            customEscalationRequired = true;
-            customApprovalReason = `Event amount ($${eventNumericAmount.toFixed(2)}) exceeds custom policy autonomous limit ($${threshold.toFixed(2)}) defined in '${rule.title || rule.id}'. Supervisor approval required.`;
-            chainOfThought.push(
-              `[Custom Threshold Trigger] Event amount $${eventNumericAmount} exceeds rule threshold of $${threshold} in '${rule.title || rule.id}'. Human supervisor intervention required.`
-            );
-          } else {
-            // Amount is within autonomous limit -> Autonomous execution approved
-            chainOfThought.push(
-              `[Custom Threshold Satisfied] Event amount $${eventNumericAmount} is within autonomous limit ($${threshold}) in '${rule.title || rule.id}'. Approved for autonomous execution.`
-            );
-          }
+        if (eventNumericAmount > threshold) {
+          // Amount exceeds autonomous limit -> Escalation triggered
+          customEscalationRequired = true;
+          customApprovalReason = `Event amount ($${eventNumericAmount.toFixed(2)}) exceeds custom policy autonomous limit ($${threshold.toFixed(2)}) defined in '${rule.title || rule.id}'. Supervisor approval required.`;
+          chainOfThought.push(
+            `[Custom Threshold Trigger] Event amount $${eventNumericAmount} exceeds rule threshold of $${threshold} in '${rule.title || rule.id}'. Human supervisor intervention required.`
+          );
+        } else {
+          // Amount is within autonomous limit -> Autonomous execution approved
+          chainOfThought.push(
+            `[Custom Threshold Satisfied] Event amount $${eventNumericAmount} is within autonomous limit ($${threshold}) in '${rule.title || rule.id}'. Approved for autonomous execution.`
+          );
         }
       } else if (mentionsSupervisorOrApproval) {
         // Non-threshold escalation clause: verify if event context satisfies the specific escalation condition
@@ -136,10 +182,7 @@ export function runPolicyAgent(
           conditionApplies = true;
           matchedConditionName = 'Blanket policy mandate';
         } else if (isCompensationRule) {
-          const eventHasCredit =
-            (event.amount && /credit|voucher|waiver/i.test(event.amount)) ||
-            /goodwill|voucher|credit|compensation/i.test(event.title + ' ' + event.description);
-          if (eventHasCredit) {
+          if (isCouponOrCompensationEvent) {
             conditionApplies = true;
             matchedConditionName = 'Discretionary compensation or goodwill credit request';
           }

@@ -628,6 +628,182 @@ async function main() {
     }
   );
 
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 8: When Greater or Equal to 0 Amount is Set, Every Refund/Coupon Requires Human Intervention
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 8: Policy Rule with Greater or Equal to 0 Amount Requires Human Intervention for Every Refund/Coupon',
+    'Dynamic Policy Modification',
+    async (details) => {
+      // Policy rule specifying greater or equal to 0 amount
+      const gteZeroRules: PolicyRule[] = [
+        {
+          id: 'POL-GTE-ZERO',
+          nodePath: 'Custom Governance > Financial Controls > Zero Tolerance Policy',
+          category: 'financial',
+          title: 'All Refunds and Coupons >= $0 Require Authorization',
+          rule: 'Any refund or discount coupon greater than or equal to 0 requires human supervisor intervention prior to transmission.',
+          condition: 'amount_gte_0',
+          allowedActions: ['Route to supervisor queue for any amount >= $0'],
+          prohibitedActions: ['Do not auto-dispatch refunds or coupons >= $0 without supervisor review'],
+          escalationRequired: true,
+          thresholdAmount: 0,
+          priority: 'critical',
+        },
+      ];
+
+      // Scenario 8A: Standard small refund of $25.00
+      const refundEvent: BusinessEvent = {
+        id: 'EVT-8A',
+        eventType: 'payment_successful_order_failed',
+        title: 'Small refund $25',
+        description: 'Auto-refund initiated for $25.00.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_8A ($25.00)', 'Refund initiated'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_8A',
+        amount: '$25.00',
+      };
+      const res8A = await orchestrateCommunication(baseCustomer, refundEvent, { primary: 'resolve_issue' }, undefined, gteZeroRules);
+      assert(res8A.strategy.decision === 'ESCALATE', 'Scenario 8A ($25 refund): Decision is ESCALATE', details);
+      assert(res8A.strategy.humanApprovalRequired === true, 'Scenario 8A: humanApprovalRequired is true', details);
+      assert(res8A.humanApprovalStatus === 'Pending', 'Scenario 8A: humanApprovalStatus is Pending', details);
+
+      // Scenario 8B: $0.00 refund
+      const zeroRefundEvent: BusinessEvent = {
+        id: 'EVT-8B',
+        eventType: 'payment_successful_order_failed',
+        title: 'Zero dollar refund $0',
+        description: 'Order canceled. Zero-fee refund processed for $0.00.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_8B ($0.00)'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_8B',
+        amount: '$0.00',
+      };
+      const res8B = await orchestrateCommunication(baseCustomer, zeroRefundEvent, { primary: 'resolve_issue' }, undefined, gteZeroRules);
+      assert(res8B.strategy.decision === 'ESCALATE', 'Scenario 8B ($0 refund): Decision is ESCALATE', details);
+      assert(res8B.strategy.humanApprovalRequired === true, 'Scenario 8B: humanApprovalRequired is true', details);
+      assert(res8B.humanApprovalStatus === 'Pending', 'Scenario 8B: humanApprovalStatus is Pending', details);
+
+      // Scenario 8C: Coupon / goodwill credit request
+      const couponEvent: BusinessEvent = {
+        id: 'EVT-8C',
+        eventType: 'promotional_opportunity',
+        title: 'Customer goodwill coupon discount request',
+        description: 'Customer requesting discount voucher or coupon credit.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Customer requested discount voucher coupon'],
+        resolutionStatus: 'In Progress',
+        amount: '15% Coupon',
+      };
+      const res8C = await orchestrateCommunication(baseCustomer, couponEvent, { primary: 'retain_customer' }, undefined, gteZeroRules);
+      assert(res8C.strategy.decision === 'ESCALATE', 'Scenario 8C (Coupon): Decision is ESCALATE', details);
+      assert(res8C.strategy.humanApprovalRequired === true, 'Scenario 8C: humanApprovalRequired is true', details);
+      assert(res8C.humanApprovalStatus === 'Pending', 'Scenario 8C: humanApprovalStatus is Pending', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 9: Policy Rule with "above $0" Amount Requires Human Intervention
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 9: Policy Rule with Above $0 Threshold Requires Human Intervention for Routine Refunds and Coupons',
+    'Dynamic Policy Modification',
+    async (details) => {
+      const aboveZeroRules: PolicyRule[] = [
+        {
+          id: 'POL-ABOVE-ZERO',
+          nodePath: 'Custom Governance > Financial Controls > Zero Tolerance Cap',
+          category: 'financial',
+          title: 'All Refunds Above $0 Require Supervisor Approval',
+          rule: 'All refunds and goodwill compensation vouchers above $0 require human supervisor approval.',
+          condition: 'above_0',
+          allowedActions: ['Escalate all transactions above $0 to supervisor review'],
+          prohibitedActions: ['Do not auto-dispatch refunds above $0 without review'],
+          escalationRequired: true,
+          thresholdAmount: 0,
+          priority: 'critical',
+        },
+      ];
+
+      const event: BusinessEvent = {
+        id: 'EVT-9',
+        eventType: 'payment_successful_order_failed',
+        title: 'Routine auto-refund for $49.50',
+        description: 'Auto-refund initiated for $49.50.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_9 ($49.50)', 'Refund initiated'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_9',
+        amount: '$49.50',
+      };
+
+      const result = await orchestrateCommunication(baseCustomer, event, { primary: 'resolve_issue' }, undefined, aboveZeroRules);
+      assert(result.strategy.decision === 'ESCALATE', 'Decision is ESCALATE under above $0 rule', details);
+      assert(result.strategy.humanApprovalRequired === true, 'humanApprovalRequired is true', details);
+      assert(result.humanApprovalStatus === 'Pending', 'humanApprovalStatus is Pending', details);
+      assert(result.strategy.approvalReason?.includes('>= $0') === true || result.strategy.approvalReason?.includes('POL-ABOVE-ZERO') === true, 'Approval reason explains zero threshold gate', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // POLICY MODIFICATION TEST 10: When Policy Does Not Mention Refund/Coupon Limits, Guardrail Is Not Used
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Mod Test 10: When Policy Does Not Mention Refund/Coupon Limits, Guardrail Is Not Used and Execution Is Autonomous',
+    'Dynamic Policy Modification',
+    async (details) => {
+      // Policy document strictly about Privacy and Tone; NO mention of refund caps, coupons, or compensation limits
+      const nonFinancialPolicyText = `
+        # Enterprise Security and Tone Policy
+        **Document ID:** SEC-TONE-01  |  **Version:** 1.0  |  **Status:** Active
+
+        # 1. Privacy and Data Redaction
+        - All customer communications must mask payment card numbers to the last 4 digits.
+        - Never transmit plaintext passwords or authentication tokens in customer notifications.
+
+        # 2. Communication Tenor
+        - All communications must maintain a calm, competent, and reassuring tenor.
+        - Zero exclamation marks are permitted across all outbound copy.
+      `;
+
+      const parsed = parsePolicyDocumentText(nonFinancialPolicyText);
+      assert(parsed.isValid === true, 'Parsed non-financial policy document successfully', details);
+      assert(parsed.rules.length >= 2, `Extracted ${parsed.rules.length} security and tone rules`, details);
+
+      // Event: $150.00 refund transaction
+      const event: BusinessEvent = {
+        id: 'EVT-10',
+        eventType: 'payment_successful_order_failed',
+        title: 'Order provisioning failed for $150 purchase',
+        description: 'Auto-refund initiated for $150.00. Card ending in 4012 charged.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_10 ($150.00)', 'Auto-refund initiated to card ending 4012'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_10',
+        amount: '$150.00',
+      };
+
+      const result = await orchestrateCommunication(
+        baseCustomer,
+        event,
+        { primary: 'resolve_issue' },
+        undefined,
+        parsed.rules,
+        nonFinancialPolicyText
+      );
+
+      // Since the policy does not mention refund/coupon limits, no financial guardrail is used
+      assert(result.strategy.decision === 'SEND', 'Decision is SEND because policy does not mention refund caps', details);
+      assert(result.strategy.humanApprovalRequired === false, 'humanApprovalRequired is false', details);
+      assert(result.humanApprovalStatus === 'Not Required', 'humanApprovalStatus is Not Required', details);
+      assert(result.guardrails.status === 'PASS', 'Guardrails status is PASS without unmentioned guardrails', details);
+      assert(!result.messages.whatsapp.body.includes('!'), 'WhatsApp has zero exclamation marks', details);
+      assert(!result.messages.email.body.includes('!'), 'Email has zero exclamation marks', details);
+    }
+  );
+
   // Print Summary Table
   console.log('\n================================================================');
   console.log('TEST EXECUTION SUMMARY');
