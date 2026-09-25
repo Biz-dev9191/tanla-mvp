@@ -41,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
     },
     {
       id: 'policy-tree' as const,
-      label: 'Edit Policy',
+      label: 'Policy Governance Rules',
       description: 'Inspect deterministic rules or upload custom policy documents',
       icon: GitBranch,
     },
