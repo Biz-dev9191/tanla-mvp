@@ -379,14 +379,14 @@ export default function Home() {
                     <button
                       type="button"
                       onClick={() => setActiveTab('policy-tree')}
-                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
                     >
-                      <span>Policy Rules</span>
+                      <span>Add Policy Rules</span>
                     </button>
                     <button
                       type="button"
                       onClick={() => setActiveTab('brief')}
-                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
                     >
                       <span>Edit Brief</span>
                     </button>
@@ -486,17 +486,9 @@ export default function Home() {
               <div className="flex items-center space-x-2 self-start sm:self-auto">
                 <button
                   type="button"
-                  onClick={() => setActiveTab('brief')}
-                  className="px-3.5 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
-                >
-                  <ArrowLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
-                  <span>Back to Brief</span>
-                </button>
-                <button
-                  type="button"
                   onClick={() => currentResult && setActiveTab('control-room')}
                   disabled={!currentResult}
-                  className={`px-3.5 py-2 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 flex items-center space-x-1.5 ${
+                  className={`px-4 py-2 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 flex items-center justify-center ${
                     currentResult
                       ? 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
                       : 'bg-aurora-neutral-200 text-aurora-neutral-400 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
@@ -504,7 +496,13 @@ export default function Home() {
                   title={!currentResult ? 'Generate a communication in brief first to view message review' : undefined}
                 >
                   <span>Decision & Previews</span>
-                  <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('brief')}
+                  className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center"
+                >
+                  <span>Edit Brief</span>
                 </button>
               </div>
             </div>
