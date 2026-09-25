@@ -64,12 +64,13 @@ const POLICY_DIRECTIVE_KEYWORDS = [
  */
 export function validatePolicyDocumentText(text: string): { isValid: boolean; reason?: string } {
   const trimmed = text.trim();
-  
+  const baseGuidance = 'Please share the sample policy document and share it in the requested format and details.';
+
   // 1. Length & Word Count bounds
   if (trimmed.length < 35) {
     return {
       isValid: false,
-      reason: 'Policy document is too short (Minimum 35 characters required).',
+      reason: `${baseGuidance} The provided text is too short (Minimum 35 characters required).`,
     };
   }
 
@@ -77,7 +78,7 @@ export function validatePolicyDocumentText(text: string): { isValid: boolean; re
   if (words.length < 7) {
     return {
       isValid: false,
-      reason: 'Insufficient word count (Minimum 7 words required).',
+      reason: `${baseGuidance} Insufficient word count (Minimum 7 words required).`,
     };
   }
 
@@ -86,7 +87,7 @@ export function validatePolicyDocumentText(text: string): { isValid: boolean; re
   if (avgWordLen > 22) {
     return {
       isValid: false,
-      reason: 'Text contains uncharacteristically long continuous strings resembling gibberish or keyboard spam.',
+      reason: `${baseGuidance} Text contains uncharacteristically long continuous strings resembling gibberish or keyboard spam.`,
     };
   }
 
@@ -94,18 +95,38 @@ export function validatePolicyDocumentText(text: string): { isValid: boolean; re
   if (letterCount / trimmed.length < 0.45) {
     return {
       isValid: false,
-      reason: 'Text does not contain enough natural language alphabetic content.',
+      reason: `${baseGuidance} Text does not contain enough natural language alphabetic content.`,
     };
   }
 
-  // 3. Governance Semantic Density Check
+  // 3. Telemetry / Customer Ticket Details Detection
+  const hasCustomerTicketFields = /(customer\s*(name|id|details)?|account\s*(number|id)?|order\s*id|phone\s*number|ticket\s*id|tracking\s*number)\s*[:=-]/i.test(trimmed);
+  const hasPolicyStructure = /(^|\n)\s*(#{1,4}\s+|section\s*[\d\w.-]*[:\s]|clause\s*[\d\w.-]*[:\s]|article\s*[\d\w.-]*[:\s]|\d+\.\s+[A-Z])/i.test(trimmed);
+  
+  if (hasCustomerTicketFields && !hasPolicyStructure) {
+    return {
+      isValid: false,
+      reason: `${baseGuidance} The provided text appears to be customer or ticket details rather than an enterprise policy document.`,
+    };
+  }
+
+  // 4. Governance Semantic Density Check
   const lower = trimmed.toLowerCase();
   const matchedKeywords = POLICY_DIRECTIVE_KEYWORDS.filter(kw => lower.includes(kw));
-  
+
   if (matchedKeywords.length < 2) {
     return {
       isValid: false,
-      reason: 'No policy governance directives, compliance terms, or operational constraints were detected in the input text.',
+      reason: `${baseGuidance} No actionable policy governance directives, compliance terms, or operational constraints were detected in the input text.`,
+    };
+  }
+
+  // 5. Structural Format Verification
+  const hasDirectivesOrBullets = /(^|\n)\s*([*-]|\d+\.)\s+/m.test(trimmed);
+  if (!hasPolicyStructure && !hasDirectivesOrBullets) {
+    return {
+      isValid: false,
+      reason: `${baseGuidance} The document lacks structured section headings (# Section) or bulleted policy directives (- Directive).`,
     };
   }
 
@@ -494,6 +515,17 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
       prohibitedSummary: c.prohibitedActions.join('; '),
     })),
   }));
+
+  if (structuredSections.length === 0 || flatRules.length === 0) {
+    return {
+      isValid: false,
+      error: 'Please share the sample policy document and share it in the requested format and details. No substantive governance directives or clauses could be extracted from the provided text.',
+      structuredDocument: null,
+      tree: null,
+      rules: [],
+      summary: 'Validation Failed: Please share the sample policy document and share it in the requested format and details.',
+    };
+  }
 
   const tree: PolicyTreeNode = {
     id: 'custom-root',

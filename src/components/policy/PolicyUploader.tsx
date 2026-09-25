@@ -90,7 +90,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
     const parsed = parsePolicyDocumentText(trimmed);
 
     if (!parsed.isValid) {
-      setErrorMessage(parsed.error || 'The provided text could not be parsed as an enterprise policy document. Random text, short phrases, or text without governance directives are rejected by policy railguards.');
+      setErrorMessage(parsed.error || 'Please share the sample policy document and share it in the requested format and details. Random text, customer details, or unstructured notes cannot be converted into an enterprise policy document.');
       setStatusMessage(null);
       setStructuredDoc(null);
       onGeneratePolicyTree(parsed, trimmed);
@@ -261,14 +261,48 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
 
       {/* Validation Feedback & Status Banners */}
       {errorMessage && (
-        <div className="p-3.5 bg-aurora-error-light border border-aurora-error/30 rounded-lg text-xs text-aurora-error font-semibold space-y-1 animate-fadeIn">
-          <div className="flex items-center space-x-2">
-            <span className="font-bold uppercase tracking-wider text-[10px] bg-aurora-error/20 px-1.5 py-0.5 rounded">Validation Error</span>
-            <span>{errorMessage}</span>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-xs text-red-900 space-y-3 shadow-sm animate-fadeIn">
+          <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+            <div className="space-y-1">
+              <div className="flex items-center space-x-2">
+                <span className="font-bold uppercase tracking-wider text-[10px] bg-red-100 text-red-700 border border-red-200 px-2 py-0.5 rounded">
+                  Policy Validation Error
+                </span>
+                <span className="font-bold text-red-900">
+                  Please share the sample policy document and share it in the requested format and details.
+                </span>
+              </div>
+              <p className="text-[11px] text-red-800 leading-relaxed pl-1 pt-0.5">
+                {errorMessage}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                setPolicyText(SAMPLE_ENTERPRISE_POLICY);
+                setFileName("sample-enterprise-policy.md");
+                setErrorMessage(null);
+                setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
+              }}
+              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow-sm transition flex items-center space-x-1.5 flex-shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <span>Load Sample Policy Format</span>
+            </button>
           </div>
-          <p className="text-[11px] text-aurora-error/80 font-normal pl-2">
-            Enterprise Railguards prevent generating a policy tree from random strings or non-policy text. Please ensure your document specifies actionable directives (e.g. must, prohibit, require, refund, privacy).
-          </p>
+
+          <div className="p-3 bg-white/90 rounded-lg border border-red-200 text-[11px] text-aurora-neutral-700 space-y-1">
+            <span className="font-bold text-aurora-neutral-900 block uppercase tracking-wider text-[10px]">
+              Requested Policy Document Format &amp; Details:
+            </span>
+            <div className="font-mono text-[10px] text-aurora-neutral-800 space-y-0.5">
+              <div># [Section Number]. [Section Name]</div>
+              <div>- [Directive]: What agents must or shall do (e.g. cite transaction ID and payment ARN)</div>
+              <div>- [Constraint]: What agents are prohibited from doing (e.g. never ask customer to re-pay without verified refund status)</div>
+              <div>- [Escalation Gate]: Financial thresholds or supervisor approval rules (e.g. vouchers over $25 require supervisor approval)</div>
+            </div>
+          </div>
         </div>
       )}
 
