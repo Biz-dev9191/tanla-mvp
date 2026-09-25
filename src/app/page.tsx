@@ -94,7 +94,7 @@ export default function Home() {
           ...payload,
           customRules: activeRules,
           customPolicyDocText: activeDocText,
-          useSamplePolicyTree: true,
+          useSamplePolicyTree: payload.useSamplePolicyTree !== undefined ? payload.useSamplePolicyTree : Boolean(customPolicyTree),
           geminiKey,
           openaiKey,
         }),
@@ -521,33 +521,21 @@ export default function Home() {
               />
             </div>
 
-            {/* Interactive Policy Tree */}
-            <InteractiveTree
-              tree={customPolicyTree !== null ? customPolicyTree : currentResult?.policyTree !== undefined ? currentResult.policyTree : null}
-              highlightedPath={currentResult?.appliedPolicyPath || ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"]}
-              onSelectNode={(node) => setSelectedPolicyNode(node)}
-              onLoadSampleTree={() => {
-                const parsed = parsePolicyDocumentText(SAMPLE_ENTERPRISE_POLICY);
-                if (parsed.isValid && parsed.tree) {
-                  setCustomPolicyTree(parsed.tree);
-                  setCustomPolicyRules(parsed.rules);
-                  setCustomStructuredDoc(parsed.structuredDocument || null);
-                  setCustomPolicyDocText(SAMPLE_ENTERPRISE_POLICY);
-                } else {
-                  setCustomPolicyTree(defaultPolicyTree);
-                  setCustomPolicyRules([]);
-                  setCustomStructuredDoc(null);
-                  setCustomPolicyDocText(null);
-                }
-              }}
-              onOpenUploader={() => {
-                const el = document.getElementById('policy-uploader-card');
-                if (el) el.scrollIntoView({ behavior: 'smooth' });
-              }}
-              onApplyToCurrentRun={handleApplyToCurrentRun}
-              canApplyToCurrentRun={Boolean(customPolicyTree || (customPolicyRules && customPolicyRules.length > 0))}
-              isApplying={isApplyingPolicy}
-            />
+            {/* Interactive Policy Tree - Only generated when policy document is uploaded or pasted followed by clicking Generate Policy Tree */}
+            {customPolicyTree && (
+              <InteractiveTree
+                tree={customPolicyTree}
+                highlightedPath={currentResult?.appliedPolicyPath || ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"]}
+                onSelectNode={(node) => setSelectedPolicyNode(node)}
+                onOpenUploader={() => {
+                  const el = document.getElementById('policy-uploader-card');
+                  if (el) el.scrollIntoView({ behavior: 'smooth' });
+                }}
+                onApplyToCurrentRun={handleApplyToCurrentRun}
+                canApplyToCurrentRun={Boolean(customPolicyTree || (customPolicyRules && customPolicyRules.length > 0))}
+                isApplying={isApplyingPolicy}
+              />
+            )}
 
             <PolicyDetailModal
               node={selectedPolicyNode}
