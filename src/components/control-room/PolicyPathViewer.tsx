@@ -1,18 +1,79 @@
 import React from 'react';
 import { PolicyRule, ClauseCitation } from '@/core/types';
-import { GitBranch, ChevronRight, ShieldCheck, BookOpen, ExternalLink, Quote } from 'lucide-react';
+import { GitBranch, ShieldCheck } from 'lucide-react';
 
 interface PolicyPathViewerProps {
-  policyPath: string[];
+  policyPath?: string[];
   appliedPolicies: PolicyRule[];
   clauseCitations?: ClauseCitation[];
+  humanApprovalRequired?: boolean;
+  approvalReason?: string;
 }
 
 export const PolicyPathViewer: React.FC<PolicyPathViewerProps> = ({
-  policyPath,
-  appliedPolicies,
+  appliedPolicies = [],
   clauseCitations = [],
+  humanApprovalRequired,
+  approvalReason,
 }) => {
+  // Only showcase policies which result in human intervention required
+  const policiesRequiringIntervention: PolicyRule[] = [];
+
+  appliedPolicies.forEach((p) => {
+    // Check if explicitly marked as escalation trigger
+    if (p.escalationTriggered) {
+      if (!policiesRequiringIntervention.some((item) => item.id === p.id)) {
+        policiesRequiringIntervention.push(p);
+      }
+    } else if (
+      humanApprovalRequired &&
+      (p.escalationRequired ||
+        (approvalReason &&
+          (approvalReason.includes(p.id) ||
+            (p.title && approvalReason.includes(p.title)))))
+    ) {
+      if (!policiesRequiringIntervention.some((item) => item.id === p.id)) {
+        policiesRequiringIntervention.push(p);
+      }
+    }
+  });
+
+  // Fallback: If humanApprovalRequired is true and appliedPolicies did not yield a rule, check clauseCitations
+  if (
+    policiesRequiringIntervention.length === 0 &&
+    humanApprovalRequired &&
+    clauseCitations &&
+    clauseCitations.length > 0
+  ) {
+    const matchingCitations = clauseCitations.filter(
+      (c) =>
+        (approvalReason &&
+          (approvalReason.includes(c.clauseId) || approvalReason.includes(c.title))) ||
+        c.directiveType === 'MANDATORY'
+    );
+    matchingCitations.forEach((c) => {
+      if (!policiesRequiringIntervention.some((item) => item.id === c.clauseId)) {
+        policiesRequiringIntervention.push({
+          id: c.clauseId,
+          nodePath: `${c.sourceDocument} > ${c.section}`,
+          category: (c.section.toLowerCase().includes('privacy')
+            ? 'privacy'
+            : c.section.toLowerCase().includes('finan')
+            ? 'financial'
+            : 'escalation') as any,
+          title: c.title,
+          rule: c.excerpt || c.complianceRequirement,
+          condition: c.complianceRequirement,
+          allowedActions: ['Adhere strictly to verified facts and supervisor directives'],
+          prohibitedActions: ['Outbound transmission without documented supervisor approval'],
+          escalationRequired: true,
+          escalationTriggered: true,
+          priority: 'high',
+        });
+      }
+    });
+  }
+
   return (
     <div className="bg-aurora-neutral-0 rounded-lg p-5 border border-aurora-neutral-200 shadow-aurora space-y-4">
       {/* Header */}
@@ -22,131 +83,93 @@ export const PolicyPathViewer: React.FC<PolicyPathViewerProps> = ({
           <h3 className="text-sm font-bold text-aurora-neutral-900">Applied Policy & Clause Citations</h3>
         </div>
         <span className="text-xs text-aurora-neutral-500 font-mono">
-          {clauseCitations.length > 0 ? `${clauseCitations.length} Citations Verified` : `${appliedPolicies.length} Active Policies`}
+          {policiesRequiringIntervention.length > 0
+            ? `${policiesRequiringIntervention.length} ${policiesRequiringIntervention.length === 1 ? 'Escalation Policy Cited' : 'Escalation Policies Cited'}`
+            : '0 Escalation Policies Cited'}
         </span>
       </div>
 
-      {/* Path Breadcrumbs */}
-      <div className="flex flex-wrap items-center gap-1.5 p-3 bg-aurora-neutral-100 rounded-md border border-aurora-neutral-200 text-xs">
-        {policyPath.map((node, idx) => (
-          <React.Fragment key={idx}>
-            <span
-              className={`px-2 py-0.5 rounded font-medium ${
-                idx === policyPath.length - 1
-                  ? 'bg-aurora-primary text-white font-bold'
-                  : 'bg-aurora-neutral-0 text-aurora-neutral-700 border border-aurora-neutral-300'
-              }`}
+      {/* Showcase ONLY policies that result in human intervention */}
+      {policiesRequiringIntervention.length > 0 ? (
+        <div className="space-y-3">
+          {policiesRequiringIntervention.map((policy) => (
+            <div
+              key={policy.id}
+              className="p-4 sm:p-5 rounded-lg border border-aurora-neutral-200 bg-aurora-neutral-50 text-xs space-y-2.5"
             >
-              {node}
-            </span>
-            {idx < policyPath.length - 1 && (
-              <ChevronRight strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-500" />
-            )}
-          </React.Fragment>
-        ))}
-      </div>
+              {/* Top Row: Policy Code & Category Tag */}
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-xs text-aurora-primary">
+                  {policy.id}
+                </span>
+                <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded bg-aurora-neutral-200 text-aurora-neutral-700">
+                  {policy.category || 'GOVERNANCE'}
+                </span>
+              </div>
 
-      {/* RAG Clause Citations with Verbatim Excerpts */}
-      {clauseCitations.length > 0 && (
-        <div className="space-y-2.5">
-          <div className="flex items-center space-x-1.5 text-xs font-bold text-aurora-neutral-900">
-            <BookOpen strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-            <span>RAG Document Clause Citations</span>
-          </div>
+              {/* Title */}
+              <h4 className="font-bold text-sm text-aurora-neutral-900 leading-snug">
+                {policy.title}
+              </h4>
 
-          <div className="grid grid-cols-1 gap-2.5">
-            {clauseCitations.map((citation, idx) => (
-              <div
-                key={idx}
-                className="p-3.5 rounded-lg border border-aurora-neutral-200 bg-aurora-neutral-100/70 text-xs space-y-2 hover:border-aurora-primary/40 transition"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <span className="font-mono font-bold text-aurora-primary text-[11px] bg-white px-2 py-0.5 rounded border border-aurora-neutral-300">
-                      {citation.clauseId}
-                    </span>
-                    <span className="font-semibold text-aurora-neutral-900">{citation.sourceDocument}</span>
-                    <span className="text-[10px] bg-aurora-neutral-200 text-aurora-neutral-700 px-1.5 py-0.2 rounded font-mono">
-                      {citation.section}
-                    </span>
-                  </div>
+              {/* Rule / Statement */}
+              <p className="text-xs text-aurora-neutral-700 leading-relaxed">
+                {policy.rule}
+              </p>
 
-                  <div className="flex items-center space-x-2">
-                    <span
-                      className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                        citation.directiveType === 'MANDATORY'
-                          ? 'bg-aurora-primary-light text-aurora-primary'
-                          : citation.directiveType === 'PROHIBITIVE'
-                          ? 'bg-aurora-error-light text-aurora-error'
-                          : 'bg-aurora-neutral-200 text-aurora-neutral-700'
-                      }`}
-                    >
-                      {citation.directiveType}
-                    </span>
-                    <span className="text-[10px] font-mono text-aurora-success font-bold">
-                      {Math.round(citation.relevanceScore * 100)}% Match
-                    </span>
-                  </div>
+              {/* Actions Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
+                <div>
+                  <span className="font-bold text-xs text-emerald-700 block mb-1">
+                    Permitted Actions:
+                  </span>
+                  {policy.allowedActions && policy.allowedActions.length > 0 ? (
+                    <ul className="text-aurora-neutral-700 space-y-1">
+                      {policy.allowedActions.map((action, i) => (
+                        <li key={i} className="flex items-start space-x-1.5 leading-relaxed">
+                          <span className="text-aurora-neutral-500 select-none">•</span>
+                          <span>{action}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-aurora-neutral-500 italic">None specified</p>
+                  )}
                 </div>
 
-                <h4 className="font-bold text-aurora-neutral-900">{citation.title}</h4>
-
-                {/* Excerpt Quote */}
-                <div className="p-2.5 rounded bg-white border border-aurora-neutral-200 text-aurora-neutral-700 italic leading-relaxed text-[11px] flex items-start space-x-2">
-                  <Quote strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary flex-shrink-0 mt-0.5" />
-                  <span>"{citation.excerpt}"</span>
-                </div>
-
-                <div className="text-[11px] text-aurora-neutral-700 pt-1 flex items-center justify-between">
-                  <span><strong>Compliance Requirement:</strong> {citation.complianceRequirement}</span>
+                <div>
+                  <span className="font-bold text-xs text-red-700 block mb-1">
+                    Prohibited Actions:
+                  </span>
+                  {policy.prohibitedActions && policy.prohibitedActions.length > 0 ? (
+                    <ul className="text-aurora-neutral-700 space-y-1">
+                      {policy.prohibitedActions.map((prohibition, i) => (
+                        <li key={i} className="flex items-start space-x-1.5 leading-relaxed">
+                          <span className="text-aurora-neutral-500 select-none">•</span>
+                          <span>{prohibition}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-aurora-neutral-500 italic">None specified</p>
+                  )}
                 </div>
               </div>
-            ))}
+            </div>
+          ))}
+        </div>
+      ) : (
+        /* Empty State when no policy requires human intervention */
+        <div className="p-6 rounded-lg border border-aurora-neutral-200 bg-aurora-neutral-50 text-center space-y-2">
+          <div className="w-9 h-9 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center mx-auto">
+            <ShieldCheck strokeWidth={1.5} className="w-5 h-5" />
           </div>
+          <h4 className="text-xs font-bold text-aurora-neutral-900">No Human Intervention Required</h4>
+          <p className="text-xs text-aurora-neutral-600 max-w-md mx-auto leading-relaxed">
+            All evaluated governance policies passed autonomously. No policy triggered a supervisor escalation gate for this scenario.
+          </p>
         </div>
       )}
-
-      {/* Rules list */}
-      <div className="space-y-3 pt-2">
-        <h4 className="text-xs font-bold text-aurora-neutral-700 uppercase tracking-wider">
-          Enforced Policy Directives ({appliedPolicies.length})
-        </h4>
-        {appliedPolicies.map((policy) => (
-          <div
-            key={policy.id}
-            className="p-3 rounded border border-aurora-neutral-200 bg-aurora-neutral-100 text-xs space-y-1.5"
-          >
-            <div className="flex items-center justify-between">
-              <span className="font-mono font-bold text-aurora-primary">{policy.id}</span>
-              <span className="text-[10px] uppercase font-semibold px-1.5 py-0.5 rounded bg-aurora-neutral-200 text-aurora-neutral-700">
-                {policy.category}
-              </span>
-            </div>
-            <h4 className="font-bold text-aurora-neutral-900">{policy.title}</h4>
-            <p className="text-aurora-neutral-700 leading-relaxed">{policy.rule}</p>
-
-            <div className="pt-1.5 border-t border-aurora-neutral-200 grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
-              <div>
-                <span className="font-semibold text-aurora-success block mb-0.5">Permitted Actions:</span>
-                <ul className="list-disc list-inside text-aurora-neutral-700 space-y-0.5">
-                  {policy.allowedActions.map((a, i) => (
-                    <li key={i}>{a}</li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <span className="font-semibold text-aurora-error block mb-0.5">Prohibited Actions:</span>
-                <ul className="list-disc list-inside text-aurora-neutral-700 space-y-0.5">
-                  {policy.prohibitedActions.map((p, i) => (
-                    <li key={i}>{p}</li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
-

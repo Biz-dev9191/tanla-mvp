@@ -804,6 +804,84 @@ async function main() {
     }
   );
 
+  // ----------------------------------------------------------------------------------
+  // Test 11: Applied Policy Citations Isolates Strictly Escalation-Triggering Policies
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Citation Test 11: Applied Policy Citations Isolates Strictly Escalation-Triggering Policies',
+    'Policy Citations',
+    async (details) => {
+      const policyWithEscalation = `# Enterprise Refund & Compliance Policy
+
+## Section 1: Customer Communication Directives
+- Ground all communication strictly in verified factual telemetry and policy constraints.
+- Never expose full credit card numbers or banking passwords. Always mask to last 4 digits (e.g. **** 4012).
+
+## Section 2: Authorization & Monetary Limits
+- Standard refunds up to $100.00 proceed autonomously.
+- Any discretionary goodwill compensation or credit above $50.00 requires documented human supervisor approval prior to outbound transmission.
+`;
+
+      const parsed = parsePolicyDocumentText(policyWithEscalation);
+      assert(parsed.isValid, 'Policy is validly parsed', details);
+
+      // Event A: Discretionary compensation $75 -> triggers human supervisor escalation
+      const escalationEvent: BusinessEvent = {
+        id: 'evt-comp-75',
+        eventType: 'customer_complaint',
+        title: 'Customer Demands Goodwill Compensation',
+        description: 'Customer experienced service delay and requested goodwill credit voucher.',
+        amount: '$75.00 goodwill credit',
+        timestamp: '2026-09-25T10:00:00Z',
+        verifiedFacts: ['Delay was 45 minutes', 'Customer requested $75 credit voucher'],
+        resolutionStatus: 'Requires Customer Action',
+      };
+
+      const resultEscalation = await orchestrateCommunication(
+        baseCustomer,
+        escalationEvent,
+        { primary: 'reassure_customer' },
+        undefined,
+        parsed.rules,
+        policyWithEscalation
+      );
+
+      assert(resultEscalation.strategy.humanApprovalRequired === true, 'Human approval required for $75 goodwill credit', details);
+      const triggeredEscalations = resultEscalation.appliedPolicies.filter(p => p.escalationTriggered);
+      assert(triggeredEscalations.length > 0, 'At least 1 policy flagged as escalationTriggered', details);
+      assert(
+        triggeredEscalations.some(p => p.title.toLowerCase().includes('goodwill') || p.title.toLowerCase().includes('authorization') || p.rule.includes('50.00')),
+        'Cited policy is specifically the supervisor escalation clause',
+        details
+      );
+
+      // Event B: Routine autonomous refund $25 -> no human intervention required
+      const autonomousEvent: BusinessEvent = {
+        id: 'evt-refund-25',
+        eventType: 'payment_successful_order_failed',
+        title: 'Routine Automatic Refund',
+        description: 'Payment captured but inventory depleted. Automatic refund initiated.',
+        amount: '$25.00',
+        timestamp: '2026-09-25T10:05:00Z',
+        verifiedFacts: ['Payment captured', 'Refund $25.00 initiated'],
+        resolutionStatus: 'Refund Initiated',
+      };
+
+      const resultAutonomous = await orchestrateCommunication(
+        baseCustomer,
+        autonomousEvent,
+        { primary: 'resolve_issue' },
+        undefined,
+        parsed.rules,
+        policyWithEscalation
+      );
+
+      assert(resultAutonomous.strategy.humanApprovalRequired === false, 'Autonomous event does not require human approval', details);
+      const autonomousEscalations = resultAutonomous.appliedPolicies.filter(p => p.escalationTriggered);
+      assert(autonomousEscalations.length === 0, 'Zero policies flagged as escalationTriggered for autonomous event', details);
+    }
+  );
+
   // Print Summary Table
   console.log('\n================================================================');
   console.log('TEST EXECUTION SUMMARY');

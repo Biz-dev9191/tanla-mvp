@@ -37,6 +37,20 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<'strategy' | 'policies'>('strategy');
 
+  const escalationPoliciesCount = appliedPolicies.filter((p) => {
+    if (p.escalationTriggered) return true;
+    if (
+      strategy.humanApprovalRequired &&
+      (p.escalationRequired ||
+        (strategy.approvalReason &&
+          (strategy.approvalReason.includes(p.id) ||
+            (p.title && strategy.approvalReason.includes(p.title)))))
+    ) {
+      return true;
+    }
+    return false;
+  }).length || (strategy.humanApprovalRequired ? 1 : 0);
+
   return (
     <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all duration-200">
       {/* Expandable Section Header */}
@@ -71,7 +85,7 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
             </span>
             {hasPolicyTreeOrCitations && (
               <span className="px-2 py-0.5 rounded bg-aurora-neutral-100 border border-aurora-neutral-200 text-aurora-neutral-700 font-medium text-[11px]">
-                Policies: <strong className="text-aurora-primary">{appliedPolicies.length} Enforced</strong>
+                Policy Citations: <strong className="text-aurora-primary">{strategy.humanApprovalRequired ? `${escalationPoliciesCount} Escalation` : 'Autonomous'}</strong>
               </span>
             )}
           </div>
@@ -116,7 +130,7 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
                 }`}
               >
                 <GitBranch strokeWidth={1.5} className="w-3.5 h-3.5" />
-                <span>Applied Policies & Citations ({appliedPolicies.length})</span>
+                <span>Applied Policy &amp; Clause Citations ({strategy.humanApprovalRequired ? escalationPoliciesCount : 0})</span>
               </button>
             )}
           </div>
@@ -142,6 +156,8 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
                 policyPath={appliedPolicyPath}
                 appliedPolicies={appliedPolicies}
                 clauseCitations={clauseCitations}
+                humanApprovalRequired={strategy.humanApprovalRequired}
+                approvalReason={strategy.approvalReason}
               />
             </div>
           )}

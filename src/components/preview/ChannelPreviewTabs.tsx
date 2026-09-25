@@ -242,7 +242,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               onClick={() => handleDispatch(activeChannel)}
               disabled={isSending || isApprovalPending}
               title={isApprovalPending ? 'Human approval required before dispatching' : undefined}
-              className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-xs ${
+              className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 shadow-xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 ${
                 isApprovalPending
                   ? 'bg-aurora-neutral-100 text-aurora-neutral-400 border border-aurora-neutral-200 cursor-not-allowed opacity-60'
                   : 'bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 text-aurora-neutral-900 disabled:opacity-50'
@@ -278,7 +278,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
                   ? 'Please select at least one channel'
                   : undefined
               }
-              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 transition shadow-aurora-md ${
+              className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center space-x-2 shadow-aurora-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 ${
                 isApprovalPending || selectedChannels.length === 0
                   ? 'bg-aurora-neutral-300 text-aurora-neutral-500 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
                   : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white disabled:opacity-50'

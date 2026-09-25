@@ -45,7 +45,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           <button
             type="button"
             onClick={onNewRun}
-            className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold shadow-sm transition flex items-center space-x-1.5"
+            className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
           >
             <span>New Communication</span>
             <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
@@ -63,7 +63,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
           <button
             type="button"
             onClick={onNewRun}
-            className="mt-4 px-4 py-2 bg-aurora-primary text-white rounded-md text-xs font-semibold shadow-sm"
+            className="mt-4 px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0"
           >
             Go to Communication Brief
           </button>

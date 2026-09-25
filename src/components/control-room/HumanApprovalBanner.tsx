@@ -46,7 +46,7 @@ export const HumanApprovalBanner: React.FC<HumanApprovalBannerProps> = ({
           <div className="flex-shrink-0 self-end sm:self-center">
             <button
               onClick={onApprove}
-              className="px-3.5 py-1.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold whitespace-nowrap flex items-center space-x-1.5 shadow-2xs transition active:scale-95 cursor-pointer"
+              className="px-3.5 py-1.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold whitespace-nowrap flex items-center space-x-1.5 shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 cursor-pointer"
             >
               <Check strokeWidth={2} className="w-3.5 h-3.5 flex-shrink-0" />
               <span>Approve & Authorize</span>

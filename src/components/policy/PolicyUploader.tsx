@@ -142,7 +142,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
               setErrorMessage(null);
               setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' to build tree.");
             }}
-            className="px-3.5 py-1.5 bg-aurora-primary-light hover:bg-aurora-primary hover:text-white text-aurora-primary border border-aurora-primary/30 rounded-md text-xs font-bold shadow-2xs transition flex items-center space-x-1.5"
+            className="px-3.5 py-1.5 bg-aurora-primary-light hover:bg-aurora-primary hover:text-white text-aurora-primary border border-aurora-primary/30 rounded-md text-xs font-bold shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
           >
             <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
             <span>Insert Sample Enterprise Policy</span>
@@ -209,7 +209,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
                 <p className="text-[11px] text-aurora-neutral-500 mb-3.5 max-w-[200px] leading-tight">
                   Select or drop your policy text or markdown file
                 </p>
-                <label className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-xs font-bold cursor-pointer shadow-xs transition-transform transform active:scale-95 inline-flex items-center space-x-1.5">
+                <label className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-xs font-bold cursor-pointer shadow-xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 inline-flex items-center space-x-1.5">
                   <Upload strokeWidth={1.5} className="w-3.5 h-3.5" />
                   <span>Browse File</span>
                   <input type="file" accept=".txt,.md,.md5" onChange={handleFileUpload} className="hidden" />
@@ -246,7 +246,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
               type="button"
               onClick={handleGenerate}
               disabled={isGenerateDisabled}
-              className={`px-5 py-2.5 rounded-lg text-xs font-bold shadow-sm transition flex items-center justify-center space-x-2 flex-shrink-0 ${
+              className={`px-5 py-2.5 rounded-lg text-xs font-bold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 flex items-center justify-center space-x-2 flex-shrink-0 ${
                 isGenerateDisabled
                   ? 'bg-aurora-neutral-200 text-aurora-neutral-400 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
                   : 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer shadow-aurora-md'
@@ -285,7 +285,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
                 setErrorMessage(null);
                 setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
               }}
-              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow-sm transition flex items-center space-x-1.5 flex-shrink-0 self-start sm:self-auto cursor-pointer"
+              className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5 flex-shrink-0 self-start sm:self-auto cursor-pointer"
             >
               <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
               <span>Load Sample Policy Format</span>

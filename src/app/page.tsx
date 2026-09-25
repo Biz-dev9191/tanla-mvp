@@ -8,7 +8,6 @@ import { CommunicationBrief } from '@/components/brief/CommunicationBrief';
 import { AgentStepper } from '@/components/control-room/AgentStepper';
 import { DecisionTraceView } from '@/components/control-room/DecisionTraceView';
 import { StrategyCard } from '@/components/control-room/StrategyCard';
-import { PolicyPathViewer } from '@/components/control-room/PolicyPathViewer';
 import { HumanApprovalBanner } from '@/components/control-room/HumanApprovalBanner';
 import { ChannelPreviewTabs } from '@/components/preview/ChannelPreviewTabs';
 import { ExpandableAnalysisSection } from '@/components/control-room/ExpandableAnalysisSection';
@@ -385,7 +384,7 @@ export default function Home() {
 
                   <button
                     onClick={() => setActiveTab('brief')}
-                    className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 self-start sm:self-auto"
+                    className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5 self-start sm:self-auto"
                   >
                     <span>Edit Brief</span>
                   </button>
@@ -439,7 +438,8 @@ export default function Home() {
                   hasPolicyTreeOrCitations={Boolean(
                     (currentResult.appliedPolicies && currentResult.appliedPolicies.length > 0) ||
                     (currentResult.clauseCitations && currentResult.clauseCitations.length > 0) ||
-                    (currentResult.policyTree !== null && currentResult.policyTree !== undefined)
+                    (currentResult.policyTree !== null && currentResult.policyTree !== undefined) ||
+                    currentResult.strategy.humanApprovalRequired
                   )}
                 />
               </>
@@ -452,7 +452,7 @@ export default function Home() {
                 </p>
                 <button
                   onClick={() => setActiveTab('brief')}
-                  className="mt-4 px-4 py-2 bg-aurora-primary text-white rounded-md text-xs font-semibold"
+                  className="mt-4 px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0"
                 >
                   Go to Communication Brief
                 </button>
@@ -491,7 +491,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={() => setActiveTab('brief')}
-                  className="px-3.5 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
+                  className="px-3.5 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
                 >
                   <ArrowLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
                   <span>Back to Brief</span>
@@ -500,7 +500,7 @@ export default function Home() {
                   type="button"
                   onClick={() => currentResult && setActiveTab('control-room')}
                   disabled={!currentResult}
-                  className={`px-3.5 py-2 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 ${
+                  className={`px-3.5 py-2 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 flex items-center space-x-1.5 ${
                     currentResult
                       ? 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
                       : 'bg-aurora-neutral-200 text-aurora-neutral-400 border border-aurora-neutral-300 cursor-not-allowed opacity-60'

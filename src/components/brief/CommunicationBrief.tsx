@@ -1028,7 +1028,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             <button
               type="button"
               onClick={onNavigateToPolicyTree}
-              className="w-full sm:w-52 h-11 px-5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-900 rounded-lg text-sm font-bold shadow-2xs transition flex items-center justify-center space-x-2"
+              className="w-full sm:w-52 h-11 px-5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-900 rounded-lg text-sm font-bold shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm flex items-center justify-center space-x-2"
             >
               <GitBranch strokeWidth={1.75} className="w-4 h-4 text-aurora-primary" />
               <span>Policy Rules</span>
@@ -1040,7 +1040,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full sm:w-52 h-11 px-5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-lg text-sm font-bold shadow-aurora-md flex items-center justify-center space-x-2 transition-all transform active:scale-95 disabled:opacity-50"
+            className="w-full sm:w-52 h-11 px-5 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-sm font-bold shadow-aurora-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             {isLoading ? (
               <span className="flex items-center space-x-2">

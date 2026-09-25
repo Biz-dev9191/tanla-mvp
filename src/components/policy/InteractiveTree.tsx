@@ -161,7 +161,7 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
               type="button"
               onClick={onApplyToCurrentRun}
               disabled={!canApplyToCurrentRun || isApplying}
-              className={`flex items-center space-x-1.5 text-xs px-3.5 py-1.5 rounded-lg font-bold transition shadow-sm ${
+              className={`flex items-center space-x-1.5 text-xs px-3.5 py-1.5 rounded-lg font-bold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 ${
                 canApplyToCurrentRun && !isApplying
                   ? 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer ring-1 ring-aurora-primary'
                   : 'bg-aurora-neutral-200 text-aurora-neutral-400 cursor-not-allowed opacity-60'
@@ -190,7 +190,7 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
               <button
                 type="button"
                 onClick={onLoadSampleTree}
-                className="px-4 py-2 bg-aurora-primary text-white rounded-lg text-xs font-bold hover:bg-aurora-primary-hover shadow-sm transition flex items-center space-x-1.5"
+                className="px-4 py-2 bg-aurora-primary text-white rounded-lg text-xs font-bold hover:bg-aurora-primary-hover shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
               >
                 <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
                 <span>Load Sample Enterprise Policy Tree</span>
@@ -201,7 +201,7 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
               <button
                 type="button"
                 onClick={onOpenUploader}
-                className="px-4 py-2 bg-white border border-aurora-neutral-300 text-aurora-neutral-800 rounded-lg text-xs font-semibold hover:bg-aurora-neutral-100 transition flex items-center space-x-1.5"
+                className="px-4 py-2 bg-white border border-aurora-neutral-300 text-aurora-neutral-800 rounded-lg text-xs font-semibold hover:bg-aurora-neutral-100 shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
               >
                 <UploadCloud strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
                 <span>Upload / Paste Policy Document</span>

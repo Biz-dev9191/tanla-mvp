@@ -29,7 +29,11 @@ export function runPolicyAgent(
 
   if (hasCustomPolicy) {
     appliedPolicyPath.push("Custom Enterprise Policy", event.eventType);
-    appliedPolicies.push(...(customRules || []));
+    const mappedRules: PolicyRule[] = (customRules || []).map((r) => ({
+      ...r,
+      escalationTriggered: false,
+    }));
+    appliedPolicies.push(...mappedRules);
 
     chainOfThought.push(
       `[Step 1 - Custom Policy Ingestion] Evaluated ${customRules?.length || 0} custom compliance rules provided by user.`
@@ -70,7 +74,7 @@ export function runPolicyAgent(
     }
 
     // Build clause citations and check dynamic amount thresholds & conditional escalation gates
-    customRules?.forEach((rule, idx) => {
+    appliedPolicies.forEach((rule, idx) => {
       const isZeroOrGreater = isZeroOrGreaterThreshold(rule);
       const ruleThreshold = rule.thresholdAmount !== undefined
         ? rule.thresholdAmount
@@ -123,6 +127,7 @@ export function runPolicyAgent(
 
         if (zeroGreaterConditionTriggered) {
           customEscalationRequired = true;
+          rule.escalationTriggered = true;
           customApprovalReason = `Human supervisor review required by custom policy clause '${rule.title || rule.id}': every ${triggeredType} ($${eventNumericAmount.toFixed(2)} >= $0) requires human intervention.`;
           chainOfThought.push(
             `[Zero-Tolerance Policy Gate] Policy clause '${rule.title || rule.id}' sets threshold >= $0. Every ${triggeredType} requires human intervention.`
@@ -134,6 +139,7 @@ export function runPolicyAgent(
         if (eventNumericAmount > threshold) {
           // Amount exceeds autonomous limit -> Escalation triggered
           customEscalationRequired = true;
+          rule.escalationTriggered = true;
           customApprovalReason = `Event amount ($${eventNumericAmount.toFixed(2)}) exceeds custom policy autonomous limit ($${threshold.toFixed(2)}) defined in '${rule.title || rule.id}'. Supervisor approval required.`;
           chainOfThought.push(
             `[Custom Threshold Trigger] Event amount $${eventNumericAmount} exceeds rule threshold of $${threshold} in '${rule.title || rule.id}'. Human supervisor intervention required.`
@@ -207,6 +213,7 @@ export function runPolicyAgent(
 
         if (conditionApplies) {
           customEscalationRequired = true;
+          rule.escalationTriggered = true;
           customApprovalReason = `Human supervisor review required by custom policy clause '${rule.title || rule.id}': ${matchedConditionName}.`;
           chainOfThought.push(
             `[Custom Escalation Trigger] Clause '${rule.title || rule.id}' condition triggered (${matchedConditionName}). Human intervention required.`
@@ -266,6 +273,21 @@ export function runPolicyAgent(
 
   if (isSupervisorRequired) {
     appliedPolicyPath.push("Enterprise Policy", "Financial Governance", "POL-FIN-001 (Supervisor Authorization)");
+    const polFin001Rule: PolicyRule = {
+      id: "POL-FIN-001",
+      nodePath: "Enterprise Policy > Financial Governance",
+      category: "financial",
+      title: "Financial Commitments & Discretionary Compensation",
+      rule: "Goodwill compensation or credit vouchers above $0.00 require documented human supervisor approval prior to outbound transmission.",
+      condition: "Discretionary compensation or goodwill credit request",
+      allowedActions: ["Acknowledge Dispute", "Apply Standard Fee Waiver", "Route to Supervisor Queue"],
+      prohibitedActions: ["Grant Unauthorized Cash Refund Above Policy Cap", "Promise Instant Settlement Date Without Verification"],
+      escalationRequired: true,
+      escalationTriggered: true,
+      priority: "high",
+    };
+    appliedPolicies.push(polFin001Rule);
+
     clauseCitations.push({
       clauseId: "POL-FIN-001",
       sourceDocument: "Enterprise Customer Communication Policy",
@@ -301,7 +323,7 @@ export function runPolicyAgent(
 
     return {
       appliedPolicyPath,
-      appliedPolicies: [],
+      appliedPolicies,
       clauseCitations,
       allowedActions: ['Acknowledge Dispute', 'Apply Standard Fee Waiver', 'Route to Supervisor Queue'],
       prohibitedActions: ['Grant Unauthorized Cash Refund Above Policy Cap', 'Promise Instant Settlement Date Without Verification'],

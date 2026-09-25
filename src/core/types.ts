@@ -105,6 +105,7 @@ export interface PolicyRule {
   escalationRequired: boolean;
   priority: 'low' | 'medium' | 'high' | 'critical';
   thresholdAmount?: number;
+  escalationTriggered?: boolean;
 }
 
 export interface CommunicationStrategy {

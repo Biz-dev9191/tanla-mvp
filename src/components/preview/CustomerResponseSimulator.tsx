@@ -360,7 +360,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
             type="button"
             onClick={() => handleSimulateCustomerTurn()}
             disabled={isLoading}
-            className="py-2 px-3 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-sm disabled:opacity-50"
+            className="py-2 px-3 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50"
           >
             {isLoading && loadingAction === 'customer' ? (
               <>
@@ -382,7 +382,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
             type="button"
             onClick={() => handleGenerateAutomatedAgentReply()}
             disabled={isLoading || lastSpeaker !== 'customer'}
-            className="py-2 px-3 bg-aurora-neutral-900 hover:bg-black text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 transition shadow-sm disabled:opacity-40"
+            className="py-2 px-3 bg-aurora-neutral-900 hover:bg-black text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-40"
           >
             {isLoading && loadingAction === 'agent' ? (
               <>
@@ -415,7 +415,7 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
               type="button"
               onClick={handleAddCustomCustomerMessage}
               disabled={!customerInput.trim() || isLoading}
-              className="px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-900 border border-aurora-neutral-300 rounded-md text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-40 transition"
+              className="px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-900 border border-aurora-neutral-300 rounded-md text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-40 shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0"
             >
               <ClipboardPaste strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
               <span>Post Customer Query</span>
