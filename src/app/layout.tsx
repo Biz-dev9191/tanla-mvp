@@ -6,11 +6,11 @@ export const metadata: Metadata = {
   description: 'An enterprise agentic communication layer that decides what to communicate, why, how, through which channel, and validates safety guardrails.',
   icons: {
     icon: [
-      { url: '/icon.svg', type: 'image/svg+xml' },
-      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icon.svg?v=2', type: 'image/svg+xml' },
+      { url: '/favicon.ico?v=2', sizes: 'any' },
     ],
-    shortcut: '/icon.svg',
-    apple: '/icon.svg',
+    shortcut: '/icon.svg?v=2',
+    apple: '/icon.svg?v=2',
   },
 };
 
@@ -22,9 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
-        <link rel="alternate icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="icon" href="/icon.svg?v=2" type="image/svg+xml" />
+        <link rel="alternate icon" href="/favicon.ico?v=2" />
+        <link rel="apple-touch-icon" href="/icon.svg?v=2" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link
