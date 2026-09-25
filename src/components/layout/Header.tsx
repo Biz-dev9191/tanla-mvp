@@ -36,31 +36,31 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
     {
       id: 'brief' as const,
       label: 'Communication Brief',
-      description: 'Set up customer details, event history, and business goals',
+      description: 'Set up customer details, event telemetry, and business goals',
       icon: PlusCircle,
+    },
+    {
+      id: 'policy-tree' as const,
+      label: 'Edit Policy',
+      description: 'Inspect deterministic rules or upload custom policy documents',
+      icon: GitBranch,
     },
     {
       id: 'control-room' as const,
       label: 'Decision & Previews',
-      description: 'Review AI decisions, message previews, quality checks, and customer simulation',
+      description: 'Review AI decisions, multi-channel message copy, and simulations',
       icon: Activity,
     },
     {
-      id: 'policy-tree' as const,
-      label: 'Policy Tree',
-      description: 'View governance rules or upload custom policy documents',
-      icon: GitBranch,
-    },
-    {
       id: 'knowledge-base' as const,
-      label: 'Knowledge Base',
+      label: 'Knowledge Rules',
       description: 'Explore agent rules, personas, pipeline steps, and scoring formulas',
       icon: BookOpen,
     },
     {
       id: 'history' as const,
       label: 'Audit History',
-      description: 'Track sent communications, channel delivery logs, and decision records',
+      description: 'Track sent communications, delivery logs, and authorization records',
       icon: History,
     },
   ];
@@ -108,8 +108,35 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
               </div>
             </div>
 
-            {/* Right: Clean Top Bar */}
-            <div className="flex items-center space-x-2">
+            {/* Right: Direct Navigation Links on Top Bar */}
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
+              <button
+                type="button"
+                onClick={() => handleSelectTab('knowledge-base')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
+                  activeTab === 'knowledge-base'
+                    ? 'bg-aurora-primary text-white shadow-2xs font-bold'
+                    : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
+                }`}
+              >
+                <BookOpen strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                <span className="hidden sm:inline">Knowledge Rules</span>
+                <span className="sm:hidden">Rules</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectTab('history')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
+                  activeTab === 'history'
+                    ? 'bg-aurora-primary text-white shadow-2xs font-bold'
+                    : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
+                }`}
+              >
+                <History strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                <span className="hidden sm:inline">Audit History</span>
+                <span className="sm:hidden">History</span>
+              </button>
             </div>
           </div>
         </div>

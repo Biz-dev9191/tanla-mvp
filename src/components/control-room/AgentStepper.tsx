@@ -10,7 +10,6 @@ import {
   ChevronUp,
   Bot,
   RefreshCw,
-  BrainCircuit,
   Shield,
   Sparkles,
   FileText,
@@ -215,24 +214,7 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
                     </div>
                   )}
 
-                  {/* 3. Chain-of-Thought Reasoning Trace */}
-                  {step.chainOfThought && step.chainOfThought.length > 0 && (
-                    <div className="space-y-1.5 p-3 rounded-lg bg-white border border-aurora-neutral-200">
-                      <div className="flex items-center space-x-1.5 text-aurora-primary font-bold text-[11px]">
-                        <BrainCircuit strokeWidth={1.5} className="w-3.5 h-3.5" />
-                        <span>Policy-Governed Chain-of-Thought Reasoning Trace ({policyMeta.code}):</span>
-                      </div>
-                      <ul className="space-y-1 text-aurora-neutral-700 font-mono text-[11px] leading-relaxed">
-                        {step.chainOfThought.map((thought, tIdx) => (
-                          <li key={tIdx} className="p-1.5 rounded bg-aurora-neutral-100/60 border border-aurora-neutral-200/50">
-                            {thought}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* 4. Evidence & Action details */}
+                  {/* 3. Evidence & Action details */}
                   <div className="p-3 rounded-lg bg-white border border-aurora-neutral-200 space-y-1.5">
                     <span className="font-bold text-aurora-neutral-900 block text-[11px] uppercase tracking-wider">
                       Structured Directives & Railguard Evidence:

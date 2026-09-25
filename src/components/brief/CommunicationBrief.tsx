@@ -23,11 +23,13 @@ import {
   RotateCcw,
   ChevronDown,
   ChevronUp,
+  GitBranch,
 } from 'lucide-react';
 
 interface CommunicationBriefProps {
   onRunOrchestration: (payload: any) => void;
   isLoading?: boolean;
+  onNavigateToPolicyTree?: () => void;
 }
 
 interface EventTypeFieldConfig {
@@ -128,6 +130,7 @@ const EVENT_TYPE_CONFIGS: Record<string, EventTypeFieldConfig> = {
 export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onRunOrchestration,
   isLoading,
+  onNavigateToPolicyTree,
 }) => {
   // Scenario Presets Selection State (Unselected and Minimized by default)
   const [isMatrixExpanded, setIsMatrixExpanded] = useState(false);
@@ -1019,8 +1022,21 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           )}
         </div>
 
-        {/* PRIMARY SUBMIT CTA */}
-        <div className="pt-2 flex justify-end">
+        {/* ACTION BUTTONS (Edit Policy + Primary Submit CTA) */}
+        <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+          {onNavigateToPolicyTree ? (
+            <button
+              type="button"
+              onClick={onNavigateToPolicyTree}
+              className="w-full sm:w-auto px-5 py-3.5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-lg text-xs font-bold shadow-2xs transition flex items-center justify-center space-x-2"
+            >
+              <GitBranch strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+              <span>Edit Policy</span>
+            </button>
+          ) : (
+            <div />
+          )}
+
           <button
             type="submit"
             disabled={isLoading}

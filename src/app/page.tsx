@@ -347,7 +347,11 @@ export default function Home() {
         {/* Tab 1: Communication Brief */}
         {activeTab === 'brief' && (
           <div id="brief-section">
-            <CommunicationBrief onRunOrchestration={handleRunOrchestration} isLoading={isLoading} />
+            <CommunicationBrief
+              onRunOrchestration={handleRunOrchestration}
+              isLoading={isLoading}
+              onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
+            />
           </div>
         )}
 
