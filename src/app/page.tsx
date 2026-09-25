@@ -374,8 +374,8 @@ export default function Home() {
                     <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
                       Communication Decision & Previews
                     </h1>
-                    <p className="text-xs text-aurora-neutral-500 mt-0.5 font-mono">
-                      Run ID: {currentResult.id} · Customer: {currentResult.customer.name} ({currentResult.customer.segment})
+                    <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
+                      Review AI decisions, multi-channel message previews, safety guardrail checks, and customer response simulations.
                     </p>
                   </div>
 
