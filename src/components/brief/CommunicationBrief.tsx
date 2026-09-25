@@ -392,7 +392,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+            <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-3 py-1.5 rounded-md">
               Communication Brief
             </span>
           </div>

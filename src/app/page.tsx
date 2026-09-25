@@ -300,7 +300,7 @@ export default function Home() {
         {activeTab === 'home' && (
           <div className="pt-8 pb-14 sm:pt-12 sm:pb-16 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto flex flex-col justify-center items-center text-center">
             <div className="space-y-6 max-w-3xl">
-              <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-aurora-neutral-900 leading-tight">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-aurora-neutral-900 leading-tight">
                 From customer event to the right conversation.
               </h1>
 
@@ -363,7 +363,7 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
                   <div>
                     <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+                      <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-3 py-1.5 rounded-md">
                         Decision & Previews
                       </span>
                     </div>
@@ -467,7 +467,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
               <div>
                 <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-3 py-1.5 rounded-md">
                     Policy Governance
                   </span>
                 </div>
