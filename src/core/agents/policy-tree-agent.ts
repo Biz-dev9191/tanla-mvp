@@ -29,8 +29,39 @@ export function runPolicyTreeGeneratorAgent(
     );
 
     const parseResult: DynamicPolicyParseResult = parsePolicyDocumentText(uploadedDocumentText);
+
+    if (!parseResult.isValid) {
+      chainOfThought.push(
+        `[Step 2 - Railguard Validation Failed] Policy input rejected: ${parseResult.error || 'Text lacks governance directives'}. Policy tree generation skipped.`
+      );
+
+      const duration = Date.now() - startTime + 30;
+      const step: AgentExecutionStep = {
+        agentId: 'policy_tree',
+        agentName: 'Policy Tree Generator Agent',
+        status: 'completed',
+        summary: 'Policy Tree Skipped: Input document rejected by policy railguards',
+        details: [
+          parseResult.error || 'No valid governance clauses detected in uploaded text.',
+          'Relying on standard enterprise safety guardrails and core brand voice.',
+        ],
+        chainOfThought,
+        durationMs: duration,
+        timestamp: new Date().toISOString(),
+      };
+
+      return {
+        status: 'SKIPPED_EMPTY',
+        activeTree: null,
+        extractedRules: [],
+        summary: parseResult.error || 'Invalid policy document: Policy tree generation skipped.',
+        chainOfThought,
+        step,
+      };
+    }
+
     chainOfThought.push(
-      `[Step 2 - Hierarchical Parsing] Parsed ${parseResult.rules.length} compliance clauses into a dynamic Directed Acyclic Graph (DAG) decision tree.`
+      `[Step 2 - Hierarchical Parsing] Converted document into structured policy model with ${parseResult.structuredDocument?.sections.length || 0} sections and ${parseResult.rules.length} clauses. Constructed policy tree.`
     );
 
     const duration = Date.now() - startTime + 50;
@@ -41,9 +72,9 @@ export function runPolicyTreeGeneratorAgent(
       status: 'completed',
       summary: `Policy Tree Generated: ${parseResult.rules.length} Rules Parsed from Custom Document`,
       details: [
-        `Dynamically structured ${parseResult.rules.length} compliance rules from uploaded enterprise documentation.`,
-        `Verified Directed Acyclic Graph (DAG) integrity and condition routing operators.`,
-        `Mapped clause citations to target communication categories.`,
+        `Converted into structured document: ${parseResult.structuredDocument?.title || 'Policy Document'} (${parseResult.structuredDocument?.version || 'v1.0'}).`,
+        `Extracted ${parseResult.rules.length} structured governance clauses across ${parseResult.structuredDocument?.sections.length || 0} categories.`,
+        `Identified ${parseResult.structuredDocument?.escalationClauseCount || 0} escalation gate conditions.`,
       ],
       chainOfThought,
       durationMs: duration,
@@ -54,7 +85,7 @@ export function runPolicyTreeGeneratorAgent(
       status: 'EXECUTED_DYNAMIC',
       activeTree: parseResult.tree,
       extractedRules: parseResult.rules,
-      summary: `Dynamically generated policy tree from uploaded document (${parseResult.rules.length} rules).`,
+      summary: `Dynamically generated policy tree from structured document (${parseResult.rules.length} rules).`,
       chainOfThought,
       step,
     };

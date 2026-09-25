@@ -177,9 +177,15 @@ export default function Home() {
 
   // 1. Generate policy tree from uploaded/pasted text
   const handleGeneratePolicyTree = (result: DynamicPolicyParseResult, rawPolicyText: string) => {
-    setCustomPolicyTree(result.tree);
-    setCustomPolicyRules(result.rules);
-    setCustomPolicyDocText(rawPolicyText);
+    if (result.isValid && result.tree) {
+      setCustomPolicyTree(result.tree);
+      setCustomPolicyRules(result.rules);
+      setCustomPolicyDocText(rawPolicyText);
+    } else {
+      setCustomPolicyTree(null);
+      setCustomPolicyRules([]);
+      setCustomPolicyDocText(null);
+    }
   };
 
   // 2. Apply generated policy tree to current run and regenerate output

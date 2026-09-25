@@ -44,7 +44,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
     { id: 'WhatsApp', label: 'WhatsApp', icon: MessageSquare, isLive: false },
     { id: 'SMS', label: 'SMS', icon: Smartphone, isLive: false },
     { id: 'Email', label: 'Email', icon: Mail, isLive: true },
-    { id: 'Voice', label: 'Voice (Simulated)', icon: PhoneCall, isLive: false },
+    { id: 'Voice', label: 'Voice', icon: PhoneCall, isLive: false },
   ] as const;
 
   const toggleChannel = (chId: PreferredChannel) => {
@@ -117,7 +117,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
         </span>
       </div>
 
-      {/* Channel Switcher Tabs with Checkboxes */}
+      {/* Channel Switcher Tabs with Checkboxes and Live/Simulated Tags */}
       <div className="flex space-x-2 border-b border-aurora-neutral-200 pb-3 overflow-x-auto items-center">
         {channels.map((ch) => {
           const Icon = ch.icon;
@@ -150,9 +150,34 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               />
               <Icon strokeWidth={1.5} className="w-4 h-4" />
               <span>{ch.label}</span>
+
+              {/* Mode Tag: Live for Email, Simulated for others */}
+              {ch.isLive ? (
+                <span
+                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold flex items-center space-x-1 ${
+                    isActive
+                      ? 'bg-emerald-400 text-emerald-950 shadow-xs'
+                      : 'bg-emerald-100 text-emerald-700 border border-emerald-300'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
+                  <span>Live</span>
+                </span>
+              ) : (
+                <span
+                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold ${
+                    isActive
+                      ? 'bg-white/20 text-white'
+                      : 'bg-aurora-neutral-200 text-aurora-neutral-600 border border-aurora-neutral-300'
+                  }`}
+                >
+                  Simulated
+                </span>
+              )}
+
               {isRecommended && (
                 <span
-                  className={`text-[9px] uppercase px-1.5 py-0.2 rounded font-bold ${
+                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold ${
                     isActive ? 'bg-white text-aurora-primary' : 'bg-aurora-primary text-white'
                   }`}
                 >

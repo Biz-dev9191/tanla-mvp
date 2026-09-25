@@ -31,6 +31,9 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
 - Suppress promotional messages if customer received 2 or more messages in 24 hours.
 - Suppress routine maintenance notices if customer received 3 or more transactional updates today.`;
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [structuredDoc, setStructuredDoc] = useState<any | null>(null);
+
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -40,7 +43,8 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
     reader.onload = (event) => {
       const content = event.target?.result as string;
       setPolicyText(content);
-      setStatusMessage(`Loaded "${file.name}". Click "Generate Policy Tree" below to build the decision hierarchy.`);
+      setErrorMessage(null);
+      setStatusMessage(`Loaded "${file.name}". Click "Generate Policy Tree" below to validate and build the structured policy tree.`);
     };
     reader.readAsText(file);
   };
@@ -48,9 +52,21 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
   const handleGenerate = () => {
     const trimmed = policyText.trim();
     if (!trimmed) return;
+
+    setErrorMessage(null);
     const parsed = parsePolicyDocumentText(trimmed);
+
+    if (!parsed.isValid) {
+      setErrorMessage(parsed.error || 'The provided text could not be parsed as an enterprise policy document. Random text, short phrases, or text without governance directives are rejected by policy railguards.');
+      setStatusMessage(null);
+      setStructuredDoc(null);
+      onGeneratePolicyTree(parsed, trimmed);
+      return;
+    }
+
+    setStructuredDoc(parsed.structuredDocument);
     onGeneratePolicyTree(parsed, trimmed);
-    setStatusMessage(`Policy tree generated with ${parsed.rules.length} governance rules. Click "Apply to Current Run" on the Policy Tree box below to update communication outputs.`);
+    setStatusMessage(`Policy document validated: ${parsed.structuredDocument?.totalClauses} clauses structured across ${parsed.structuredDocument?.sections.length} sections. Policy tree constructed.`);
   };
 
   const isGenerateDisabled = !policyText.trim();
@@ -69,6 +85,7 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
           onClick={() => {
             setPolicyText(sampleFintechPolicy);
             setFileName("fintech-policy-sample.md");
+            setErrorMessage(null);
             setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
           }}
           className="text-xs text-aurora-primary font-semibold hover:underline flex items-center space-x-1"
@@ -97,14 +114,17 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
           <textarea
             rows={4}
             value={policyText}
-            onChange={(e) => setPolicyText(e.target.value)}
+            onChange={(e) => {
+              setPolicyText(e.target.value);
+              if (errorMessage) setErrorMessage(null);
+            }}
             placeholder="Or paste company policy guidelines, restrictions, required disclosures, and escalation rules here..."
             className="w-full p-3 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded-md text-xs text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-sans leading-relaxed"
           />
 
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1">
             <span className="text-[11px] text-aurora-neutral-500">
-              The AI parses categories, permitted actions, prohibited claims, and human approval triggers.
+              Converts policy text into a Structured Document model first, then constructs the Policy Tree hierarchy.
             </span>
             <button
               type="button"
@@ -123,10 +143,71 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
         </div>
       </div>
 
+      {errorMessage && (
+        <div className="p-3 bg-aurora-error-light border border-aurora-error/30 rounded-md text-xs text-aurora-error font-semibold space-y-1">
+          <div className="flex items-center space-x-2">
+            <span className="font-bold uppercase tracking-wider text-[10px] bg-aurora-error/20 px-1.5 py-0.5 rounded">Validation Error</span>
+            <span>{errorMessage}</span>
+          </div>
+          <p className="text-[11px] text-aurora-error/80 font-normal pl-2">
+            Enterprise Railguards prevent generating a policy tree from random strings or non-policy text. Please ensure your document specifies actionable directives (e.g. must, prohibit, require, refund, privacy).
+          </p>
+        </div>
+      )}
+
       {statusMessage && (
         <div className="p-3 bg-aurora-success-light border border-aurora-success/20 rounded-md text-xs text-aurora-success flex items-center space-x-2 font-semibold">
           <CheckCircle2 strokeWidth={1.5} className="w-4 h-4 flex-shrink-0" />
           <span>{statusMessage}</span>
+        </div>
+      )}
+
+      {/* Structured Document Specification Viewer */}
+      {structuredDoc && (
+        <div className="mt-4 pt-4 border-t border-aurora-neutral-200">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center space-x-2">
+              <FileText strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
+              <span className="text-xs font-bold text-aurora-neutral-900">
+                Structured Document Model ({structuredDoc.title} · {structuredDoc.version})
+              </span>
+            </div>
+            <span className="text-[11px] text-aurora-neutral-500 font-mono">
+              {structuredDoc.totalClauses} Clauses · {structuredDoc.sections.length} Sections · {structuredDoc.escalationClauseCount} Escalation Gates
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-60 overflow-y-auto p-1">
+            {structuredDoc.sections.map((section: any) => (
+              <div key={section.sectionId} className="p-3 bg-aurora-neutral-100 rounded-lg border border-aurora-neutral-200 text-xs">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-bold text-aurora-neutral-900 text-[11px]">{section.title}</span>
+                  <span className="text-[10px] font-mono text-aurora-neutral-500 bg-white px-1.5 py-0.5 rounded border border-aurora-neutral-200">
+                    {section.clauses.length} clauses
+                  </span>
+                </div>
+                <div className="space-y-1.5 mt-2">
+                  {section.clauses.map((clause: any) => (
+                    <div key={clause.clauseId} className="p-2 bg-white rounded border border-aurora-neutral-200 text-[11px]">
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="font-semibold text-aurora-neutral-800">{clause.title}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded uppercase ${
+                          clause.directive === 'PROHIBITIVE'
+                            ? 'bg-rose-100 text-rose-700'
+                            : clause.directive === 'MANDATORY'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-emerald-100 text-emerald-800'
+                        }`}>
+                          {clause.directive}
+                        </span>
+                      </div>
+                      <p className="text-aurora-neutral-600 line-clamp-2">{clause.statement}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
