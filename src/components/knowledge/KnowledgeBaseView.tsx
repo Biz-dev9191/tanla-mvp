@@ -785,9 +785,89 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                   Measures recent message frequency and emotional state to prevent customer inbox fatigue, spam complaints, and opt-outs.
                 </p>
                 
-                <div className="p-3 bg-white rounded-lg border border-aurora-neutral-200 font-mono text-xs text-aurora-neutral-900 space-y-1">
+                <div className="p-3 bg-white rounded-lg border border-aurora-neutral-200 font-mono text-xs text-aurora-neutral-900 space-y-1.5">
                   <div className="font-bold text-aurora-primary">Fatigue Score = (Velocity × 25) + Sentiment Modifier</div>
-                  <div className="text-[11px] text-aurora-neutral-500">Velocity = Total Transactional + Promotional messages in last 24h</div>
+                  <div className="text-[11px] text-aurora-neutral-600 font-sans">
+                    • <strong>Velocity:</strong> Total Transactional + Promotional messages in last 24 hours (bounded 0 to 4)
+                  </div>
+                  <div className="text-[11px] text-aurora-neutral-600 font-sans">
+                    • <strong>Score Bounds:</strong> Range 0 to 100 (Clamped between minimum 0 and maximum 100)
+                  </div>
+                </div>
+
+                {/* Explicit Sentiment Modifier Values Table */}
+                <div className="space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-aurora-neutral-800 text-[11px] uppercase tracking-wider block">
+                      Sentiment Modifier Values
+                    </span>
+                    <span className="text-[10px] font-mono text-aurora-neutral-500">
+                      Deterministic Emotional Calibration
+                    </span>
+                  </div>
+                  <div className="border border-aurora-neutral-200 rounded-lg overflow-hidden bg-white text-[11px]">
+                    <table className="w-full text-left">
+                      <thead className="bg-aurora-neutral-50 text-aurora-neutral-700 font-bold border-b border-aurora-neutral-200">
+                        <tr>
+                          <th className="p-2">Customer Sentiment</th>
+                          <th className="p-2 text-center w-24">Modifier Value</th>
+                          <th className="p-2">Operational Computation Impact</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-aurora-neutral-200">
+                        <tr className="hover:bg-aurora-neutral-50/70 transition">
+                          <td className="p-2 font-semibold text-red-700 flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full bg-red-500 flex-shrink-0" />
+                            <span>Frustrated</span>
+                          </td>
+                          <td className="p-2 font-mono font-bold text-center text-red-700 bg-red-50/50">+20</td>
+                          <td className="p-2 text-aurora-neutral-600 leading-snug">
+                            Active grievance and friction amplify fatigue index, accelerating the suppression threshold.
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-aurora-neutral-50/70 transition">
+                          <td className="p-2 font-semibold text-amber-700 flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full bg-amber-500 flex-shrink-0" />
+                            <span>Anxious</span>
+                          </td>
+                          <td className="p-2 font-mono font-bold text-center text-amber-700 bg-amber-50/50">+15</td>
+                          <td className="p-2 text-aurora-neutral-600 leading-snug">
+                            Emotional apprehension heightens sensitivity to notification overload; requires heightened reassurance.
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-aurora-neutral-50/70 transition">
+                          <td className="p-2 font-semibold text-sky-700 flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full bg-sky-500 flex-shrink-0" />
+                            <span>Urgent</span>
+                          </td>
+                          <td className="p-2 font-mono font-bold text-center text-sky-700 bg-sky-50/50">+10</td>
+                          <td className="p-2 text-aurora-neutral-600 leading-snug">
+                            Time-sensitive blocker increases customer cognitive pressure; non-critical outbound updates are deprioritized.
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-aurora-neutral-50/70 transition">
+                          <td className="p-2 font-semibold text-aurora-neutral-800 flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full bg-aurora-neutral-400 flex-shrink-0" />
+                            <span>Neutral</span>
+                          </td>
+                          <td className="p-2 font-mono font-bold text-center text-aurora-neutral-700 bg-aurora-neutral-50">0</td>
+                          <td className="p-2 text-aurora-neutral-600 leading-snug">
+                            Standard baseline state; fatigue score is strictly derived from 24h message velocity.
+                          </td>
+                        </tr>
+                        <tr className="hover:bg-aurora-neutral-50/70 transition">
+                          <td className="p-2 font-semibold text-emerald-700 flex items-center space-x-1.5">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0" />
+                            <span>Satisfied</span>
+                          </td>
+                          <td className="p-2 font-mono font-bold text-center text-emerald-700 bg-emerald-50/50">-10</td>
+                          <td className="p-2 text-aurora-neutral-600 leading-snug">
+                            Positive brand affinity and high customer goodwill provide an attention tolerance buffer.
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 text-xs">

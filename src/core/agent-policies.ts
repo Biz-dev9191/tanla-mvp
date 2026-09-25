@@ -60,7 +60,7 @@ export const AGENT_1_CONTEXT_POLICY: AgentGovernancePolicy = {
   ],
   permittedActions: [
     'Map demographic traits to validated persona archetypes in the Catalog',
-    'Calculate attention fatigue using deterministic velocity formula: (totalRecent * 25) + sentimentModifier',
+    'Calculate attention fatigue using deterministic velocity formula: (totalRecent * 25) + sentimentModifier (Frustrated: +20, Anxious: +15, Urgent: +10, Neutral: 0, Satisfied: -10)',
     'Flag unverified email or phone numbers as missing metadata',
     'Escalate reassurance priority when prior contacts >= 2 or customer is Frustrated'
   ],
@@ -92,7 +92,7 @@ export const AGENT_1_CONTEXT_POLICY: AgentGovernancePolicy = {
     {
       ruleCode: 'CTX-FATIGUE-002',
       name: '24-Hour Attention Fatigue Threshold',
-      description: 'If a customer received >= 3 messages in the last 24 hours, fatigue score must exceed 60 and trigger suppression review.',
+      description: 'Fatigue Score is computed deterministically as (Velocity × 25) + Sentiment Modifier (Frustrated: +20, Anxious: +15, Urgent: +10, Neutral: 0, Satisfied: -10). If score >= 70, triggers high fatigue risk and suppression review.',
       category: 'Friction & Fatigue',
       enforcementLevel: 'MANDATORY',
       railguardCheck: 'Velocity check enforces fatigue risk calculation.'

@@ -20,6 +20,37 @@ export interface ContextAnalysisOutput {
   step: AgentExecutionStep;
 }
 
+export const SENTIMENT_FATIGUE_MODIFIERS: Record<
+  CustomerProfile['sentiment'],
+  { value: number; label: string; rationale: string }
+> = {
+  Frustrated: {
+    value: 20,
+    label: '+20',
+    rationale: 'Active grievance and friction amplify fatigue index, accelerating the suppression threshold.',
+  },
+  Anxious: {
+    value: 15,
+    label: '+15',
+    rationale: 'Emotional apprehension heightens sensitivity to notification overload; requires heightened reassurance.',
+  },
+  Urgent: {
+    value: 10,
+    label: '+10',
+    rationale: 'Time-sensitive blocker increases customer cognitive pressure; non-critical outbound updates are deprioritized.',
+  },
+  Neutral: {
+    value: 0,
+    label: '0 (Baseline)',
+    rationale: 'Standard baseline state; fatigue score is strictly derived from 24h message velocity.',
+  },
+  Satisfied: {
+    value: -10,
+    label: '-10',
+    rationale: 'Positive brand goodwill and affinity provide an attention tolerance buffer.',
+  },
+};
+
 export function runCustomerContextAgent(
   customer: CustomerProfile,
   event: BusinessEvent
@@ -70,14 +101,17 @@ export function runCustomerContextAgent(
   const promotional24h = customer.recentCommunicationCount24h.promotional || 0;
   const totalRecent = transactional24h + promotional24h;
 
-  let fatigueScore = totalRecent * 25;
-  if (customer.sentiment === 'Frustrated') fatigueScore += 20;
+  const sentimentEntry = SENTIMENT_FATIGUE_MODIFIERS[customer.sentiment] || SENTIMENT_FATIGUE_MODIFIERS.Neutral;
+  const sentimentModifier = sentimentEntry.value;
+
+  const velocityScore = totalRecent * 25;
+  let fatigueScore = velocityScore + sentimentModifier;
   fatigueScore = Math.min(100, Math.max(0, fatigueScore));
 
   const fatigueRisk = fatigueScore >= 70 ? 'High' : fatigueScore >= 40 ? 'Moderate' : 'Low';
 
   chainOfThought.push(
-    `[Step 4 - Attention Fatigue Calculus (CTX-FATIGUE-002)] 24h Outbound Velocity: ${transactional24h} transactional, ${promotional24h} promotional (Total: ${totalRecent}). Computed Attention Fatigue Score: ${fatigueScore}/100 (Risk: ${fatigueRisk}).`
+    `[Step 4 - Attention Fatigue Calculus (CTX-FATIGUE-002)] 24h Outbound Velocity: ${transactional24h} transactional, ${promotional24h} promotional (Total: ${totalRecent} msgs × 25 = ${velocityScore}). Sentiment Modifier for '${customer.sentiment}': ${sentimentModifier >= 0 ? `+${sentimentModifier}` : sentimentModifier}. Computed Attention Fatigue Score: ${fatigueScore}/100 (Risk: ${fatigueRisk}).`
   );
 
   // Chain-of-thought 5: Channel Capability & Contactability Check
@@ -103,7 +137,7 @@ export function runCustomerContextAgent(
       `Ingested profile and matched to Persona: '${matchedPersona.name}' (${matchedPersona.cohort}).`,
       `Persona tone blueprint: "${matchedPersona.tonePreference}".`,
       `Preferred channel: ${customer.preferredChannel} (Transactional consent verified).`,
-      `Assessed 24h message frequency (${totalRecent} recent messages, Fatigue Score: ${fatigueScore}/100, Risk: ${fatigueRisk}).`,
+      `Assessed 24h message frequency (${totalRecent} recent msgs × 25 = ${velocityScore}, Sentiment '${customer.sentiment}': ${sentimentModifier >= 0 ? `+${sentimentModifier}` : sentimentModifier}, Fatigue Score: ${fatigueScore}/100, Risk: ${fatigueRisk}).`,
       `Factored ${prevContacts} prior support contacts and '${customer.sentiment}' sentiment dynamics.`,
     ],
     chainOfThought,
