@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StreamlinedBriefPayload, CustomerProfile, BusinessEvent, BusinessObjective } from '@/core/types';
+import { StreamlinedBriefPayload, CustomerProfile, BusinessEvent, BusinessObjective, PreferredChannel } from '@/core/types';
 import {
   MATRIX_CUSTOMERS,
   MATRIX_EVENTS,
@@ -142,6 +142,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
   // Column 1 Structured & Text State (Default Empty)
   const [structCustomerName, setStructCustomerName] = useState('');
+  const [structEmail, setStructEmail] = useState('');
+  const [structPhone, setStructPhone] = useState('');
   const [structAgeGroup, setStructAgeGroup] = useState<any>('25–34');
   const [structSegment, setStructSegment] = useState<any>('Standard');
   const [structDigitalProfile, setStructDigitalProfile] = useState<any>('Digital-first');
@@ -180,6 +182,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     setSelectedCustomerId(custId);
     if (!custId) {
       setStructCustomerName('');
+      setStructEmail('');
+      setStructPhone('');
       setStructAgeGroup('25–34');
       setStructSegment('Standard');
       setStructDigitalProfile('Digital-first');
@@ -192,6 +196,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     const cust = MATRIX_CUSTOMERS.find((c) => c.id === custId);
     if (cust) {
       setStructCustomerName(cust.name);
+      setStructEmail(cust.email || '');
+      setStructPhone(cust.phone || '');
       setStructAgeGroup(cust.ageGroup);
       setStructSegment(cust.segment);
       setStructDigitalProfile(cust.digitalProfile);
@@ -306,6 +312,15 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       }
     }
 
+    const finalCustomerEmail = structEmail.trim() || `${finalCustomerName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`;
+    const finalCustomerPhone = structPhone.trim() || '+91 98765 43210';
+    const computedPreferredChannel: PreferredChannel =
+      structDigitalProfile === 'Assisted' || structAgeGroup === '55+'
+        ? 'Email'
+        : structDigitalProfile === 'Mixed'
+        ? 'Email'
+        : 'WhatsApp';
+
     const customerPayload: CustomerProfile = {
       id: `CUST-${Date.now()}`,
       name: finalCustomerName,
@@ -314,15 +329,15 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       segment: structSegment,
       digitalProfile: structDigitalProfile,
       preferredLanguage: 'English' as const,
-      preferredChannel: structDigitalProfile === 'Assisted' ? 'Email' as const : 'WhatsApp' as const,
+      preferredChannel: computedPreferredChannel,
       consent: { transactional: structConsentTx, promotional: structConsentPromo, voice: structDigitalProfile === 'Assisted' },
       customerValue: structSegment === 'VIP' ? 'VIP' as const : structSegment === 'High Value' ? 'High' as const : structSegment === 'Premium' ? 'High' as const : 'Standard' as const,
       tenureMonths: 18,
       recentCommunicationCount24h: { transactional: 1, promotional: 0 },
       previousSupportContacts: structSupportContacts,
       sentiment: structSentiment,
-      email: `${finalCustomerName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`,
-      phone: '+91 98765 43210',
+      email: finalCustomerEmail,
+      phone: finalCustomerPhone,
     };
 
     const eventPayload: BusinessEvent = {
@@ -555,6 +570,29 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                       placeholder="e.g. Rahul Sharma"
                       className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Email Address</label>
+                      <input
+                        type="email"
+                        value={structEmail}
+                        onChange={(e) => setStructEmail(e.target.value)}
+                        placeholder="e.g. rahul.sharma@example.com"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-aurora-neutral-700 font-medium mb-1">Mobile Number</label>
+                      <input
+                        type="tel"
+                        value={structPhone}
+                        onChange={(e) => setStructPhone(e.target.value)}
+                        placeholder="e.g. +91 98765 43210"
+                        className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary font-mono text-[11px]"
+                      />
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">

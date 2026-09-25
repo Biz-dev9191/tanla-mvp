@@ -4,6 +4,8 @@ export interface MatrixCustomerProfile {
   id: string;
   label: string;
   name: string;
+  email?: string;
+  phone?: string;
   age: number;
   ageGroup: AgeGroup;
   segment: CustomerSegment;
@@ -43,6 +45,8 @@ export const MATRIX_CUSTOMERS: MatrixCustomerProfile[] = [
     id: 'cust-1-genz',
     label: '1. Rahul Sharma (Gen Z / 22y / Digital-First / Premium / Anxious)',
     name: 'Rahul Sharma',
+    email: 'rahul.sharma@example.com',
+    phone: '+91 98765 43210',
     age: 22,
     ageGroup: '18–24',
     segment: 'Premium',
@@ -57,6 +61,8 @@ export const MATRIX_CUSTOMERS: MatrixCustomerProfile[] = [
     id: 'cust-2-boomer',
     label: '2. Meera Sen (Baby Boomer / 66y / Assisted / Standard / Cautious)',
     name: 'Meera Sen',
+    email: 'meera.sen@example.com',
+    phone: '+91 98112 34567',
     age: 66,
     ageGroup: '55+',
     segment: 'Standard',
@@ -71,6 +77,8 @@ export const MATRIX_CUSTOMERS: MatrixCustomerProfile[] = [
     id: 'cust-3-millennial',
     label: '3. Vikram Patel (Millennial / 34y / VIP High-LTV / SaaS Founder / Urgent)',
     name: 'Vikram Patel',
+    email: 'vikram.patel@example.com',
+    phone: '+91 99201 88319',
     age: 34,
     ageGroup: '25–34',
     segment: 'High Value',
@@ -85,6 +93,8 @@ export const MATRIX_CUSTOMERS: MatrixCustomerProfile[] = [
     id: 'cust-4-genx',
     label: '4. Anita Desai (Gen X / 48y / Corporate Director / Mixed / Frustrated)',
     name: 'Anita Desai',
+    email: 'anita.desai@example.com',
+    phone: '+91 98450 11223',
     age: 48,
     ageGroup: '45–54',
     segment: 'Premium',
@@ -99,6 +109,8 @@ export const MATRIX_CUSTOMERS: MatrixCustomerProfile[] = [
     id: 'cust-5-silent',
     label: '5. David Chen (Silent Gen / 81y / Pensioner / Assisted / First-Timer)',
     name: 'David Chen',
+    email: 'david.chen@example.com',
+    phone: '+91 98100 55443',
     age: 81,
     ageGroup: '55+',
     segment: 'New',

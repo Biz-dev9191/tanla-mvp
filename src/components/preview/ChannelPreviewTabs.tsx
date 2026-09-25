@@ -38,6 +38,12 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
   const [isSending, setIsSending] = useState(false);
   const [sentStatus, setSentStatus] = useState<{ channel: string; timestamp: string } | null>(null);
 
+  React.useEffect(() => {
+    if (recommendedChannel) {
+      setActiveChannel(recommendedChannel);
+    }
+  }, [recommendedChannel]);
+
   const isApprovalPending = Boolean(humanApprovalRequired && humanApprovalStatus !== 'Approved');
 
   const channels = [

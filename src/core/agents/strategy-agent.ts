@@ -26,13 +26,34 @@ export function runCommunicationStrategyAgent(
   const chainOfThought: string[] = [];
   const persona = context.matchedPersona;
 
-  // Chain-of-thought 1: Channel Suitability & Routing Calculus
-  let selectedChannel: PreferredChannel = customer.preferredChannel;
+  // Chain-of-thought 1: Channel Suitability & Routing Calculus (Persona-Calibrated)
+  let selectedChannel: PreferredChannel = customer.preferredChannel || 'WhatsApp';
+  
+  // Dynamic channel routing based on persona cohort and digital maturity
+  if (
+    customer.digitalProfile === 'Assisted' ||
+    customer.ageGroup === '55+' ||
+    persona.cohort === 'Baby Boomer (59–77)' ||
+    persona.cohort === 'Silent Generation (78+)'
+  ) {
+    selectedChannel = 'Email';
+  } else if (customer.digitalProfile === 'Mixed' || persona.cohort === 'Gen X (43–58)') {
+    selectedChannel = persona.preferredChannel === 'WhatsApp' ? 'Email' : (persona.preferredChannel || 'Email');
+  } else if (
+    customer.digitalProfile === 'Digital-first' ||
+    persona.cohort === 'Gen Z (18–26)' ||
+    persona.cohort === 'Millennial (27–42)'
+  ) {
+    selectedChannel = persona.preferredChannel || 'WhatsApp';
+  } else if (persona.preferredChannel) {
+    selectedChannel = persona.preferredChannel;
+  }
+
   let fallbackChannel: PreferredChannel | undefined =
-    customer.preferredChannel === 'WhatsApp' ? 'Email' : customer.preferredChannel === 'Email' ? 'SMS' : 'Email';
+    selectedChannel === 'WhatsApp' ? 'Email' : selectedChannel === 'Email' ? 'SMS' : 'WhatsApp';
 
   chainOfThought.push(
-    `[Step 1 - Channel Routing Calculus (CSAP-2026)] Customer: ${customer.name} | Persona: '${persona.name}' (${persona.cohort}). Preferred channel: ${customer.preferredChannel}. Consent: (Transactional=${customer.consent.transactional}, Promo=${customer.consent.promotional}). Primary: ${selectedChannel}, Fallback: ${fallbackChannel}.`
+    `[Step 1 - Channel Routing Calculus (CSAP-2026)] Customer: ${customer.name} | Persona: '${persona.name}' (${persona.cohort}). Digital Maturity: ${customer.digitalProfile}. Selected recommended channel: ${selectedChannel} (Fallback: ${fallbackChannel}).`
   );
 
   // Chain-of-thought 2: Multidimensional Tone Matrix Synthesis (Persona-Governed)
