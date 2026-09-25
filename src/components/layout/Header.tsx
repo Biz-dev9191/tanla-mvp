@@ -218,30 +218,6 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                     })}
                   </nav>
                 </div>
-
-                {/* Telemetry Status Card */}
-                <div className="p-4 bg-aurora-neutral-100 rounded-lg border border-aurora-neutral-200 space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2 h-2 rounded-full bg-aurora-success animate-pulse"></span>
-                    <span className="text-xs font-bold text-aurora-neutral-900">
-                      Governance Engine Online
-                    </span>
-                  </div>
-                  <div className="text-[11px] text-aurora-neutral-600 space-y-1 font-mono">
-                    <div className="flex justify-between">
-                      <span>Deterministic Rules:</span>
-                      <span className="font-bold text-aurora-neutral-900">Active v1.0</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Multi-Agent Core:</span>
-                      <span className="font-bold text-aurora-neutral-900">6 Specialized Agents</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>Outbound Channels:</span>
-                      <span className="font-bold text-aurora-neutral-900">WA, SMS, Email, Voice</span>
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Drawer Footer */}
