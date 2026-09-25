@@ -367,9 +367,6 @@ export default function Home() {
                         Decision & Previews
                       </span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-                      Decision & Previews
-                    </h1>
                     <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
                       Review AI decisions, multi-channel message previews, safety guardrail checks, and customer response simulations.
                     </p>
@@ -474,9 +471,6 @@ export default function Home() {
                     Policy Governance
                   </span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-                  Policy Governance Rules
-                </h1>
                 <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
                   View governance rules or upload custom policy documents to dynamically steer agent communications.
                 </p>

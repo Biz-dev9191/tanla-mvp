@@ -396,9 +396,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               Communication Brief
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-            Customer Communication Brief
-          </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
             Enter customer profile details, event information, and business goals—or choose from pre-configured scenarios below. The AI engine automatically adapts tone, channel routing, and policy guardrails.
           </p>

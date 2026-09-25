@@ -203,9 +203,6 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
               Knowledge Rules
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-            Knowledge Rules
-          </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
             The central guide for AI agent governance rules, customer personas, multi-agent execution pipeline, channel guidelines, and scoring formulas.
           </p>

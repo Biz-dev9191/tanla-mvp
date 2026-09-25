@@ -24,9 +24,6 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               Audit History
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-            Audit History
-          </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-2xl leading-relaxed">
             Review all messages sent to customers, delivery channels, and decision logs.
           </p>
