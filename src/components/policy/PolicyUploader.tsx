@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { Upload, FileText, Sparkles, CheckCircle2, Network } from 'lucide-react';
-import { parsePolicyDocumentText, DynamicPolicyParseResult } from '@/core/policy-generator';
+import React, { useState, useEffect } from 'react';
+import { Upload, FileText, Sparkles, CheckCircle2, Network, Trash2 } from 'lucide-react';
+import { parsePolicyDocumentText, DynamicPolicyParseResult, SAMPLE_ENTERPRISE_POLICY } from '@/core/policy-generator';
 
 interface PolicyUploaderProps {
   onGeneratePolicyTree: (result: DynamicPolicyParseResult, rawPolicyText: string) => void;
@@ -11,28 +11,31 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
   const [policyText, setPolicyText] = useState(activePolicyText || "");
   const [fileName, setFileName] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
-
-  const sampleFintechPolicy = `# Enterprise Customer Communication Policy v2.4
-
-1. Transactional Payments & Failures:
-- For successful payments where order provisioning fails, immediately cite payment ID and confirm automated refund within 3-5 business days.
-- Prohibit asking customer to pay again immediately without verified refund status.
-- Reassure customer that zero action is required on their part.
-
-2. Privacy & Data Masking:
-- Never expose full credit card numbers or banking passwords. Always mask to last 4 digits (e.g. **** 4012).
-- Prohibit transmitting internal database keys across public channels.
-
-3. Financial Commitments & Compensation:
-- Agents must never grant goodwill compensation or discount vouchers above $0 without Human Supervisor Approval.
-- Any compensation request above $0 must be escalated to human supervisor review.
-
-4. Communication Fatigue:
-- Suppress promotional messages if customer received 2 or more messages in 24 hours.
-- Suppress routine maintenance notices if customer received 3 or more transactional updates today.`;
-
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [structuredDoc, setStructuredDoc] = useState<any | null>(null);
+
+  useEffect(() => {
+    if (activePolicyText !== undefined) {
+      setPolicyText(activePolicyText || "");
+    }
+  }, [activePolicyText]);
+
+  const handleClear = () => {
+    setPolicyText('');
+    setFileName(null);
+    setStatusMessage(null);
+    setErrorMessage(null);
+    setStructuredDoc(null);
+    onGeneratePolicyTree({
+      isValid: false,
+      tree: null,
+      rules: [],
+      structuredDocument: null,
+      summary: 'Policy document cleared.',
+    }, '');
+  };
+
+  const sampleFintechPolicy = SAMPLE_ENTERPRISE_POLICY;
 
   const examplePolicyPlaceholder = `e.g. Expected Policy Document Structure:
 
@@ -110,19 +113,31 @@ export const PolicyUploader: React.FC<PolicyUploaderProps> = ({ onGeneratePolicy
             Dynamic Policy Document Uploader & Tree Generator
           </h3>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setPolicyText(sampleFintechPolicy);
-            setFileName("fintech-policy-sample.md");
-            setErrorMessage(null);
-            setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
-          }}
-          className="text-xs text-aurora-primary font-semibold hover:underline flex items-center space-x-1"
-        >
-          <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
-          <span>Insert Sample Enterprise Policy</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          {(policyText.trim().length > 0 || fileName) && (
+            <button
+              type="button"
+              onClick={handleClear}
+              className="text-xs text-red-600 hover:text-red-700 font-semibold flex items-center space-x-1"
+            >
+              <Trash2 strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <span>Clear Policy Document</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => {
+              setPolicyText(sampleFintechPolicy);
+              setFileName("fintech-policy-sample.md");
+              setErrorMessage(null);
+              setStatusMessage("Sample Enterprise Policy loaded into editor. Click 'Generate Policy Tree' below to build tree.");
+            }}
+            className="text-xs text-aurora-primary font-semibold hover:underline flex items-center space-x-1"
+          >
+            <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
+            <span>Insert Sample Enterprise Policy</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

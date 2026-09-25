@@ -19,7 +19,7 @@ import { PolicyUploader } from '@/components/policy/PolicyUploader';
 import { KnowledgeBaseView } from '@/components/knowledge/KnowledgeBaseView';
 import { HistoryView } from '@/components/history/HistoryView';
 import { PolicyTreeNode, defaultPolicyTree } from '@/core/policy-tree-data';
-import { DynamicPolicyParseResult } from '@/core/policy-generator';
+import { DynamicPolicyParseResult, StructuredPolicyDocument, SAMPLE_ENTERPRISE_POLICY, parsePolicyDocumentText } from '@/core/policy-generator';
 import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2, MessageSquare, ArrowRight } from 'lucide-react';
 
 export default function Home() {
@@ -31,6 +31,7 @@ export default function Home() {
   const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
   const [customPolicyRules, setCustomPolicyRules] = useState<any[]>([]);
   const [customPolicyDocText, setCustomPolicyDocText] = useState<string | null>(null);
+  const [customStructuredDoc, setCustomStructuredDoc] = useState<StructuredPolicyDocument | null>(null);
   const [isApplyingPolicy, setIsApplyingPolicy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -180,10 +181,12 @@ export default function Home() {
     if (result.isValid && result.tree) {
       setCustomPolicyTree(result.tree);
       setCustomPolicyRules(result.rules);
+      setCustomStructuredDoc(result.structuredDocument || null);
       setCustomPolicyDocText(rawPolicyText);
     } else {
       setCustomPolicyTree(null);
       setCustomPolicyRules([]);
+      setCustomStructuredDoc(null);
       setCustomPolicyDocText(null);
     }
   };
@@ -504,8 +507,18 @@ export default function Home() {
               highlightedPath={currentResult?.appliedPolicyPath || ["Communication", "Transactional", "Payment", "Payment Successful", "Order Failed"]}
               onSelectNode={(node) => setSelectedPolicyNode(node)}
               onLoadSampleTree={() => {
-                setCustomPolicyTree(defaultPolicyTree);
-                setCustomPolicyRules([]);
+                const parsed = parsePolicyDocumentText(SAMPLE_ENTERPRISE_POLICY);
+                if (parsed.isValid && parsed.tree) {
+                  setCustomPolicyTree(parsed.tree);
+                  setCustomPolicyRules(parsed.rules);
+                  setCustomStructuredDoc(parsed.structuredDocument || null);
+                  setCustomPolicyDocText(SAMPLE_ENTERPRISE_POLICY);
+                } else {
+                  setCustomPolicyTree(defaultPolicyTree);
+                  setCustomPolicyRules([]);
+                  setCustomStructuredDoc(null);
+                  setCustomPolicyDocText(null);
+                }
               }}
               onOpenUploader={() => {
                 const el = document.getElementById('policy-uploader-card');
@@ -529,6 +542,7 @@ export default function Home() {
             customPolicyTree={customPolicyTree}
             customPolicyRules={customPolicyRules}
             customPolicyDocText={customPolicyDocText}
+            customStructuredDoc={customStructuredDoc}
             onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
             onNavigateToControlRoom={() => setActiveTab('control-room')}
             onNavigateToBrief={() => setActiveTab('brief')}

@@ -511,3 +511,22 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
     summary: `Structured document parsed: ${structuredDocument.totalClauses} clauses across ${structuredSections.length} sections (${structuredDocument.escalationClauseCount} escalation gates). Policy tree constructed successfully.`,
   };
 }
+
+export const SAMPLE_ENTERPRISE_POLICY = `# Enterprise Customer Communication Policy v2.4
+
+1. Transactional Payments & Failures:
+- For successful payments where order provisioning fails, immediately cite payment ID and confirm automated refund within 3-5 business days.
+- Prohibit asking customer to pay again immediately without verified refund status.
+- Reassure customer that zero action is required on their part.
+
+2. Privacy & Data Masking:
+- Never expose full credit card numbers or banking passwords. Always mask to last 4 digits (e.g. **** 4012).
+- Prohibit transmitting internal database keys across public channels.
+
+3. Financial Commitments & Compensation:
+- Agents must never grant goodwill compensation or discount vouchers above $0 without Human Supervisor Approval.
+- Any compensation request above $0 must be escalated to human supervisor review.
+
+4. Communication Fatigue:
+- Suppress promotional messages if customer received 2 or more messages in 24 hours.
+- Suppress routine maintenance notices if customer received 3 or more transactional updates today.`;
