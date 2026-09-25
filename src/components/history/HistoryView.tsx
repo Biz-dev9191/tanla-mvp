@@ -19,10 +19,12 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-            Audit History
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
+          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+              Audit History
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
             Audit History
           </h1>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-2xl leading-relaxed">

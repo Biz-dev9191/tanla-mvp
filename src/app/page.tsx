@@ -362,19 +362,12 @@ export default function Home() {
                 {/* Top Control Bar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
                   <div>
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => setActiveTab('brief')}
-                        className="p-1 text-aurora-neutral-500 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-200 rounded"
-                        title="Back to Brief"
-                      >
-                        <ArrowLeft strokeWidth={1.5} className="w-4 h-4" />
-                      </button>
+                    <div className="flex flex-wrap items-center gap-2 mb-1.5">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
                         Decision & Previews
                       </span>
                     </div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
                       Decision & Previews
                     </h1>
                     <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
@@ -382,12 +375,22 @@ export default function Home() {
                     </p>
                   </div>
 
-                  <button
-                    onClick={() => setActiveTab('brief')}
-                    className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5 self-start sm:self-auto"
-                  >
-                    <span>Edit Brief</span>
-                  </button>
+                  <div className="flex items-center space-x-2 self-start sm:self-auto">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('policy-tree')}
+                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                      <span>Policy Rules</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('brief')}
+                      className="px-4 py-2 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                    >
+                      <span>Edit Brief</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Human Approval Gate (if triggered) */}
@@ -466,19 +469,12 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
               <div>
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => setActiveTab('brief')}
-                    className="p-1 text-aurora-neutral-500 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-200 rounded"
-                    title="Back to Brief"
-                  >
-                    <ArrowLeft strokeWidth={1.5} className="w-4 h-4" />
-                  </button>
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
                     Policy Governance
                   </span>
                 </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 mt-2 tracking-tight">
+                <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
                   Policy Governance Rules
                 </h1>
                 <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
