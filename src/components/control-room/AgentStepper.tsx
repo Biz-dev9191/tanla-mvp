@@ -113,7 +113,7 @@ export const AgentStepper: React.FC<AgentStepperProps> = ({ steps, currentRunnin
           const isExpanded = expandedIndex === idx;
           const policyMeta = POLICY_CODE_MAP[step.agentId] || { code: 'GOV-2026', color: 'bg-gray-50 text-gray-700 border-gray-200' };
           const policyDoc = AGENT_GOVERNANCE_POLICIES.find((p) => p.agentId === step.agentId);
-          const isEscalated = step.status === 'escalated' || step.details.some(d => d.toLowerCase().includes('escalat') || d.toLowerCase().includes('approval'));
+          const isEscalated = step.status === 'escalated';
 
           return (
             <div
