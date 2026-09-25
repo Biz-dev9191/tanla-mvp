@@ -322,9 +322,6 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
                   <span className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-600 bg-aurora-neutral-100 px-2.5 py-1 rounded">
                     Agent {currentPolicy.agentNumber}: {currentPolicy.agentId.toUpperCase()}
                   </span>
-                  <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                    Active & Enforced
-                  </span>
                 </div>
                 <h2 className="text-xl font-bold text-aurora-neutral-900 mt-2">
                   {currentPolicy.title}
