@@ -365,10 +365,11 @@ export function parsePolicyDocumentText(policyText: string): DynamicPolicyParseR
         globalClauseCount++;
         const isEscalation = cleanItem.toLowerCase().includes('supervisor') || cleanItem.toLowerCase().includes('approval') || cleanItem.toLowerCase().includes('escalat');
         const isProhibitive = pendingAvoidOrProhibited || cleanItem.toLowerCase().startsWith('do not') || cleanItem.toLowerCase().startsWith('never') || cleanItem.toLowerCase().startsWith('prohibit');
+        const isPermissive = cleanItem.toLowerCase().startsWith('permit') || cleanItem.toLowerCase().startsWith('allow') || cleanItem.toLowerCase().includes('permitted to') || cleanItem.toLowerCase().includes('allowed to') || cleanItem.toLowerCase().includes('may provide');
         const directive: 'MANDATORY' | 'PROHIBITIVE' | 'PERMISSIVE' = isProhibitive
           ? 'PROHIBITIVE'
-          : isEscalation || cleanItem.toLowerCase().includes('must') || cleanItem.toLowerCase().includes('shall')
-          ? 'MANDATORY'
+          : isPermissive
+          ? 'PERMISSIVE'
           : 'MANDATORY';
 
         // Extract clean title
