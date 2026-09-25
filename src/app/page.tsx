@@ -11,7 +11,6 @@ import { StrategyCard } from '@/components/control-room/StrategyCard';
 import { PolicyPathViewer } from '@/components/control-room/PolicyPathViewer';
 import { HumanApprovalBanner } from '@/components/control-room/HumanApprovalBanner';
 import { ChannelPreviewTabs } from '@/components/preview/ChannelPreviewTabs';
-import { QualityScorecard } from '@/components/preview/QualityScorecard';
 import { ExpandableAnalysisSection } from '@/components/control-room/ExpandableAnalysisSection';
 import { CustomerResponseSimulator } from '@/components/preview/CustomerResponseSimulator';
 import { InteractiveTree } from '@/components/policy/InteractiveTree';

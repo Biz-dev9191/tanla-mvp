@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { CommunicationStrategy, GuardrailEvaluation, PolicyRule, ClauseCitation } from '@/core/types';
-import { QualityScorecard } from '@/components/preview/QualityScorecard';
 import { StrategyCard } from '@/components/control-room/StrategyCard';
 import { DecisionTraceView } from '@/components/control-room/DecisionTraceView';
 import { PolicyPathViewer } from '@/components/control-room/PolicyPathViewer';
@@ -8,7 +7,6 @@ import {
   BarChart3,
   ChevronDown,
   ChevronUp,
-  Award,
   Compass,
   GitBranch,
   ShieldCheck,
@@ -37,7 +35,7 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
   hasPolicyTreeOrCitations,
 }) => {
   const [isExpanded, setIsExpanded] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'strategy' | 'scorecard' | 'policies'>('strategy');
+  const [activeTab, setActiveTab] = useState<'strategy' | 'policies'>('strategy');
 
   return (
     <div className="bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200 shadow-aurora overflow-hidden transition-all duration-200">
@@ -53,14 +51,14 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
           <div>
             <div className="flex items-center space-x-2">
               <h3 className="text-sm font-bold text-aurora-neutral-900">
-                Decision Details & Quality Analysis
+                Decision Details & Strategy Analysis
               </h3>
               <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-aurora-success-light text-aurora-success border border-aurora-success/20">
-                Quality Verified
+                Verified
               </span>
             </div>
             <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
-              Explore strategy reasoning, 7-point quality scorecard, and decision logs
+              Explore strategy reasoning, applied enterprise policies, and decision logs
             </p>
           </div>
         </div>
@@ -70,9 +68,6 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
           <div className="hidden md:flex items-center space-x-2 text-xs">
             <span className="px-2 py-0.5 rounded bg-aurora-neutral-100 border border-aurora-neutral-200 text-aurora-neutral-700 font-medium text-[11px]">
               Decision: <strong className="text-aurora-neutral-900">{strategy.decision}</strong>
-            </span>
-            <span className="px-2 py-0.5 rounded bg-aurora-neutral-100 border border-aurora-neutral-200 text-aurora-neutral-700 font-medium text-[11px]">
-              Quality: <strong className="text-aurora-success">7/7 Passed</strong>
             </span>
             {hasPolicyTreeOrCitations && (
               <span className="px-2 py-0.5 rounded bg-aurora-neutral-100 border border-aurora-neutral-200 text-aurora-neutral-700 font-medium text-[11px]">
@@ -109,19 +104,6 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
               <span>Strategy & Decision Logs</span>
             </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab('scorecard')}
-              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition ${
-                activeTab === 'scorecard'
-                  ? 'bg-aurora-primary text-white shadow-sm'
-                  : 'bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-700'
-              }`}
-            >
-              <Award strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>7-Point Quality Scorecard</span>
-            </button>
-
             {/* Render Policy Tab only if policy tree or citations are generated */}
             {hasPolicyTreeOrCitations && (
               <button
@@ -153,14 +135,7 @@ export const ExpandableAnalysisSection: React.FC<ExpandableAnalysisSectionProps>
             </div>
           )}
 
-          {/* Tab 2: Quality & Guardrail Scorecard */}
-          {activeTab === 'scorecard' && (
-            <div>
-              <QualityScorecard guardrails={guardrails} />
-            </div>
-          )}
-
-          {/* Tab 3: Applied Policy Path & Clause Citations (only if present) */}
+          {/* Tab 2: Applied Policy Path & Clause Citations (only if present) */}
           {activeTab === 'policies' && hasPolicyTreeOrCitations && (
             <div>
               <PolicyPathViewer
