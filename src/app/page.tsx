@@ -35,6 +35,22 @@ export default function Home() {
   const [isApplyingPolicy, setIsApplyingPolicy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Scroll to top whenever active tab changes or page loads
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if ('scrollRestoration' in window.history) {
+          window.history.scrollRestoration = 'manual';
+        }
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      } catch (e) {
+        window.scrollTo(0, 0);
+      }
+    }
+  }, [activeTab]);
+
   // Load history from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {

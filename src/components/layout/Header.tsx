@@ -72,6 +72,15 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
     if (tabId === 'control-room' && !hasActiveRun) return;
     onTabChange?.(tabId);
     setIsMenuOpen(false);
+    if (typeof window !== 'undefined') {
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      } catch (e) {
+        window.scrollTo(0, 0);
+      }
+    }
   };
 
   return (
