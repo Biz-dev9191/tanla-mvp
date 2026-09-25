@@ -157,30 +157,6 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               <Icon strokeWidth={1.5} className="w-4 h-4" />
               <span>{ch.label}</span>
 
-              {/* Mode Tag: Live for Email, Simulated for others */}
-              {ch.isLive ? (
-                <span
-                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold flex items-center space-x-1 ${
-                    isActive
-                      ? 'bg-emerald-400 text-emerald-950 shadow-xs'
-                      : 'bg-emerald-100 text-emerald-700 border border-emerald-300'
-                  }`}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-600 animate-pulse" />
-                  <span>Live</span>
-                </span>
-              ) : (
-                <span
-                  className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold ${
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-aurora-neutral-200 text-aurora-neutral-600 border border-aurora-neutral-300'
-                  }`}
-                >
-                  Simulated
-                </span>
-              )}
-
               {isRecommended && (
                 <span
                   className={`text-[9px] uppercase px-1.5 py-0.5 rounded font-bold ${
@@ -195,8 +171,24 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
         })}
       </div>
 
-      {/* Render active preview frame */}
+      {/* Render active preview frame with top right Live/Simulated status badge */}
       <div className="py-2">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-xs font-semibold text-aurora-neutral-600">
+            Previewing <strong className="text-aurora-neutral-900">{activeChannelData.label}</strong> Template
+          </span>
+          {activeChannelData.isLive ? (
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-300 inline-flex items-center space-x-1.5 shadow-2xs">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              <span>Live Channel</span>
+            </span>
+          ) : (
+            <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-aurora-neutral-100 text-aurora-neutral-600 border border-aurora-neutral-300 inline-flex items-center space-x-1 shadow-2xs">
+              <span>Simulated Channel</span>
+            </span>
+          )}
+        </div>
+
         {activeChannel === 'WhatsApp' && (
           <WhatsAppBubble message={messages.whatsapp} recipientName={customer.name} phone={customer.phone} />
         )}
