@@ -11,6 +11,7 @@ import {
   Layers,
   Shield,
   ArrowRight,
+  ArrowLeft,
   AlertTriangle,
   ShieldCheck,
   ShieldAlert,
@@ -31,6 +32,9 @@ interface KnowledgeBaseViewProps {
   customPolicyRules?: any[];
   customPolicyDocText?: string | null;
   onNavigateToPolicyTree?: () => void;
+  onNavigateToControlRoom?: () => void;
+  onNavigateToBrief?: () => void;
+  hasActiveRun?: boolean;
 }
 
 export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
@@ -38,6 +42,9 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
   customPolicyRules,
   customPolicyDocText,
   onNavigateToPolicyTree,
+  onNavigateToControlRoom,
+  onNavigateToBrief,
+  hasActiveRun = false,
 }) => {
   const [activeSection, setActiveSection] = useState<'agent_policies' | 'policy_tree' | 'heuristics' | 'personas' | 'hierarchy' | 'channels'>('agent_policies');
   const [personaSearch, setPersonaSearch] = useState<string>('');
@@ -62,18 +69,50 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
       {/* Header */}
-      <div className="pb-4 border-b border-aurora-neutral-200">
-        <div className="flex flex-wrap items-center gap-2 mb-2">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
-            Knowledge Base & Governance
-          </span>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
+        <div>
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-2.5 py-1 rounded">
+              Knowledge Base & Governance
+            </span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
+            Knowledge Base & Agent Governance
+          </h1>
+          <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
+            The central guide for AI agent governance rules, customer personas, multi-agent execution pipeline, channel guidelines, and scoring formulas.
+          </p>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-aurora-neutral-900 tracking-tight">
-          Knowledge Base & Agent Governance
-        </h1>
-        <p className="text-sm text-aurora-neutral-700 mt-1 max-w-4xl leading-relaxed">
-          The central guide for AI agent governance rules, customer personas, multi-agent execution pipeline, channel guidelines, and scoring formulas.
-        </p>
+
+        {/* Top Navigation CTAs */}
+        <div className="flex items-center space-x-2 self-start sm:self-auto flex-shrink-0">
+          {onNavigateToBrief && (
+            <button
+              type="button"
+              onClick={onNavigateToBrief}
+              className="px-3.5 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-800 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
+            >
+              <ArrowLeft strokeWidth={1.5} className="w-3.5 h-3.5" />
+              <span>Back to Brief</span>
+            </button>
+          )}
+          {onNavigateToControlRoom && (
+            <button
+              type="button"
+              onClick={() => hasActiveRun && onNavigateToControlRoom()}
+              disabled={!hasActiveRun}
+              className={`px-3.5 py-2 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 ${
+                hasActiveRun
+                  ? 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
+                  : 'bg-aurora-neutral-200 text-aurora-neutral-400 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
+              }`}
+              title={!hasActiveRun ? 'Generate a communication in brief first to view message review' : undefined}
+            >
+              <span>Go to Decision & Previews</span>
+              <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Navigation Tabs */}

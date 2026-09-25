@@ -254,6 +254,7 @@ export default function Home() {
       <Header
         activeTab={activeTab}
         onTabChange={(t) => setActiveTab(t)}
+        hasActiveRun={Boolean(currentResult)}
       />
 
       {errorMessage && (
@@ -473,8 +474,14 @@ export default function Home() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => setActiveTab('control-room')}
-                  className="px-3.5 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5"
+                  onClick={() => currentResult && setActiveTab('control-room')}
+                  disabled={!currentResult}
+                  className={`px-3.5 py-2 rounded-md text-xs font-semibold shadow-sm transition flex items-center space-x-1.5 ${
+                    currentResult
+                      ? 'bg-aurora-primary hover:bg-aurora-primary-hover text-white cursor-pointer'
+                      : 'bg-aurora-neutral-200 text-aurora-neutral-400 border border-aurora-neutral-300 cursor-not-allowed opacity-60'
+                  }`}
+                  title={!currentResult ? 'Generate a communication in brief first to view message review' : undefined}
                 >
                   <span>Go to Decision & Previews</span>
                   <ArrowRight strokeWidth={1.5} className="w-3.5 h-3.5" />
@@ -522,6 +529,9 @@ export default function Home() {
             customPolicyRules={customPolicyRules}
             customPolicyDocText={customPolicyDocText}
             onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
+            onNavigateToControlRoom={() => setActiveTab('control-room')}
+            onNavigateToBrief={() => setActiveTab('brief')}
+            hasActiveRun={Boolean(currentResult)}
           />
         )}
 

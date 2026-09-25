@@ -17,9 +17,10 @@ export type TabType = 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base
 interface HeaderProps {
   activeTab?: TabType;
   onTabChange?: (tab: TabType) => void;
+  hasActiveRun?: boolean;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange }) => {
+export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange, hasActiveRun = false }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Close menu on ESC key
@@ -68,6 +69,7 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
   const CurrentIcon = currentActiveItem.icon;
 
   const handleSelectTab = (tabId: TabType) => {
+    if (tabId === 'control-room' && !hasActiveRun) return;
     onTabChange?.(tabId);
     setIsMenuOpen(false);
   };
@@ -145,19 +147,28 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                     {navItems.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeTab === item.id;
+                      const isDisabled = item.id === 'control-room' && !hasActiveRun;
+
                       return (
                         <button
                           key={item.id}
+                          type="button"
+                          disabled={isDisabled}
                           onClick={() => handleSelectTab(item.id)}
                           className={`w-full flex items-start space-x-3.5 p-3 rounded-lg text-left transition-all ${
-                            isActive
+                            isDisabled
+                              ? 'bg-aurora-neutral-50/80 text-aurora-neutral-400 border border-transparent cursor-not-allowed opacity-50'
+                              : isActive
                               ? 'bg-aurora-primary-light text-aurora-primary border border-aurora-primary/20 shadow-sm'
                               : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-transparent'
                           }`}
+                          title={isDisabled ? 'Generate a communication in brief first to unlock decision & message previews' : undefined}
                         >
                           <div
                             className={`p-2 rounded-md mt-0.5 flex-shrink-0 ${
-                              isActive
+                              isDisabled
+                                ? 'bg-aurora-neutral-200 text-aurora-neutral-400'
+                                : isActive
                                 ? 'bg-aurora-primary text-white'
                                 : 'bg-aurora-neutral-200 text-aurora-neutral-700'
                             }`}
@@ -166,23 +177,31 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-bold text-aurora-neutral-900">
+                              <span className={`text-sm font-bold ${isDisabled ? 'text-aurora-neutral-400' : 'text-aurora-neutral-900'}`}>
                                 {item.label}
                               </span>
-                              {isActive && (
+                              {isActive ? (
                                 <span className="text-[10px] font-bold uppercase tracking-wider bg-aurora-primary text-white px-2 py-0.5 rounded">
                                   Active
                                 </span>
-                              )}
+                              ) : isDisabled ? (
+                                <span className="text-[9px] font-mono text-aurora-neutral-400 bg-aurora-neutral-200/80 px-1.5 py-0.5 rounded font-medium">
+                                  No Active Run
+                                </span>
+                              ) : null}
                             </div>
                             <p className="text-xs text-aurora-neutral-500 mt-0.5 leading-snug">
-                              {item.description}
+                              {isDisabled ? 'Generate communication brief first to unlock decision and previews' : item.description}
                             </p>
                           </div>
                           <ChevronRight
                             strokeWidth={1.5}
                             className={`w-4 h-4 mt-2 flex-shrink-0 ${
-                              isActive ? 'text-aurora-primary' : 'text-aurora-neutral-400'
+                              isDisabled
+                                ? 'text-aurora-neutral-300'
+                                : isActive
+                                ? 'text-aurora-primary'
+                                : 'text-aurora-neutral-400'
                             }`}
                           />
                         </button>
