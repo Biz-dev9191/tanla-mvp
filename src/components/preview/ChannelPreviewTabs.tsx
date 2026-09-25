@@ -28,7 +28,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
   humanApprovalRequired,
   humanApprovalStatus,
 }) => {
-  const [activeChannel, setActiveChannel] = useState<PreferredChannel>(recommendedChannel);
+  const [activeChannel, setActiveChannel] = useState<PreferredChannel>('Email');
   const [selectedChannels, setSelectedChannels] = useState<PreferredChannel[]>([
     'Email',
     'WhatsApp',
@@ -39,10 +39,9 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
   const [sentStatus, setSentStatus] = useState<{ channel: string; timestamp: string } | null>(null);
 
   React.useEffect(() => {
-    if (recommendedChannel) {
-      setActiveChannel(recommendedChannel);
-    }
-  }, [recommendedChannel]);
+    // Always open with email tab in decision and preview page
+    setActiveChannel('Email');
+  }, [customer, messages]);
 
   const isApprovalPending = Boolean(humanApprovalRequired && humanApprovalStatus !== 'Approved');
 
@@ -77,6 +76,7 @@ export const ChannelPreviewTabs: React.FC<ChannelPreviewTabsProps> = ({
               to: customer.email,
               subject: messages.email.subject || 'Aurora Cloud Notification',
               body: messages.email.body,
+              from: 'Aurora Cloud <rachit9191@gmail.com>',
             }),
           });
         } catch (e) {

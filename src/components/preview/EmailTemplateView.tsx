@@ -6,12 +6,14 @@ interface EmailTemplateViewProps {
   message: ChannelMessage;
   recipientEmail?: string;
   recipientName?: string;
+  fromEmail?: string;
 }
 
 export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
   message,
   recipientEmail = "customer@example.com",
   recipientName = "Customer",
+  fromEmail = "rachit9191@gmail.com",
 }) => {
   const [emailTo, setEmailTo] = useState(recipientEmail);
 
@@ -34,7 +36,7 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
           <div className="flex items-center">
             <span className="w-16 font-semibold text-aurora-neutral-500">From:</span>
             <span className="text-aurora-neutral-900 font-mono text-[11px]">
-              Aurora Cloud Notifications &lt;notifications@auroracloud.app&gt;
+              Aurora Cloud Notifications &lt;{fromEmail}&gt;
             </span>
           </div>
           <div className="flex items-center">

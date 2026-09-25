@@ -11,7 +11,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
   const [resendKey, setResendKey] = useState('');
   const [geminiKey, setGeminiKey] = useState('');
   const [openaiKey, setOpenaiKey] = useState('');
-  const [senderEmail, setSenderEmail] = useState('Aurora Cloud <onboarding@resend.dev>');
+  const [senderEmail, setSenderEmail] = useState('Aurora Cloud <rachit9191@gmail.com>');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
       setResendKey(localStorage.getItem('aurora_resend_key') || '');
       setGeminiKey(localStorage.getItem('aurora_gemini_key') || '');
       setOpenaiKey(localStorage.getItem('aurora_openai_key') || '');
-      setSenderEmail(localStorage.getItem('aurora_sender_email') || 'Aurora Cloud <onboarding@resend.dev>');
+      setSenderEmail(localStorage.getItem('aurora_sender_email') || 'Aurora Cloud <rachit9191@gmail.com>');
     }
   }, [isOpen]);
 
@@ -91,7 +91,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose, o
               type="text"
               value={senderEmail}
               onChange={(e) => setSenderEmail(e.target.value)}
-              placeholder="Aurora Cloud <onboarding@resend.dev>"
+              placeholder="Aurora Cloud <rachit9191@gmail.com>"
               className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-mono text-[11px] focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
             />
             <span className="text-[10px] text-aurora-neutral-500 mt-0.5 block">

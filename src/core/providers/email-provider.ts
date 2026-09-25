@@ -71,7 +71,7 @@ export async function sendOutboundEmail(params: SendEmailParams): Promise<EmailD
   const brevoKey = process.env.BREVO_API_KEY;
   if (brevoKey && brevoKey.trim().length > 5) {
     try {
-      const senderEmail = process.env.BREVO_SENDER_EMAIL || 'notifications@auroracloud.app';
+      const senderEmail = process.env.BREVO_SENDER_EMAIL || 'rachit9191@gmail.com';
       const res = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -105,7 +105,7 @@ export async function sendOutboundEmail(params: SendEmailParams): Promise<EmailD
 
   // 3. Check for Resend API
   const resendKey = params.apiKey || process.env.RESEND_API_KEY;
-  const fromAddress = params.from || process.env.EMAIL_FROM || "Aurora Cloud <onboarding@resend.dev>";
+  const fromAddress = params.from || process.env.EMAIL_FROM || "Aurora Cloud <rachit9191@gmail.com>";
 
   if (resendKey && resendKey.trim().length > 5) {
     try {
