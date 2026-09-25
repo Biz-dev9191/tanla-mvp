@@ -46,8 +46,14 @@ export function runDeterministicPreChecks(
   }
 
   // Routine non-critical transactional suppression if fatigue saturated
+  // Critical financial debit / recovery notifications MUST NEVER be suppressed (IAC-01 Union)
+  const isCriticalFinancial =
+    event.eventType === 'payment_successful_order_failed' ||
+    Boolean(event.amount && /refund|deduct|captured|\$\d+/i.test(event.amount) && !/promotional|discount/i.test(event.description));
+
   if (
     !isPromotional &&
+    !isCriticalFinancial &&
     recent24hTx >= 3 &&
     (event.eventType === 'service_disruption' && event.resolutionStatus === 'None Required')
   ) {

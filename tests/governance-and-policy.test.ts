@@ -883,6 +883,101 @@ async function main() {
     }
   );
 
+  // ----------------------------------------------------------------------------------
+  // POLICY PRECEDENCE TEST 12: Uploaded Policy Rules Take Precedence Over Agent Defaults
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Policy Precedence Test 12: Uploaded Policy Rules Strictly Take Precedence Over Agent Default Heuristics',
+    'Policy Precedence & Governance Hierarchy',
+    async (details) => {
+      const customPolicyDoc = `
+# Global Customer Communication & Refund Policy
+**Document ID:** POL-PRECEDENCE-01  |  **Version:** 4.0  |  **Status:** Active
+
+### Section 1.0 Routing Constraints
+All outbound customer notifications regarding transaction updates must be dispatched exclusively via Email only.
+
+### Section 2.0 Autonomous Financial Limits
+Refunds and goodwill compensation up to $250.00 may be processed autonomously without human supervisor approval. Amounts exceeding $250.00 require human review.
+`;
+      const parsed = parsePolicyDocumentText(customPolicyDoc);
+      assert(parsed.isValid, 'Custom document parsed successfully', details);
+
+      const genZCustomer: CustomerProfile = {
+        ...baseCustomer,
+        age: 21,
+        ageGroup: '18–24',
+        digitalProfile: 'Digital-first',
+        preferredChannel: 'WhatsApp',
+      };
+
+      const event150: BusinessEvent = {
+        id: 'evt-prec-150',
+        eventType: 'payment_successful_order_failed',
+        title: 'Inventory timeout with $150 transaction',
+        description: 'Payment was captured but order could not be fulfilled.',
+        amount: '$150.00',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment captured: $150.00', 'Automated refund initiated'],
+        resolutionStatus: 'Refund Initiated',
+      };
+
+      const result = await orchestrateCommunication(
+        genZCustomer,
+        event150,
+        { primary: 'resolve_issue' },
+        undefined,
+        parsed.rules,
+        customPolicyDoc
+      );
+
+      // Verify channel precedence: Uploaded policy mandates 'Email only', overriding Gen Z WhatsApp preference
+      assert(result.strategy.selectedChannel === 'Email', 'Selected channel is Email per uploaded policy precedence', details);
+
+      // Verify financial cap precedence: Uploaded policy permits up to $250 autonomously, overriding default supervisor gate
+      assert(result.strategy.humanApprovalRequired === false, 'Autonomous execution allowed up to $250 cap', details);
+      assert(result.strategy.decision === 'SEND', 'Strategy decision is SEND', details);
+      assert(result.clauseCitations.length > 0, 'Citations generated from uploaded policy', details);
+    }
+  );
+
+  // ----------------------------------------------------------------------------------
+  // UNION TEST 13: Critical Financial Notifications Protected from Fatigue Suppression
+  // ----------------------------------------------------------------------------------
+  await runTest(
+    'Union Test 13: Critical Financial Debit Notifications Are Protected from Routine Fatigue Suppression',
+    'Rule Overlap & Union Strategies',
+    async (details) => {
+      const highFatigueCustomer: CustomerProfile = {
+        ...baseCustomer,
+        recentCommunicationCount24h: { transactional: 4, promotional: 1 },
+      };
+
+      const financialEvent: BusinessEvent = {
+        id: 'evt-fatigue-fin',
+        eventType: 'payment_successful_order_failed',
+        title: 'Order provisioning failed after successful payment',
+        description: 'Auto-refund initiated for $49.50.',
+        timestamp: 'Just now',
+        verifiedFacts: ['Payment ID: PAY_99482 ($49.50)', 'Auto-refund initiated to card ending 4012'],
+        resolutionStatus: 'Refund Initiated',
+        transactionId: 'PAY_99482',
+        amount: '$49.50',
+      };
+
+      const result = await orchestrateCommunication(
+        highFatigueCustomer,
+        financialEvent,
+        { primary: 'resolve_issue' }
+      );
+
+      // Critical financial notification must not be suppressed despite 4 recent transactional messages
+      assert(result.strategy.decision !== 'SUPPRESS', 'Critical financial notification is not suppressed', details);
+      assert(result.strategy.decision === 'SEND', 'Decision is SEND for financial refund notice', details);
+      assert(result.guardrails.status === 'PASS', 'Guardrails pass for critical financial resolution', details);
+    }
+  );
+
   // Print Summary Table
   console.log('\n================================================================');
   console.log('TEST EXECUTION SUMMARY');

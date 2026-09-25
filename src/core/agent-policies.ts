@@ -73,7 +73,9 @@ export const AGENT_1_CONTEXT_POLICY: AgentGovernancePolicy = {
   strictRailguards: [
     'RG-CTX-01: Fatigue Score cap at 100 with mandatory suppression warning at score >= 70.',
     'RG-CTX-02: Missing contact endpoint (e.g. Email without email address) must invalidate the channel for primary dispatch.',
-    'RG-CTX-03: Frustrated or Anxious sentiment mandates heightened reassurance flag passed to Strategy Layer.'
+    'RG-CTX-03: Frustrated or Anxious sentiment mandates heightened reassurance flag passed to Strategy Layer.',
+    'RG-CTX-04: Critical Financial Exemption — Financial deduction failures and refund recovery notifications are strictly exempted from routine attention fatigue suppression.',
+    'RG-CTX-05: Regulatory Consent Veto — Explicit channel consent is a non-negotiable legal veto that supersedes customer channel preferences.'
   ],
   antiHallucinationConstraints: [
     'All persona assignments must match an existing catalog archetype ID exactly.',
@@ -156,7 +158,9 @@ export const AGENT_2_OBJECTIVE_POLICY: AgentGovernancePolicy = {
   strictRailguards: [
     'RG-OBJ-01: Financial deductions mandate immediate refund or fulfillment disclosure in the primary objective.',
     'RG-OBJ-02: Support contact reduction requires eliminating open-ended phrases like "call us if you have questions" when automated tracking is provided.',
-    'RG-OBJ-03: High anxiety events require reassuring objective statements placed ahead of procedural instructions.'
+    'RG-OBJ-03: High anxiety events require reassuring objective statements placed ahead of procedural instructions.',
+    'RG-OBJ-04: Tiered Support Deflection — Provide comprehensive self-service telemetry upfront to deflect inbound calls; for Assisted or Senior personas, provide formal contact channels as reassuring secondary fallback.',
+    'RG-OBJ-05: Dual-Phase Resolution — When human supervisor authorization is required, acknowledge verified automated actions immediately and define a concrete SLA timeline for supervisor review.'
   ],
   antiHallucinationConstraints: [
     'Resolution status must match verified system facts (e.g. do not state "Refund Completed" if status is "Refund Initiated").',
@@ -291,18 +295,21 @@ export const AGENT_4_COMPLIANCE_POLICY: AgentGovernancePolicy = {
     'Enforce statutory quiet hours (21:00 to 08:00) by converting promotional SMS to morning queue',
     'Mask Personally Identifiable Information (PII) including card numbers (last 4 digits only)',
     'Trigger mandatory Human Approval requirement if compensation > $0 without prior system authorization',
-    'Select applicable DLT template registration categories for Indian telecom routing'
+    'Select applicable DLT template registration categories for Indian telecom routing',
+    'Enforce absolute precedence of uploaded enterprise policy document rules over default agent heuristics'
   ],
   prohibitedActions: [
-    'NEVER authorize financial compensation or credit promises exceeding $0 without human supervisor approval (POL-FIN-001)',
+    'NEVER authorize financial compensation or credit promises exceeding policy limits without human supervisor approval',
     'NEVER permit promotional content during transactional failure resolution flows',
     'NEVER transmit full payment card PAN, CVV, or bank account numbers over unencrypted channels',
-    'NEVER bypass privacy masking rules regardless of customer value tier'
+    'NEVER bypass privacy masking rules regardless of customer value tier',
+    'NEVER allow default agent heuristics to override explicit clauses from uploaded compliance documents'
   ],
   strictRailguards: [
-    'RG-POL-01 (POL-FIN-001): Zero unauthorized financial promises. Any goodwill credit or payout requires supervisor sign-off.',
-    'RG-POL-02 (POL-PRIV-002): PII Masking — Full account numbers and passwords must never be emitted.',
-    'RG-POL-03 (POL-FREQ-003): Frequency Capping — Reject messages if customer reached daily limit unless high-urgency transactional.'
+    'RG-POL-01: Zero unauthorized financial promises. Any goodwill credit or payout requires supervisor sign-off.',
+    'RG-POL-02: PII Masking — Full account numbers and passwords must never be emitted.',
+    'RG-POL-03: Frequency Capping — Reject messages if customer reached daily limit unless high-urgency transactional.',
+    'RG-POL-04: Policy Precedence Rule — Uploaded enterprise policy document rules and clauses strictly take precedence over default agent heuristics and baseline thresholds.'
   ],
   antiHallucinationConstraints: [
     'All policy citations must directly reflect certified enterprise policy rules.',
@@ -310,15 +317,15 @@ export const AGENT_4_COMPLIANCE_POLICY: AgentGovernancePolicy = {
   ],
   rules: [
     {
-      ruleCode: 'POL-FIN-001',
+      ruleCode: 'COMP-FIN-001',
       name: 'Financial Compensation & Refund Authorization Gate',
-      description: 'Automated systems may confirm verified refunds initiated by payment gateways. Any additional monetary compensation requires human approval.',
+      description: 'Automated systems may confirm verified refunds initiated by payment gateways. Any additional monetary compensation requires human approval unless custom policy authorizes higher cap.',
       category: 'Financial & SLA',
       enforcementLevel: 'MANDATORY',
       railguardCheck: 'Verify no unauthorized credit or compensation is added without human approval flag.'
     },
     {
-      ruleCode: 'POL-PRIV-002',
+      ruleCode: 'COMP-PRIV-002',
       name: 'PII & Financial Data Masking',
       description: 'Card numbers must display last 4 digits only (e.g. card ending 4012). Full account numbers are strictly prohibited.',
       category: 'Compliance & Legal',
@@ -326,7 +333,7 @@ export const AGENT_4_COMPLIANCE_POLICY: AgentGovernancePolicy = {
       railguardCheck: 'Regex check for 16-digit card numbers and PII.'
     },
     {
-      ruleCode: 'POL-TXN-003',
+      ruleCode: 'COMP-TXN-003',
       name: 'Transactional Integrity & No Upselling',
       description: 'Transactional notifications must not contain promotional discounts or upselling material.',
       category: 'Compliance & Legal',
@@ -335,11 +342,12 @@ export const AGENT_4_COMPLIANCE_POLICY: AgentGovernancePolicy = {
     }
   ],
   decisionHeuristics: [
+    'Uploaded Enterprise Policy Precedence: When an uploaded policy document is shared, its rules and thresholds strictly override default agent heuristics.',
     'If event contains verified auto-refund, permit refund confirmation stating exact bank timeline (3–5 business days).',
     'If customer requested custom compensation, mandate Human Approval workflow.'
   ],
   escalationTriggers: [
-    'Customer disputes amount > $500.',
+    'Customer disputes amount exceeding active policy threshold.',
     'Regulatory complaint threat detected in customer sentiment.'
   ]
 };
@@ -385,7 +393,9 @@ export const AGENT_5_STRATEGY_POLICY: AgentGovernancePolicy = {
   strictRailguards: [
     'RG-STR-01: Tone Alignment — Tone must strictly match the assigned Persona archetype in the catalog.',
     'RG-STR-02: Channel Redundancy — Always define a fallback channel with verified contactability.',
-    'RG-STR-03: Suppression Protection — High-severity payment failures MUST NEVER be suppressed.'
+    'RG-STR-03: Suppression Protection — High-severity payment failures MUST NEVER be suppressed.',
+    'RG-STR-04: Policy Precedence — Rules from uploaded enterprise policy documents strictly take precedence over default persona channel selection and heuristic routing.',
+    'RG-STR-05: Dual-Channel Redundancy — High-urgency transactional notices for Assisted or Senior customers must pair Email with instant SMS fallback.'
   ],
   antiHallucinationConstraints: [
     'Selected channels must be supported by the enterprise omnichannel stack.',
@@ -468,7 +478,9 @@ export const AGENT_6_MESSAGE_POLICY: AgentGovernancePolicy = {
   strictRailguards: [
     'RG-MSG-01: ZERO EXCLAMATION MARKS — Any exclamation mark (!) constitutes an instant generation failure.',
     'RG-MSG-02: SMS Character Cap — Body must be <= 160 characters strictly.',
-    'RG-MSG-03: Factual Fidelity — Every ID, amount, and timeframe must match the verified event facts exactly.'
+    'RG-MSG-03: Factual Fidelity — Every ID, amount, and timeframe must match the verified event facts exactly.',
+    'RG-MSG-04: Channel-Density Optimization — For SMS, condense greetings and boilerplate to fit essential verified facts within <= 160 characters without truncation.',
+    'RG-MSG-05: Brevity and Accuracy — Present banking refund timelines in crisp, grounded phrasing for younger personas without legalistic filler.'
   ],
   antiHallucinationConstraints: [
     'Do not invent discount coupons, compensation vouchers, or fake phone numbers.',
@@ -551,7 +563,9 @@ export const AGENT_7_CRITIC_POLICY: AgentGovernancePolicy = {
   strictRailguards: [
     'RG-CRT-01: Exclamation Mark Detection — Instant REVISE flag if any channel body contains "!".',
     'RG-CRT-02: Fact Verification — Reject messages referencing unverified transaction amounts or IDs.',
-    'RG-CRT-03: Financial Gate — If financial compensation > $0 is detected, humanApprovalRequired must be true.'
+    'RG-CRT-03: Financial Gate — If financial compensation > $0 is detected, humanApprovalRequired must be true.',
+    'RG-CRT-04: Intent-Source Disambiguation — Escalate to supervisor (ESCALATE) if compensation was requested in telemetry; trigger reflection loop (REVISE) to strip if unrequested compensation was hallucinated.',
+    'RG-CRT-05: Policy Precedence — When an uploaded compliance document is active, its explicit caps and rules supersede default critic heuristics.'
   ],
   antiHallucinationConstraints: [
     'Verify that all cited transaction numbers exist in the source event payload.',
@@ -653,8 +667,8 @@ export const AGENT_TRANSFORMATION_HIERARCHY: TransformationLayerHierarchy[] = [
     agentCode: 'policy',
     policyCode: 'EPAP-2026-v3.0',
     inputDescription: 'Active policy tree, customer context, transaction metadata, regulatory compliance requirements.',
-    outputDescription: 'Traversed decision path, DLT templates, PII masking rules, POL-FIN-001 $0 compensation gate.',
-    keyRailguards: ['POL-FIN-001 $0 compensation limit', 'PII card masking (last 4 digits)', 'Transactional integrity'],
+    outputDescription: 'Traversed decision path, DLT templates, PII masking rules, supervisor compensation authorization gate.',
+    keyRailguards: ['Supervisor compensation authorization gate', 'PII card masking (last 4 digits)', 'Transactional integrity', 'Uploaded Policy Precedence'],
     transformationSummary: 'Applies enterprise regulations, statutory laws (TRAI/GDPR/TCPA), and enforces human approval on financial compensation.'
   },
   {

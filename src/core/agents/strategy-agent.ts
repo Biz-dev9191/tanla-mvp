@@ -49,8 +49,37 @@ export function runCommunicationStrategyAgent(
     selectedChannel = persona.preferredChannel;
   }
 
+  // Precedence Rule: Uploaded enterprise policy rules strictly override agent default channel heuristics
+  if (policy.allowedActions && policy.allowedActions.length > 0) {
+    if (policy.allowedActions.some((a) => /only email|email only/i.test(a))) {
+      selectedChannel = 'Email';
+    } else if (policy.allowedActions.some((a) => /only whatsapp|whatsapp only/i.test(a))) {
+      selectedChannel = 'WhatsApp';
+    } else if (policy.allowedActions.some((a) => /only sms|sms only/i.test(a))) {
+      selectedChannel = 'SMS';
+    }
+  }
+  if (policy.prohibitedActions && policy.prohibitedActions.length > 0) {
+    if (policy.prohibitedActions.some((p) => /whatsapp/i.test(p)) && selectedChannel === 'WhatsApp') {
+      selectedChannel = 'Email';
+    } else if (policy.prohibitedActions.some((p) => /sms/i.test(p)) && selectedChannel === 'SMS') {
+      selectedChannel = 'Email';
+    }
+  }
+
+  // Regulatory Consent Precedence: Explicit consent veto overrides preference
+  if (selectedChannel === 'Voice' && !customer.consent.voice) {
+    selectedChannel = customer.digitalProfile === 'Assisted' ? 'Email' : 'WhatsApp';
+  }
+
+  const urgency = event.eventType === 'payment_failed' || event.eventType === 'payment_successful_order_failed' ? 'Medium' : 'Low';
   let fallbackChannel: PreferredChannel | undefined =
     selectedChannel === 'WhatsApp' ? 'Email' : selectedChannel === 'Email' ? 'SMS' : 'WhatsApp';
+
+  // Dual-channel redundancy for seniors on high/medium urgency events
+  if ((customer.digitalProfile === 'Assisted' || customer.ageGroup === '55+') && urgency !== 'Low') {
+    fallbackChannel = 'SMS';
+  }
 
   chainOfThought.push(
     `[Step 1 - Channel Routing Calculus (CSAP-2026)] Customer: ${customer.name} | Persona: '${persona.name}' (${persona.cohort}). Digital Maturity: ${customer.digitalProfile}. Selected recommended channel: ${selectedChannel} (Fallback: ${fallbackChannel}).`
@@ -103,8 +132,6 @@ export function runCommunicationStrategyAgent(
     ctaType = 'None';
     ctaText = undefined;
   }
-
-  const urgency = event.eventType === 'payment_failed' || event.eventType === 'payment_successful_order_failed' ? 'Medium' : 'Low';
 
   // Chain-of-thought 4: Final Dispatch Verdict
   const decision: 'SEND' | 'SUPPRESS' | 'ESCALATE' = policy.humanApprovalRequired ? 'ESCALATE' : 'SEND';

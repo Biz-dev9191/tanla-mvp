@@ -433,7 +433,7 @@ export async function orchestrateCommunication(
       objective,
       agentSteps: steps,
       decisionTrace,
-      appliedPolicyPath: ['Communication', 'Governance', 'Fatigue & Frequency'],
+      appliedPolicyPath: [],
       appliedPolicies: [],
       strategy: {
         decision: 'SUPPRESS',

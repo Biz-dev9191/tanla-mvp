@@ -97,15 +97,20 @@ export function runGuardrailAgent(
   );
 
   // Chain-of-thought 6: 24h Message Fatigue & Frequency Limits
+  // Critical financial debit / recovery notifications are strictly exempted from attention fatigue suppression (IAC-01 Union)
+  const isCriticalFinancial =
+    event.eventType === 'payment_successful_order_failed' ||
+    Boolean(event.amount && /refund|deduct|captured|\$\d+/i.test(event.amount) && !/promotional|discount/i.test(event.description));
+
   const totalRecent = (customer.recentCommunicationCount24h.transactional || 0) + (customer.recentCommunicationCount24h.promotional || 0);
-  const fatiguePass = totalRecent < 4;
+  const fatiguePass = isCriticalFinancial || totalRecent < 4;
   if (!fatiguePass) {
     violationCodes.push('FATIGUE_LIMIT_EXCEEDED');
     actionableFeedback.push('Customer frequency cap exceeded for rolling 24h period. SUPPRESS communication.');
   }
 
   chainOfThought.push(
-    `[Check 6 - Attention Fatigue Limit] 24h message count: ${totalRecent}/4 limit. Status: ${fatiguePass ? 'PASSED' : 'FAILED (Suppression required)'}.`
+    `[Check 6 - Attention Fatigue Limit] 24h message count: ${totalRecent}/4 limit. Status: ${fatiguePass ? (isCriticalFinancial ? 'EXEMPTED (Critical Financial Event)' : 'PASSED') : 'FAILED (Suppression required)'}.`
   );
 
   // Chain-of-thought 7: Verdict Computation & Revision Loop Decision
@@ -126,7 +131,7 @@ export function runGuardrailAgent(
     status = 'ESCALATE';
   }
 
-  if (!fatiguePass) {
+  if (!fatiguePass && !isCriticalFinancial) {
     status = 'SUPPRESS';
   }
 
@@ -165,7 +170,7 @@ export function runGuardrailAgent(
     fatigueCheck: {
       passed: fatiguePass,
       details: fatiguePass
-        ? `Passed: Customer communication count (${totalRecent}/24h) is within frequency thresholds.`
+        ? (isCriticalFinancial ? 'Passed: Critical financial notification exempted from routine frequency limits.' : `Passed: Customer communication count (${totalRecent}/24h) is within frequency thresholds.`)
         : `Suppressed: Frequency threshold exceeded.`,
     },
     unsupportedPromises: {
