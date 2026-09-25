@@ -1,11 +1,11 @@
 import React from 'react';
-import { ShieldAlert, Check, RefreshCw, XCircle } from 'lucide-react';
+import { ShieldAlert, Check, XCircle } from 'lucide-react';
 
 interface HumanApprovalBannerProps {
   reason?: string;
   onApprove: () => void;
-  onRequestRevision: () => void;
-  onSuppress: () => void;
+  onRequestRevision?: () => void;
+  onSuppress?: () => void;
   status: 'Pending' | 'Approved' | 'Rejected' | 'Not Required';
 }
 
@@ -40,20 +40,6 @@ export const HumanApprovalBanner: React.FC<HumanApprovalBannerProps> = ({
 
         {status === 'Pending' && (
           <div className="flex items-center space-x-2 w-full sm:w-auto justify-end">
-            <button
-              onClick={onSuppress}
-              className="px-3 py-1.5 border border-aurora-neutral-300 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 text-aurora-neutral-900 rounded text-xs font-semibold flex items-center space-x-1"
-            >
-              <XCircle strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-error" />
-              <span>Suppress</span>
-            </button>
-            <button
-              onClick={onRequestRevision}
-              className="px-3 py-1.5 border border-aurora-neutral-300 bg-aurora-neutral-0 hover:bg-aurora-neutral-100 text-aurora-neutral-900 rounded text-xs font-semibold flex items-center space-x-1"
-            >
-              <RefreshCw strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
-              <span>Request Revision</span>
-            </button>
             <button
               onClick={onApprove}
               className="px-4 py-1.5 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded text-xs font-bold flex items-center space-x-1 shadow-sm"
