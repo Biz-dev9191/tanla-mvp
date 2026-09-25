@@ -67,6 +67,20 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
   const [sentimentTrajectory, setSentimentTrajectory] = useState<string[]>(['Anxious']);
   const [overallSatisfaction, setOverallSatisfaction] = useState<number | null>(null);
   const [deflectionStatus, setDeflectionStatus] = useState<string | null>(null);
+  const threadContainerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (threadContainerRef.current) {
+      if (turns.length === 0) {
+        threadContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        threadContainerRef.current.scrollTo({
+          top: threadContainerRef.current.scrollHeight,
+          behavior: 'smooth',
+        });
+      }
+    }
+  }, [turns, isLoading]);
 
   // Trigger customer response simulation turn
   const handleSimulateCustomerTurn = async (injectedMsg?: string) => {
@@ -286,8 +300,11 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
         </div>
       )}
 
-      {/* Conversation Thread */}
-      <div className="space-y-3 bg-aurora-neutral-100/50 p-4 rounded-lg border border-aurora-neutral-200 min-h-[160px] max-h-[360px] overflow-y-auto">
+      {/* Conversation Thread - Fixed Height Window (does not expand or contract) */}
+      <div
+        ref={threadContainerRef}
+        className="space-y-3 bg-aurora-neutral-100/50 p-4 rounded-lg border border-aurora-neutral-200 h-[210px] overflow-y-auto scroll-smooth"
+      >
         {/* Initial Orchestrated Outbound Bubble */}
         <div className="flex flex-col items-end space-y-1">
           <div className="flex items-center space-x-1.5 text-[11px] text-aurora-neutral-500 font-medium">
@@ -352,53 +369,60 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
       </div>
 
       {/* Simulator Action Controls */}
-      <div className="space-y-3 pt-1">
-        {/* Row 1: Primary Action Buttons */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          {/* Button 1: Autonomous Persona Simulation */}
-          <button
-            type="button"
-            onClick={() => handleSimulateCustomerTurn()}
-            disabled={isLoading}
-            className="py-2 px-3 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50"
-          >
-            {isLoading && loadingAction === 'customer' ? (
-              <>
-                <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
-                <span>Simulating Persona Reaction...</span>
-              </>
-            ) : (
-              <>
-                <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
-                <span>
-                  {turns.length === 0 ? 'Generate Customer Response' : 'Simulate Customer Follow-Up'} ({PERSONAS.find((p) => p.id === selectedPersona)?.name})
-                </span>
-              </>
-            )}
-          </button>
+      <div className="space-y-2.5 pt-1">
+        {/* Compact Simulation Actions Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Button 1: Autonomous Persona Simulation */}
+            <button
+              type="button"
+              onClick={() => handleSimulateCustomerTurn()}
+              disabled={isLoading}
+              className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-xs font-bold flex items-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50"
+            >
+              {isLoading && loadingAction === 'customer' ? (
+                <>
+                  <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
+                  <span>Simulating Reaction...</span>
+                </>
+              ) : (
+                <>
+                  <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5 text-sky-200" />
+                  <span>
+                    {turns.length === 0 ? 'Simulate Customer Response' : 'Simulate Customer Follow-Up'}
+                  </span>
+                </>
+              )}
+            </button>
 
-          {/* Button 2: Generate Automated Agent Reply */}
-          <button
-            type="button"
-            onClick={() => handleGenerateAutomatedAgentReply()}
-            disabled={isLoading || lastSpeaker !== 'customer'}
-            className="py-2 px-3 bg-aurora-neutral-900 hover:bg-black text-white rounded-md text-xs font-semibold flex items-center justify-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-40"
-          >
-            {isLoading && loadingAction === 'agent' ? (
-              <>
-                <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
-                <span>Generating Agent Reply...</span>
-              </>
-            ) : (
-              <>
-                <Bot strokeWidth={1.5} className="w-3.5 h-3.5" />
-                <span>Generate Automated Agent Reply</span>
-              </>
-            )}
-          </button>
+            {/* Button 2: Generate Automated Agent Reply */}
+            <button
+              type="button"
+              onClick={() => handleGenerateAutomatedAgentReply()}
+              disabled={isLoading || lastSpeaker !== 'customer'}
+              className="px-4 py-2 bg-aurora-neutral-900 hover:bg-black text-white rounded-lg text-xs font-bold flex items-center space-x-2 shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-40"
+            >
+              {isLoading && loadingAction === 'agent' ? (
+                <>
+                  <Loader2 strokeWidth={1.5} className="w-3.5 h-3.5 animate-spin" />
+                  <span>Generating Reply...</span>
+                </>
+              ) : (
+                <>
+                  <Bot strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-300" />
+                  <span>Generate Agent Reply</span>
+                </>
+              )}
+            </button>
+          </div>
+
+          <div className="text-[11px] text-aurora-neutral-500 font-mono hidden sm:flex items-center space-x-1.5 bg-aurora-neutral-100 px-2.5 py-1 rounded-md border border-aurora-neutral-200">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>Active Persona: <strong className="text-aurora-neutral-800 font-sans">{PERSONAS.find((p) => p.id === selectedPersona)?.name}</strong></span>
+          </div>
         </div>
 
-        {/* Row 2: Copy-Paste or Type Customer Response Input */}
+        {/* Custom Query Inbound Input Box */}
         <div className="space-y-1.5">
           <div className="flex items-center space-x-2">
             <input
@@ -409,47 +433,47 @@ export const CustomerResponseSimulator: React.FC<CustomerResponseSimulatorProps>
                 if (e.key === 'Enter') handleAddCustomCustomerMessage();
               }}
               placeholder="Paste or type customer response here to simulate custom roleplay situation..."
-              className="flex-1 text-xs bg-white border border-aurora-neutral-300 rounded-md px-3 py-2 text-aurora-neutral-900 focus:outline-none focus:ring-1 focus:ring-aurora-primary"
+              className="flex-1 text-xs bg-white border border-aurora-neutral-300 rounded-lg px-3 py-2 text-aurora-neutral-900 focus:outline-none focus:ring-1 focus:ring-aurora-primary shadow-2xs"
             />
             <button
               type="button"
               onClick={handleAddCustomCustomerMessage}
               disabled={!customerInput.trim() || isLoading}
-              className="px-3 py-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-900 border border-aurora-neutral-300 rounded-md text-xs font-semibold flex items-center space-x-1.5 disabled:opacity-40 shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0"
+              className="px-3.5 py-2 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 text-aurora-neutral-900 border border-aurora-neutral-300 rounded-lg text-xs font-bold flex items-center space-x-1.5 disabled:opacity-40 shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 whitespace-nowrap flex-shrink-0"
             >
-              <ClipboardPaste strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
-              <span>Post Customer Query</span>
+              <Send strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-neutral-600" />
+              <span>Post Query</span>
             </button>
           </div>
 
           {/* Sample Canned Inbound Queries */}
-          <div className="flex flex-wrap items-center gap-1.5 text-[11px] pt-1">
+          <div className="flex flex-wrap items-center gap-1.5 text-[11px] pt-0.5">
             <span className="text-aurora-neutral-500 text-[10px] font-semibold">Quick Roleplay Scenarios:</span>
             <button
               type="button"
               onClick={() => handleSelectQuickScenario('When exactly will the refund reflect in my account?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition-all transform hover:-translate-y-0.5 active:translate-y-0 shadow-2xs"
             >
               "When will the refund reflect?"
             </button>
             <button
               type="button"
               onClick={() => handleSelectQuickScenario('Can I get a courtesy coupon voucher for the inconvenience?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition-all transform hover:-translate-y-0.5 active:translate-y-0 shadow-2xs"
             >
               "Can I get a courtesy coupon voucher?"
             </button>
             <button
               type="button"
               onClick={() => handleSelectQuickScenario('What is the transaction reference number for this refund?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition-all transform hover:-translate-y-0.5 active:translate-y-0 shadow-2xs"
             >
               "What is the reference number?"
             </button>
             <button
               type="button"
               onClick={() => handleSelectQuickScenario('Do I need to take any action or call customer support?')}
-              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition"
+              className="px-2 py-0.5 bg-aurora-neutral-100 hover:bg-aurora-neutral-200 border border-aurora-neutral-300 rounded text-aurora-neutral-700 text-[10px] transition-all transform hover:-translate-y-0.5 active:translate-y-0 shadow-2xs"
             >
               "Do I need to call support?"
             </button>
