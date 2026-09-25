@@ -18,7 +18,7 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({ selectedPresetId
         <span className="text-xs text-aurora-neutral-500">1-click to test agent orchestration</span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
         {PRESET_SCENARIOS.map((scenario) => {
           const isSelected = selectedPresetId === scenario.id;
           const isHero = scenario.id === 'hero-rahul';
@@ -42,6 +42,10 @@ export const PresetSelector: React.FC<PresetSelectorProps> = ({ selectedPresetId
                         ? 'bg-aurora-neutral-200 text-aurora-neutral-900'
                         : scenario.badge === 'Suppression Test'
                         ? 'bg-aurora-warning-light text-aurora-warning border border-aurora-warning/20'
+                        : scenario.badge === 'Contradiction Test'
+                        ? 'bg-purple-50 text-purple-700 border border-purple-200'
+                        : scenario.badge === 'Consent Gate'
+                        ? 'bg-rose-50 text-rose-700 border border-rose-200'
                         : 'bg-aurora-error-light text-aurora-error border border-aurora-error/20'
                     }`}
                   >
