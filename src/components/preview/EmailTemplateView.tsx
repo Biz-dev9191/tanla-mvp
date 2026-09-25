@@ -59,9 +59,7 @@ export const EmailTemplateView: React.FC<EmailTemplateViewProps> = ({
       <div className="p-6 bg-white min-h-[300px]">
         {/* Aurora Cloud Email Header Logo */}
         <div className="pb-4 mb-4 border-b border-aurora-neutral-200 flex items-center space-x-2">
-          <div className="w-6 h-6 rounded bg-aurora-primary text-white flex items-center justify-center font-bold text-[10px]">
-            AC
-          </div>
+          <img src="/icon.svg" alt="Aurora Cloud" className="w-6 h-6 rounded-md shadow-2xs flex-shrink-0" />
           <span className="font-bold text-xs text-aurora-neutral-900 tracking-tight">Aurora Cloud</span>
         </div>
 

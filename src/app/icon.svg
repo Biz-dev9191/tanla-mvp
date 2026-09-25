@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <!-- Background Gradient: Deep Oceanic Twilight -->
+    <linearGradient id="aurora-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="45%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#090D16"/>
+    </linearGradient>
+
+    <!-- Aurora Primary Glow: Emerald to Cyan to Sapphire -->
+    <linearGradient id="aurora-stream" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="35%" stop-color="#06B6D4"/>
+      <stop offset="70%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+
+    <!-- Aurora Secondary Ribbon: Electric Blue to Violet -->
+    <linearGradient id="aurora-ribbon" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="40%" stop-color="#38BDF8"/>
+      <stop offset="75%" stop-color="#818CF8"/>
+      <stop offset="100%" stop-color="#C084FC"/>
+    </linearGradient>
+
+    <!-- Cloud Fill: Translucent Glassmorphism Gradient -->
+    <linearGradient id="cloud-glass" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.05"/>
+    </linearGradient>
+
+    <!-- AI Spark Glow -->
+    <linearGradient id="spark-glow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#38BDF8"/>
+    </linearGradient>
+
+    <!-- Drop Shadow Filter for Floating Depth -->
+    <filter id="aurora-shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#06B6D4" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Squircle Emblem Base -->
+  <rect width="64" height="64" rx="16" fill="url(#aurora-bg)"/>
+  <rect x="1" y="1" width="62" height="62" rx="15" stroke="url(#aurora-ribbon)" stroke-width="1.2" stroke-opacity="0.45"/>
+
+  <!-- Glowing Ambient Aurora Cloud Silhouette Backing -->
+  <path d="M20 44h24a10 10 0 0 0 3.2-19.47A13 13 0 0 0 22.8 19.1 11 11 0 0 0 20 44z"
+        fill="url(#aurora-stream)" opacity="0.2" filter="url(#aurora-shadow)"/>
+
+  <!-- Main Glassmorphic Cloud Contour -->
+  <path d="M19 43h25a9.5 9.5 0 0 0 3-18.5 12.5 12.5 0 0 0-23.4-5.3A10.5 10.5 0 0 0 19 43z"
+        fill="url(#cloud-glass)" stroke="rgba(255,255,255,0.3)" stroke-width="1.2"/>
+
+  <!-- Fluid Aurora Borealis Wave Ribbon 1 (Lower Sweep) -->
+  <path d="M13 38.5c5-4 12-3.5 18-7s11-9 20-6"
+        stroke="url(#aurora-stream)" stroke-width="3.5" stroke-linecap="round"/>
+
+  <!-- Fluid Aurora Borealis Wave Ribbon 2 (Central Harmonic Sweep) -->
+  <path d="M15 42c6-3.5 13-2 20-5.5s10-8 17-5.5"
+        stroke="url(#aurora-ribbon)" stroke-width="2.6" stroke-linecap="round"/>
+
+  <!-- Fluid Aurora Wave Ribbon 3 (Light Crest) -->
+  <path d="M21 28.5c4-3.5 9-4 14-2s8 6 14 5"
+        stroke="#38BDF8" stroke-width="1.6" stroke-linecap="round" stroke-dasharray="0.5 3"/>
+
+  <!-- Agentic Intelligence Sparkle (North Star / AI Orchestrator Beacon) -->
+  <g transform="translate(46, 14)">
+    <path d="M0 -6 C0 -1.5, 1.5 0, 6 0 C1.5 0, 0 1.5, 0 6 C0 1.5, -1.5 0, -6 0 C-1.5 0, 0 -1.5, 0 -6 Z"
+          fill="url(#spark-glow)"/>
+    <circle cx="0" cy="0" r="1.2" fill="#FFFFFF"/>
+  </g>
+</svg>
