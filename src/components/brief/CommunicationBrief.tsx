@@ -458,6 +458,15 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       return;
     }
 
+    // Mandatory Objective Gating: Column 3 requires either structured primary/secondary objective OR an objective pill / custom text
+    const hasObjectiveInStructured = Boolean(structPrimaryObjective || structSecondaryObjective.trim());
+    const hasObjectiveInPillsOrText = Boolean(objectivePills.length > 0 || objectiveText.trim().length > 0);
+
+    if (!hasObjectiveInStructured && !hasObjectiveInPillsOrText) {
+      setValidationError("Column 3 (Business Objective *) is mandatory. Please select a Primary Objective in the Structured Form or choose an Objective Pill / Statement in Text & Pills.");
+      return;
+    }
+
     setValidationError(null);
 
     const finalCustomerName = structCustomerName.trim() || 'Customer';
@@ -520,13 +529,12 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       amount: finalAmount || undefined,
     };
 
+    const finalObjectivePrimary = structPrimaryObjective || undefined;
+    const finalObjectiveSecondary = structSecondaryObjective.trim() || (objectivePills[0] || (objectiveText.trim() ? objectiveText.trim().slice(0, 40) : undefined));
+
     const objectivePayload: BusinessObjective = {
-      primary: objectiveTab === 'structured'
-        ? (structPrimaryObjective || 'resolve_issue')
-        : (structPrimaryObjective || (undefined as any)),
-      secondary: objectiveTab === 'structured'
-        ? (structSecondaryObjective.trim() || (structPrimaryObjective ? structPrimaryObjective.replace(/_/g, ' ') : 'Resolve issue proactively'))
-        : (objectivePills[0] || structSecondaryObjective.trim() || (objectiveText.trim() ? objectiveText.trim().slice(0, 40) : undefined)),
+      primary: finalObjectivePrimary as any,
+      secondary: finalObjectiveSecondary,
       customNote: objectiveText.trim() || undefined,
     };
 
@@ -547,8 +555,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       : eventPills;
 
     const finalObjectiveText = objectiveTab === 'structured'
-      ? `${(structPrimaryObjective || 'resolve issue').replace(/_/g, ' ')}. ${structSecondaryObjective}`
-      : (objectiveText.trim() || `${(structPrimaryObjective || 'resolve issue').replace(/_/g, ' ')}. Resolve issue and reassure customer.`);
+      ? [structPrimaryObjective ? structPrimaryObjective.replace(/_/g, ' ') : '', structSecondaryObjective.trim()].filter(Boolean).join('. ')
+      : (objectiveText.trim() || (objectivePills.length > 0 ? objectivePills.join(', ') : ''));
 
     const finalObjectivePills = objectiveTab === 'structured'
       ? (structPrimaryObjective ? [structPrimaryObjective.replace(/_/g, ' ')] : [])
@@ -1138,7 +1146,13 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                 <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
                   {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
                     <>
-                      Loaded: <strong className="text-aurora-neutral-900">{structCustomerName || 'Custom'}</strong> ({structAgeGroup}) • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span>
+                      Loaded: <strong className="text-aurora-neutral-900">{structCustomerName || 'Custom'}</strong> ({structAgeGroup || 'Profile'})
+                      {structEventType && (
+                        <> • <span className="text-aurora-neutral-800">{structEventType.replace(/_/g, ' ')}</span></>
+                      )}
+                      {structPrimaryObjective && (
+                        <> • <span className="text-aurora-neutral-800">{structPrimaryObjective.replace(/_/g, ' ')}</span></>
+                      )}
                     </>
                   ) : (
                     'Choose a prefilled test scenario to automatically populate the 3 columns above'
