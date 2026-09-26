@@ -203,28 +203,46 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
 
-  // Validation Error State & 0.7s Disappearing Timer
+  // Validation Error State & Gradual Disappearing Timers (1.2s visible + 0.6s gradual fade = 1.8s)
   const [validationError, setValidationError] = useState<string | null>(null);
-  const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [isValidationErrorFading, setIsValidationErrorFading] = useState<boolean>(false);
+  const validationFadeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const validationRemoveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const triggerValidationError = (msg: string) => {
-    // If clicked multiple times, clear active timer and override error message cleanly
-    if (validationTimerRef.current) {
-      clearTimeout(validationTimerRef.current);
-      validationTimerRef.current = null;
+  const clearValidationTimers = () => {
+    if (validationFadeTimerRef.current) {
+      clearTimeout(validationFadeTimerRef.current);
+      validationFadeTimerRef.current = null;
     }
-    setValidationError(msg);
-    // Disappear in 0.7s (700ms)
-    validationTimerRef.current = setTimeout(() => {
-      setValidationError(null);
-      validationTimerRef.current = null;
-    }, 700);
+    if (validationRemoveTimerRef.current) {
+      clearTimeout(validationRemoveTimerRef.current);
+      validationRemoveTimerRef.current = null;
+    }
   };
 
-  // Cleanup timer on component unmount
+  const triggerValidationError = (msg: string) => {
+    // If clicked multiple times, clear active timers, reset opacity, and override error message cleanly
+    clearValidationTimers();
+    setIsValidationErrorFading(false);
+    setValidationError(msg);
+
+    // Stay fully visible for 1.2s, then start gradual fade-out
+    validationFadeTimerRef.current = setTimeout(() => {
+      setIsValidationErrorFading(true);
+    }, 1200);
+
+    // Completely remove from DOM at 1.8s (after 600ms smooth gradual fade)
+    validationRemoveTimerRef.current = setTimeout(() => {
+      setValidationError(null);
+      setIsValidationErrorFading(false);
+      clearValidationTimers();
+    }, 1800);
+  };
+
+  // Cleanup timers on component unmount
   useEffect(() => {
     return () => {
-      if (validationTimerRef.current) clearTimeout(validationTimerRef.current);
+      clearValidationTimers();
     };
   }, []);
 
@@ -234,18 +252,16 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     const hasEvent = Boolean(structEventType || structEventTitle.trim() || eventPills.length > 0 || eventText.trim().length > 0);
     const hasObjective = Boolean(structPrimaryObjective || structSecondaryObjective.trim() || objectivePills.length > 0 || objectiveText.trim().length > 0);
 
+    const clearAndReset = () => {
+      clearValidationTimers();
+      setIsValidationErrorFading(false);
+      setValidationError(null);
+    };
+
     if (validationError.includes('Business Event') && hasEvent) {
-      if (validationTimerRef.current) {
-        clearTimeout(validationTimerRef.current);
-        validationTimerRef.current = null;
-      }
-      setValidationError(null);
+      clearAndReset();
     } else if (validationError.includes('Business Objective') && hasObjective) {
-      if (validationTimerRef.current) {
-        clearTimeout(validationTimerRef.current);
-        validationTimerRef.current = null;
-      }
-      setValidationError(null);
+      clearAndReset();
     }
   }, [
     structEventType,
@@ -343,10 +359,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         localStorage.removeItem('aurora_brief_state');
       } catch (e) {}
     }
-    if (validationTimerRef.current) {
-      clearTimeout(validationTimerRef.current);
-      validationTimerRef.current = null;
-    }
+    clearValidationTimers();
+    setIsValidationErrorFading(false);
     setValidationError(null);
     setSelectedCustomerId('');
     setSelectedEventId('');
@@ -524,10 +538,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       return;
     }
 
-    if (validationTimerRef.current) {
-      clearTimeout(validationTimerRef.current);
-      validationTimerRef.current = null;
-    }
+    clearValidationTimers();
+    setIsValidationErrorFading(false);
     setValidationError(null);
 
     const finalCustomerName = structCustomerName.trim() || 'Customer';
@@ -1304,9 +1316,15 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           )}
         </div>
 
-        {/* Validation Error Alert Banner - Compact & Auto-dismissing (0.7s) */}
+        {/* Validation Error Alert Banner - Compact & Gradual Disappearing (1.2s visible + 0.6s fade = 1.8s) */}
         {validationError && (
-          <div className="py-2.5 px-3.5 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2 text-xs font-medium shadow-2xs animate-fadeIn transition-all duration-150">
+          <div
+            className={`py-2.5 px-3.5 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2 text-xs font-medium shadow-2xs transition-all duration-600 ease-out transform ${
+              isValidationErrorFading
+                ? 'opacity-0 -translate-y-1 scale-98 pointer-events-none'
+                : 'opacity-100 translate-y-0 scale-100 animate-fadeIn'
+            }`}
+          >
             <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
             <span>{validationError}</span>
           </div>
