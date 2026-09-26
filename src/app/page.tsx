@@ -159,7 +159,7 @@ export default function Home() {
       setIsLoading(true);
       setErrorMessage(null);
 
-      // Validate that all 3 columns have at least 1 input
+      // Validate that mandatory columns have inputs (Column 1 & Column 2 are mandatory; Column 3 Business Objective is optional)
       if (payload.customerProfileText !== undefined || payload.structuredCustomer !== undefined) {
         const hasCol1 = Boolean(payload.customerProfileText && payload.customerProfileText.trim().length > 0) || 
           Boolean(payload.customerPills && payload.customerPills.length > 0) || 
@@ -167,12 +167,9 @@ export default function Home() {
         const hasCol2 = Boolean(payload.eventHistoryText && payload.eventHistoryText.trim().length > 0) || 
           Boolean(payload.eventPills && payload.eventPills.length > 0) || 
           Boolean(payload.structuredEvent && (payload.structuredEvent.eventType || payload.structuredEvent.title));
-        const hasCol3 = Boolean(payload.objectiveText && payload.objectiveText.trim().length > 0) || 
-          Boolean(payload.objectivePills && payload.objectivePills.length > 0) || 
-          Boolean(payload.structuredObjective && payload.structuredObjective.primary);
 
-        if (!hasCol1 || !hasCol2 || !hasCol3) {
-          throw new Error("Please provide at least one detail (text description, filter pill, or structured field) in each of the 3 columns to proceed.");
+        if (!hasCol1 || !hasCol2) {
+          throw new Error("Please provide Customer Profile and Business Event details to proceed.");
         }
       }
 
@@ -201,6 +198,7 @@ export default function Home() {
         throw new Error((data as any).error || 'Orchestration execution failed.');
       }
 
+      (data as any).userSelectedObjective = payload.userSelectedObjective !== undefined ? payload.userSelectedObjective : true;
       setCurrentResult(data);
       setActiveTab('control-room');
     } catch (err: any) {
@@ -248,6 +246,7 @@ export default function Home() {
       id: `DISP-${dateCompact}-${timeCompact}`,
       timestamp: now.toISOString(),
       dispatchedChannel: dispatchedChannelName,
+      userSelectedObjective: (currentResult as any).userSelectedObjective !== undefined ? (currentResult as any).userSelectedObjective : true,
       strategy: {
         ...currentResult.strategy,
         selectedChannel: resolvedChannel,

@@ -529,18 +529,14 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       return;
     }
 
-    // Mandatory Objective Gating: Column 3 requires either structured primary/secondary objective OR an objective pill / custom text
-    const hasObjectiveInStructured = Boolean(structPrimaryObjective || structSecondaryObjective.trim());
-    const hasObjectiveInPillsOrText = Boolean(objectivePills.length > 0 || objectiveText.trim().length > 0);
-
-    if (!hasObjectiveInStructured && !hasObjectiveInPillsOrText) {
-      triggerValidationError("Please select a Business Objective (dropdown or pill) to proceed.");
-      return;
-    }
-
     clearValidationTimers();
     setIsValidationErrorFading(false);
     setValidationError(null);
+
+    const hasSelectedObjective = Boolean(
+      (objectiveTab === 'structured' && (structPrimaryObjective || structSecondaryObjective.trim())) ||
+      (objectiveTab === 'text' && (objectivePills.length > 0 || objectiveText.trim().length > 0))
+    );
 
     const finalCustomerName = structCustomerName.trim() || 'Customer';
     const finalEventTitle = structEventTitle.trim() || (structEventType ? structEventType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : (eventPills[0] || 'Business Event'));
@@ -645,6 +641,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       objectiveText: finalObjectiveText,
       objectivePills: finalObjectivePills,
       structuredObjective: objectivePayload,
+      userSelectedObjective: hasSelectedObjective,
       useSamplePolicyTree: true,
     });
   };
@@ -1316,52 +1313,56 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           )}
         </div>
 
-        {/* Validation Error Alert Banner - Compact & Gradual Disappearing (1.2s visible + 0.6s fade = 1.8s) */}
-        {validationError && (
+        {/* ACTION BUTTONS (Policy Rules + Primary Submit CTA) */}
+        <div className="space-y-2">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+            {onNavigateToPolicyTree ? (
+              <button
+                type="button"
+                onClick={onNavigateToPolicyTree}
+                className="w-full sm:w-52 h-11 px-5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-900 rounded-lg text-sm font-bold shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm flex items-center justify-center space-x-2"
+              >
+                <GitBranch strokeWidth={1.75} className="w-4 h-4 text-aurora-primary" />
+                <span>Add Policy Rules</span>
+              </button>
+            ) : (
+              <div />
+            )}
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full sm:w-52 h-11 px-5 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-sm font-bold shadow-aurora-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50 flex items-center justify-center space-x-2"
+            >
+              {isLoading ? (
+                <span className="flex items-center space-x-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                  <span>Generating...</span>
+                </span>
+              ) : (
+                <span className="flex items-center space-x-2">
+                  <span>Generate Response</span>
+                  <ArrowRight strokeWidth={1.75} className="w-4 h-4" />
+                </span>
+              )}
+            </button>
+          </div>
+
+          {/* Validation Error Alert Banner - Positioned BELOW Action Buttons with Smooth Height/Opacity Transitions */}
           <div
-            className={`py-2.5 px-3.5 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2 text-xs font-medium shadow-2xs transition-all duration-600 ease-out transform ${
-              isValidationErrorFading
-                ? 'opacity-0 -translate-y-1 scale-98 pointer-events-none'
-                : 'opacity-100 translate-y-0 scale-100 animate-fadeIn'
+            className={`flex justify-end transition-all duration-500 ease-in-out overflow-hidden ${
+              validationError ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
             }`}
           >
-            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
-            <span>{validationError}</span>
-          </div>
-        )}
-
-        {/* ACTION BUTTONS (Policy Rules + Primary Submit CTA) */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
-          {onNavigateToPolicyTree ? (
-            <button
-              type="button"
-              onClick={onNavigateToPolicyTree}
-              className="w-full sm:w-52 h-11 px-5 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-900 rounded-lg text-sm font-bold shadow-2xs transition-all transform hover:-translate-y-0.5 active:translate-y-0 hover:shadow-sm flex items-center justify-center space-x-2"
+            <div
+              className={`w-full sm:w-auto min-w-[320px] max-w-md py-2 px-3 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2 text-xs font-medium shadow-2xs transition-all duration-600 ease-out transform ${
+                isValidationErrorFading ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-0'
+              }`}
             >
-              <GitBranch strokeWidth={1.75} className="w-4 h-4 text-aurora-primary" />
-              <span>Add Policy Rules</span>
-            </button>
-          ) : (
-            <div />
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full sm:w-52 h-11 px-5 bg-aurora-primary hover:bg-aurora-primary-dark text-white rounded-lg text-sm font-bold shadow-aurora-md transition-all transform hover:-translate-y-0.5 active:translate-y-0 disabled:hover:translate-y-0 disabled:opacity-50 flex items-center justify-center space-x-2"
-          >
-            {isLoading ? (
-              <span className="flex items-center space-x-2">
-                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-                <span>Generating...</span>
-              </span>
-            ) : (
-              <span className="flex items-center space-x-2">
-                <span>Generate Response</span>
-                <ArrowRight strokeWidth={1.75} className="w-4 h-4" />
-              </span>
-            )}
-          </button>
+              <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          </div>
         </div>
       </form>
     </div>

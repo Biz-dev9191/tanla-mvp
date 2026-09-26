@@ -100,14 +100,14 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             <table className="w-full text-xs text-left">
               <thead className="bg-aurora-neutral-100 border-b border-aurora-neutral-200 text-aurora-neutral-700 font-semibold uppercase tracking-wider">
                 <tr>
-                  <th className="py-3 px-4">Dispatched / ID</th>
-                  <th className="py-3 px-4">Customer</th>
-                  <th className="py-3 px-4">Event Summary</th>
-                  <th className="py-3 px-4">Objective</th>
-                  <th className="py-3 px-4">Dispatched Channel</th>
-                  <th className="py-3 px-4">Decision</th>
-                  <th className="py-3 px-4">Quality Checks</th>
-                  <th className="py-3 px-4 text-right">Action</th>
+                  <th className="py-3 px-4 w-[14%]">Dispatched / ID</th>
+                  <th className="py-3 px-4 w-[14%]">Customer</th>
+                  <th className="py-3 px-4 w-[18%]">Event Summary</th>
+                  <th className="py-3 px-4 w-[14%]">Objective</th>
+                  <th className="py-3 px-4 w-[15%]">Dispatched Channel</th>
+                  <th className="py-3 px-4 w-[8%]">Decision</th>
+                  <th className="py-3 px-4 w-[9%]">Quality Checks</th>
+                  <th className="py-3 px-4 w-[8%] text-right">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-aurora-neutral-200/70">
@@ -125,17 +125,23 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                         {run.customer.segment} · {run.customer.digitalProfile}
                       </div>
                     </td>
-                    <td className="py-3 px-4 max-w-xs truncate text-aurora-neutral-700">
+                    <td className="py-3 px-4 text-aurora-neutral-700 leading-snug whitespace-normal break-words max-w-[190px]">
                       {run.event.title}
                     </td>
                     <td className="py-3 px-4 max-w-xs">
-                      <div className="font-semibold text-aurora-neutral-900 capitalize">
-                        {run.objective.primary.replace(/_/g, ' ')}
-                      </div>
-                      {run.objective.secondary && run.objective.secondary.toLowerCase() !== run.objective.primary.replace(/_/g, ' ').toLowerCase() && (
-                        <div className="text-[11px] text-aurora-neutral-500 truncate mt-0.5" title={run.objective.secondary}>
-                          {run.objective.secondary}
-                        </div>
+                      {(run as any).userSelectedObjective !== false && run.objective?.primary ? (
+                        <>
+                          <div className="font-semibold text-aurora-neutral-900 capitalize">
+                            {run.objective.primary.replace(/_/g, ' ')}
+                          </div>
+                          {run.objective.secondary && run.objective.secondary.toLowerCase() !== run.objective.primary.replace(/_/g, ' ').toLowerCase() && (
+                            <div className="text-[11px] text-aurora-neutral-500 truncate mt-0.5" title={run.objective.secondary}>
+                              {run.objective.secondary}
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-aurora-neutral-400 font-mono font-medium">--</span>
                       )}
                     </td>
                     <td className="py-3 px-4 font-semibold text-aurora-primary font-mono text-[11px]">
@@ -483,7 +489,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                       )}
                       <div className="flex justify-between py-1 border-b border-aurora-neutral-100">
                         <span className="text-aurora-neutral-500">Primary Objective</span>
-                        <span className="font-semibold text-aurora-neutral-900">{inspectedRun.objective.primary.replace(/_/g, ' ')}</span>
+                        <span className="font-semibold text-aurora-neutral-900">
+                          {(inspectedRun as any).userSelectedObjective !== false && inspectedRun.objective?.primary
+                            ? inspectedRun.objective.primary.replace(/_/g, ' ')
+                            : '--'}
+                        </span>
                       </div>
                       <div className="py-1">
                         <span className="text-aurora-neutral-500 block mb-0.5">Verified Facts</span>
