@@ -107,7 +107,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                   <th className="py-3 px-4 w-[15%]">Dispatched Channel</th>
                   <th className="py-3 px-4 w-[8%]">Decision</th>
                   <th className="py-3 px-4 w-[9%]">Quality Checks</th>
-                  <th className="py-3 px-4 w-[8%] text-right">Action</th>
+                  <th className="py-3 px-4 w-[8%] text-left">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-aurora-neutral-200/70">
@@ -172,11 +172,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                         <span>{run.guardrails.status}</span>
                       </span>
                     </td>
-                    <td className="py-3 px-4 text-right">
+                    <td className="py-3 px-4 text-left">
                       <button
                         type="button"
                         onClick={() => handleOpenInspector(run)}
-                        className="px-2.5 py-1 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 rounded text-xs font-semibold transition flex items-center space-x-1 ml-auto cursor-pointer"
+                        className="px-2.5 py-1 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 rounded text-xs font-semibold transition inline-flex items-center space-x-1 cursor-pointer"
                         title="Inspect record details without affecting active generated output"
                       >
                         <Eye strokeWidth={1.5} className="w-3.5 h-3.5" />
