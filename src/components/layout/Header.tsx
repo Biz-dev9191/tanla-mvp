@@ -32,7 +32,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
-  // Close menu on ESC key
+  // Close menu on ESC key or when navigating to home
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsMenuOpen(false);
@@ -40,6 +40,12 @@ export const Header: React.FC<HeaderProps> = ({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'home') {
+      setIsMenuOpen(false);
+    }
+  }, [activeTab]);
 
   const navItems = [
     {
@@ -100,14 +106,16 @@ export const Header: React.FC<HeaderProps> = ({
             
             {/* Left: Navigation Menu Trigger + Brand Logo */}
             <div className="flex items-center space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsMenuOpen(true)}
-                className="flex items-center justify-center p-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20"
-                aria-label="Open Navigation Menu"
-              >
-                <Menu strokeWidth={1.75} className="w-4 h-4" />
-              </button>
+              {activeTab !== 'home' && (
+                <button
+                  type="button"
+                  onClick={() => setIsMenuOpen(true)}
+                  className="flex items-center justify-center p-2 bg-aurora-neutral-100 hover:bg-aurora-primary hover:text-white border border-aurora-neutral-300 text-aurora-neutral-900 rounded-md text-xs shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-aurora-primary/20 animate-fadeIn"
+                  aria-label="Open Navigation Menu"
+                >
+                  <Menu strokeWidth={1.75} className="w-4 h-4" />
+                </button>
+              )}
 
               <button
                 type="button"
@@ -217,21 +225,38 @@ export const Header: React.FC<HeaderProps> = ({
                     {navItems.map((item) => {
                       const Icon = item.icon;
                       const isActive = activeTab === item.id;
+                      const isControlRoom = item.id === 'control-room';
+                      const isDisabled = isControlRoom && !hasActiveRun;
 
                       return (
                         <button
                           key={item.id}
                           type="button"
-                          onClick={() => handleSelectTab(item.id)}
+                          onClick={() => {
+                            if (!isDisabled) {
+                              handleSelectTab(item.id);
+                            }
+                          }}
+                          disabled={isDisabled}
+                          aria-disabled={isDisabled}
+                          title={
+                            isDisabled
+                              ? 'Generate a communication in Communication Brief first to view Decision & Previews'
+                              : undefined
+                          }
                           className={`w-full flex items-start space-x-3 p-2.5 rounded-lg text-left transition-all ${
-                            isActive
-                              ? 'bg-aurora-primary-light text-aurora-primary border border-aurora-primary/20 shadow-sm'
-                              : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-transparent'
+                            isDisabled
+                              ? 'opacity-40 cursor-not-allowed bg-aurora-neutral-50/60 border border-transparent select-none'
+                              : isActive
+                              ? 'bg-aurora-primary-light text-aurora-primary border border-aurora-primary/20 shadow-sm cursor-pointer'
+                              : 'text-aurora-neutral-700 hover:text-aurora-neutral-900 hover:bg-aurora-neutral-100 border border-transparent cursor-pointer'
                           }`}
                         >
                           <div
-                            className={`p-1.5 rounded-md mt-0.5 flex-shrink-0 ${
-                              isActive
+                            className={`p-1.5 rounded-md mt-0.5 flex-shrink-0 transition-colors ${
+                              isDisabled
+                                ? 'bg-aurora-neutral-200/60 text-aurora-neutral-400'
+                                : isActive
                                 ? 'bg-aurora-primary text-white'
                                 : 'bg-aurora-neutral-200 text-aurora-neutral-700'
                             }`}
@@ -240,18 +265,35 @@ export const Header: React.FC<HeaderProps> = ({
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
-                              <span className="text-xs font-bold text-aurora-neutral-900">
+                              <span
+                                className={`text-xs font-bold ${
+                                  isDisabled ? 'text-aurora-neutral-400' : 'text-aurora-neutral-900'
+                                }`}
+                              >
                                 {item.label}
                               </span>
+                              {isDisabled && (
+                                <span className="text-[10px] font-medium text-aurora-neutral-400 bg-aurora-neutral-100 border border-aurora-neutral-200/80 px-1.5 py-0.5 rounded">
+                                  Not Generated
+                                </span>
+                              )}
                             </div>
-                            <p className="text-[11px] text-aurora-neutral-500 mt-0.5 leading-snug">
+                            <p
+                              className={`text-[11px] mt-0.5 leading-snug ${
+                                isDisabled ? 'text-aurora-neutral-400' : 'text-aurora-neutral-500'
+                              }`}
+                            >
                               {item.description}
                             </p>
                           </div>
                           <ChevronRight
                             strokeWidth={1.5}
                             className={`w-4 h-4 mt-1.5 flex-shrink-0 ${
-                              isActive ? 'text-aurora-primary' : 'text-aurora-neutral-400'
+                              isDisabled
+                                ? 'text-aurora-neutral-300'
+                                : isActive
+                                ? 'text-aurora-primary'
+                                : 'text-aurora-neutral-400'
                             }`}
                           />
                         </button>
