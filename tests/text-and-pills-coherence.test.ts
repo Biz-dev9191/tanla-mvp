@@ -143,7 +143,140 @@ async function runCoherenceTests() {
   assert(res5.messages.sms.characterCount <= 160, `SMS character limit exceeded (${res5.messages.sms.characterCount})`);
   console.log('✅ Test 5 Passed: Customer Complaint acknowledges grievance with concrete supervisor SLA.\n');
 
-  console.log('🎉 ALL 5 ACTIVE COHERENCE & TEXT/PILLS INTEGRATION TESTS PASSED SUCCESSFULLY!');
+  // Test 6: Information Hierarchy - Structured Form (Tier 1) Overrides Contradictory Text (Tier 3)
+  console.log('--- Test 6: Information Hierarchy (Tier 1 Structured Form Overrides Contradictory Tier 3 Text) ---');
+  const payload6: StreamlinedBriefPayload = {
+    // Structured form explicitly says Senior (55+) and VIP
+    structuredCustomer: {
+      id: 'CUST-TEST-6',
+      name: 'Robert Davis',
+      age: 68,
+      ageGroup: '55+',
+      segment: 'VIP',
+      digitalProfile: 'Assisted',
+      preferredLanguage: 'English',
+      preferredChannel: 'Email',
+      consent: { transactional: true, promotional: false, voice: true },
+      customerValue: 'VIP',
+      tenureMonths: 48,
+      recentCommunicationCount24h: { transactional: 1, promotional: 0 },
+      previousSupportContacts: 0,
+      sentiment: 'Neutral',
+      email: 'robert.davis@example.com',
+      phone: '+1 555 019 2831',
+    },
+    // Contradictory text claiming customer is a 21-year-old student with Standard tier
+    customerProfileText: 'Customer is a 21 yo college student named Rob, Standard account tier with app-only habits.',
+    customerPills: ['VIP'],
+    structuredEvent: {
+      id: 'EVT-TEST-6',
+      eventType: 'payment_successful_order_failed',
+      title: 'Payment Received / Order Provisioning Update',
+      description: 'Order failed after capture.',
+      timestamp: 'Just now',
+      verifiedFacts: ['Event: Payment Received / Order Provisioning Update'],
+      resolutionStatus: 'Refund Initiated',
+    },
+    eventHistoryText: 'Payment received but inventory out of stock. Order cancelled.',
+    eventPills: ['Payment Ok / Order Failed'],
+    structuredObjective: {
+      primary: 'reassure_customer',
+      secondary: 'Reassure customer / Calm anxiety',
+    },
+    useSamplePolicyTree: true,
+  };
+
+  const res6 = await orchestrateCommunication(payload6);
+  console.log(`- Synthesized Customer Age Group: ${res6.customer.ageGroup} (Expected '55+')`);
+  console.log(`- Synthesized Customer Segment: ${res6.customer.segment} (Expected 'High Value' or VIP)`);
+  console.log(`- Channel Selected: ${res6.strategy.selectedChannel} (Expected 'Email' for Assisted/55+)`);
+
+  assert(res6.customer.ageGroup === '55+', `Expected Tier 1 Structured ageGroup '55+', got '${res6.customer.ageGroup}'`);
+  assert(res6.customer.customerValue === 'VIP', `Expected Tier 1 Structured value 'VIP', got '${res6.customer.customerValue}'`);
+  assert(res6.strategy.selectedChannel === 'Email', `Expected Assisted channel 'Email', got '${res6.strategy.selectedChannel}'`);
+  console.log('✅ Test 6 Passed: Tier 1 Structured Form strictly overrides contradictory Tier 3 text.\n');
+
+  // Test 7: Information Hierarchy - Filter Pill (Tier 2) Overrides Contradictory Text (Tier 3) When Structured Is Empty
+  console.log('--- Test 7: Information Hierarchy (Tier 2 Pill Overrides Contradictory Text) ---');
+  const payload7: StreamlinedBriefPayload = {
+    customerProfileText: 'Customer is 45 years old Gen X working professional named Maya Lin.',
+    customerPills: ['18–24', 'Standard', 'Digital-first'], // Pill explicitly indicates Gen Z
+    eventHistoryText: 'Payment failed for checkout. Card declined.',
+    eventPills: ['Payment Failed'],
+    objectiveText: 'Send 1-click retry payment link.',
+    objectivePills: ['Recover Revenue'],
+    useSamplePolicyTree: true,
+  };
+
+  const res7 = await orchestrateCommunication(payload7);
+  console.log(`- Synthesized Age Group from Pill: ${res7.customer.ageGroup} (Expected '18–24')`);
+  console.log(`- Synthesized Persona Cohort: ${res7.agentSteps[0].details[0]}`);
+
+  assert(res7.customer.ageGroup === '18–24', `Expected Pill Tier 2 ageGroup '18–24', got '${res7.customer.ageGroup}'`);
+  console.log('✅ Test 7 Passed: Tier 2 Pill correctly prioritized over contradictory freeform text.\n');
+
+  // Test 8: Strict Zero-Manufactured Information Engine
+  console.log('--- Test 8: Strict Zero-Manufactured Information (No Dummy $49.50 or PAY_99482) ---');
+  const payload8: StreamlinedBriefPayload = {
+    customerProfileText: 'Customer John Doe.',
+    customerPills: ['25–34', 'Standard'],
+    // Omit transactionId and amount completely!
+    eventHistoryText: 'Payment was charged but the order was cancelled due to an internal provisioning error.',
+    eventPills: ['Payment Ok / Order Failed'],
+    objectiveText: 'Inform customer of automated full refund and confirm zero action is needed.',
+    objectivePills: ['Resolve Issue Proactively'],
+    useSamplePolicyTree: true,
+  };
+
+  const res8 = await orchestrateCommunication(payload8);
+  console.log(`- Synthesized Event Amount: ${res8.event.amount || '(None / Undefined - Correct)'}`);
+  console.log(`- Synthesized Event TxId: ${res8.event.transactionId || '(None / Undefined - Correct)'}`);
+  console.log(`- WhatsApp Message Body:\n  "${res8.messages.whatsapp.body}"`);
+
+  assert(!res8.messages.whatsapp.body.includes('$49.50'), 'Must NOT manufacture synthetic default amount $49.50');
+  assert(!res8.messages.whatsapp.body.includes('PAY_99482'), 'Must NOT manufacture synthetic default transaction ID PAY_99482');
+  assert(!res8.messages.sms.body.includes('$49.50'), 'SMS must not manufacture $49.50');
+  assert(!res8.messages.email.body.includes('$49.50'), 'Email must not manufacture $49.50');
+  assert(res8.messages.whatsapp.body.toLowerCase().includes('refund'), 'Message should reference refund naturally');
+  console.log('✅ Test 8 Passed: Strict Zero-Manufactured Information verified. No hallucinated IDs or amounts.\n');
+
+  // Test 9: Purview Isolation & Text Supplementation
+  console.log('--- Test 9: Purview Isolation & Narrative Text Supplementation ---');
+  const payload9: StreamlinedBriefPayload = {
+    structuredCustomer: {
+      id: 'CUST-TEST-9',
+      name: 'Samir Patel',
+      ageGroup: '35–44',
+      segment: 'Standard',
+      // Sentiment left unselected in structured form!
+    },
+    customerProfileText: 'Samir Patel contacted support multiple times and is extremely frustrated and angry about service quality.',
+    customerPills: ['35–44', 'Standard'],
+    structuredEvent: {
+      id: 'EVT-TEST-9',
+      eventType: 'customer_complaint',
+      title: 'Billing Dispute / Escalation Review',
+      description: 'Customer dispute regarding duplicate billing.',
+      resolutionStatus: 'Pending Approval',
+    },
+    eventHistoryText: 'Billing dispute logged for review.',
+    eventPills: ['Billing Dispute / Escalation'],
+    structuredObjective: {
+      primary: 'resolve_issue',
+    },
+    objectiveText: 'Offer voucher code PEACE20 to reassure customer.',
+    useSamplePolicyTree: true,
+  };
+
+  const res9 = await orchestrateCommunication(payload9);
+  console.log(`- Synthesized Customer Sentiment: ${res9.customer.sentiment} (Expected 'Frustrated' supplemented from text)`);
+  console.log(`- Voucher code citation: ${res9.messages.whatsapp.body.includes('PEACE20') ? 'PEACE20 Cited' : 'Not Cited'}`);
+
+  assert(res9.customer.sentiment === 'Frustrated', `Expected sentiment 'Frustrated' supplemented from text, got '${res9.customer.sentiment}'`);
+  assert(res9.messages.whatsapp.body.includes('PEACE20'), 'Objective voucher note PEACE20 should be integrated into final copy');
+  console.log('✅ Test 9 Passed: Narrative text successfully supplements unselected fields and vouchers.\n');
+
+  console.log('🎉 ALL 9 ACTIVE COHERENCE, HIERARCHY & TEXT/PILLS INTEGRATION TESTS PASSED SUCCESSFULLY!');
 }
 
 runCoherenceTests().catch((err) => {

@@ -5,12 +5,15 @@ export type PreferredChannel = 'WhatsApp' | 'Email' | 'SMS' | 'Voice';
 export type AgeGroup = '18–24' | '25–34' | '35–44' | '45–54' | '55+';
 
 export interface StreamlinedBriefPayload {
-  customerProfileText: string;
-  customerPills: string[];
-  eventHistoryText: string;
-  eventPills: string[];
-  objectiveText: string;
-  objectivePills: string[];
+  customerProfileText?: string;
+  customerPills?: string[];
+  eventHistoryText?: string;
+  eventPills?: string[];
+  objectiveText?: string;
+  objectivePills?: string[];
+  structuredCustomer?: Partial<CustomerProfile>;
+  structuredEvent?: Partial<BusinessEvent>;
+  structuredObjective?: Partial<BusinessObjective>;
   useSamplePolicyTree?: boolean;
   customPolicyDocText?: string;
 }

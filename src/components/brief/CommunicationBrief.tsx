@@ -138,95 +138,184 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onViewCurrentResult,
   onResetCurrentResult,
 }) => {
-  // Ensure any stale brief storage from previous sessions is removed on mount
-  useEffect(() => {
+  // Session storage state initialization with reload check (cleared on reload/close)
+  const [initialSessionState] = useState<any>(() => {
     if (typeof window !== 'undefined') {
       try {
-        localStorage.removeItem('aurora_brief_state');
+        const navEntry = window.performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming | undefined;
+        const isReload = navEntry?.type === 'reload' || (window.performance as any)?.navigation?.type === 1;
+        if (!isReload) {
+          const raw = sessionStorage.getItem('aurora_session_brief_state');
+          if (raw) return JSON.parse(raw);
+        } else {
+          sessionStorage.removeItem('aurora_session_brief_state');
+        }
       } catch (e) {}
     }
-  }, []);
+    return null;
+  });
 
   // Scenario Presets Selection State (Unselected and Minimized by default)
-  const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>('');
+  const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(initialSessionState?.isMatrixExpanded ?? false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(initialSessionState?.selectedCustomerId ?? '');
+  const [selectedEventId, setSelectedEventId] = useState<string>(initialSessionState?.selectedEventId ?? '');
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(initialSessionState?.selectedObjectiveId ?? '');
 
   // Column Tabs: Default to 'structured' on the LEFT
-  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>('structured');
-  const [eventTab, setEventTab] = useState<'structured' | 'text'>('structured');
-  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>('structured');
+  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>(initialSessionState?.customerTab ?? 'structured');
+  const [eventTab, setEventTab] = useState<'structured' | 'text'>(initialSessionState?.eventTab ?? 'structured');
+  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>(initialSessionState?.objectiveTab ?? 'structured');
 
-  // Column 1 Structured & Text State (Default Empty)
-  const [structCustomerName, setStructCustomerName] = useState('');
-  const [structEmail, setStructEmail] = useState('');
-  const [structPhone, setStructPhone] = useState('');
-  const [structAgeGroup, setStructAgeGroup] = useState<any>('25–34');
-  const [structSegment, setStructSegment] = useState<any>('Standard');
-  const [structDigitalProfile, setStructDigitalProfile] = useState<any>('Digital-first');
-  const [structConsentTx, setStructConsentTx] = useState(true);
-  const [structConsentPromo, setStructConsentPromo] = useState(true);
-  const [structSentiment, setStructSentiment] = useState<any>('Neutral');
-  const [structSupportContacts, setStructSupportContacts] = useState(0);
-  const [customerText, setCustomerText] = useState('');
-  const [customerPills, setCustomerPills] = useState<string[]>([]);
+  // Column 1 Structured & Text State (Default Empty - NOT Pre-filled)
+  const [structCustomerName, setStructCustomerName] = useState(initialSessionState?.structCustomerName ?? '');
+  const [structEmail, setStructEmail] = useState(initialSessionState?.structEmail ?? '');
+  const [structPhone, setStructPhone] = useState(initialSessionState?.structPhone ?? '');
+  const [structAgeGroup, setStructAgeGroup] = useState<any>(initialSessionState?.structAgeGroup ?? '');
+  const [structSegment, setStructSegment] = useState<any>(initialSessionState?.structSegment ?? '');
+  const [structDigitalProfile, setStructDigitalProfile] = useState<any>(initialSessionState?.structDigitalProfile ?? '');
+  const [structConsentTx, setStructConsentTx] = useState(initialSessionState?.structConsentTx ?? true);
+  const [structConsentPromo, setStructConsentPromo] = useState(initialSessionState?.structConsentPromo ?? false);
+  const [structSentiment, setStructSentiment] = useState<any>(initialSessionState?.structSentiment ?? '');
+  const [structSupportContacts, setStructSupportContacts] = useState(initialSessionState?.structSupportContacts ?? 0);
+  const [customerText, setCustomerText] = useState(initialSessionState?.customerText ?? '');
+  const [customerPills, setCustomerPills] = useState<string[]>(initialSessionState?.customerPills ?? []);
   const [customCustomerPillInput, setCustomCustomerPillInput] = useState('');
   const [isAddingCustomerPill, setIsAddingCustomerPill] = useState(false);
 
-  // Column 2 Structured & Text State (Default Empty)
-  const [structEventType, setStructEventType] = useState<any>('payment_successful_order_failed');
-  const [structEventTitle, setStructEventTitle] = useState('');
-  const [structTransactionId, setStructTransactionId] = useState('');
-  const [structOrderId, setStructOrderId] = useState('');
-  const [structAmount, setStructAmount] = useState('');
-  const [structVerifiedFacts, setStructVerifiedFacts] = useState('');
-  const [structResolutionStatus, setStructResolutionStatus] = useState<any>('Refund Initiated');
-  const [eventText, setEventText] = useState('');
-  const [eventPills, setEventPills] = useState<string[]>([]);
+  // Column 2 Structured & Text State (Default Empty - NOT Pre-filled, Mandatory Event)
+  const [structEventType, setStructEventType] = useState<any>(initialSessionState?.structEventType ?? '');
+  const [structEventTitle, setStructEventTitle] = useState(initialSessionState?.structEventTitle ?? '');
+  const [structTransactionId, setStructTransactionId] = useState(initialSessionState?.structTransactionId ?? '');
+  const [structOrderId, setStructOrderId] = useState(initialSessionState?.structOrderId ?? '');
+  const [structAmount, setStructAmount] = useState(initialSessionState?.structAmount ?? '');
+  const [structVerifiedFacts, setStructVerifiedFacts] = useState(initialSessionState?.structVerifiedFacts ?? '');
+  const [structResolutionStatus, setStructResolutionStatus] = useState<any>(initialSessionState?.structResolutionStatus ?? '');
+  const [eventText, setEventText] = useState(initialSessionState?.eventText ?? '');
+  const [eventPills, setEventPills] = useState<string[]>(initialSessionState?.eventPills ?? []);
   const [customEventPillInput, setCustomEventPillInput] = useState('');
   const [isAddingEventPill, setIsAddingEventPill] = useState(false);
 
-  // Column 3 Structured & Text State (Default Empty)
-  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>('resolve_issue');
-  const [structSecondaryObjective, setStructSecondaryObjective] = useState('');
-  const [objectiveText, setObjectiveText] = useState('');
-  const [objectivePills, setObjectivePills] = useState<string[]>([]);
+  // Column 3 Structured & Text State (Default Empty - NOT Pre-filled)
+  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>(initialSessionState?.structPrimaryObjective ?? '');
+  const [structSecondaryObjective, setStructSecondaryObjective] = useState(initialSessionState?.structSecondaryObjective ?? '');
+  const [objectiveText, setObjectiveText] = useState(initialSessionState?.objectiveText ?? '');
+  const [objectivePills, setObjectivePills] = useState<string[]>(initialSessionState?.objectivePills ?? []);
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
+
+  // Validation Error State
+  const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Save brief state to sessionStorage on any modification so state survives in-app tab/page changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const briefData = {
+          isMatrixExpanded,
+          selectedCustomerId,
+          selectedEventId,
+          selectedObjectiveId,
+          customerTab,
+          eventTab,
+          objectiveTab,
+          structCustomerName,
+          structEmail,
+          structPhone,
+          structAgeGroup,
+          structSegment,
+          structDigitalProfile,
+          structConsentTx,
+          structConsentPromo,
+          structSentiment,
+          structSupportContacts,
+          customerText,
+          customerPills,
+          structEventType,
+          structEventTitle,
+          structTransactionId,
+          structOrderId,
+          structAmount,
+          structVerifiedFacts,
+          structResolutionStatus,
+          eventText,
+          eventPills,
+          structPrimaryObjective,
+          structSecondaryObjective,
+          objectiveText,
+          objectivePills,
+        };
+        sessionStorage.setItem('aurora_session_brief_state', JSON.stringify(briefData));
+      } catch (e) {}
+    }
+  }, [
+    isMatrixExpanded,
+    selectedCustomerId,
+    selectedEventId,
+    selectedObjectiveId,
+    customerTab,
+    eventTab,
+    objectiveTab,
+    structCustomerName,
+    structEmail,
+    structPhone,
+    structAgeGroup,
+    structSegment,
+    structDigitalProfile,
+    structConsentTx,
+    structConsentPromo,
+    structSentiment,
+    structSupportContacts,
+    customerText,
+    customerPills,
+    structEventType,
+    structEventTitle,
+    structTransactionId,
+    structOrderId,
+    structAmount,
+    structVerifiedFacts,
+    structResolutionStatus,
+    eventText,
+    eventPills,
+    structPrimaryObjective,
+    structSecondaryObjective,
+    objectiveText,
+    objectivePills,
+  ]);
 
   // Reset entire brief state
   const handleResetBrief = () => {
     if (typeof window !== 'undefined') {
       try {
+        sessionStorage.removeItem('aurora_session_brief_state');
         localStorage.removeItem('aurora_brief_state');
       } catch (e) {}
     }
+    setValidationError(null);
     setSelectedCustomerId('');
     setSelectedEventId('');
     setSelectedObjectiveId('');
     setStructCustomerName('');
     setStructEmail('');
     setStructPhone('');
-    setStructAgeGroup('25–34');
-    setStructSegment('Standard');
-    setStructDigitalProfile('Digital-first');
+    setStructAgeGroup('');
+    setStructSegment('');
+    setStructDigitalProfile('');
     setStructConsentTx(true);
-    setStructConsentPromo(true);
-    setStructSentiment('Neutral');
+    setStructConsentPromo(false);
+    setStructSentiment('');
     setStructSupportContacts(0);
     setCustomerText('');
     setCustomerPills([]);
-    setStructEventType('payment_successful_order_failed');
+    setStructEventType('');
     setStructEventTitle('');
     setStructTransactionId('');
     setStructOrderId('');
     setStructAmount('');
     setStructVerifiedFacts('');
-    setStructResolutionStatus('Refund Initiated');
+    setStructResolutionStatus('');
     setEventText('');
     setEventPills([]);
-    setStructPrimaryObjective('resolve_issue');
+    setStructPrimaryObjective('');
     setStructSecondaryObjective('');
     setObjectiveText('');
     setObjectivePills([]);
@@ -242,10 +331,10 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       setStructCustomerName('');
       setStructEmail('');
       setStructPhone('');
-      setStructAgeGroup('25–34');
-      setStructSegment('Standard');
-      setStructDigitalProfile('Digital-first');
-      setStructSentiment('Neutral');
+      setStructAgeGroup('');
+      setStructSegment('');
+      setStructDigitalProfile('');
+      setStructSentiment('');
       setStructSupportContacts(0);
       setCustomerText('');
       setCustomerPills([]);
@@ -270,13 +359,13 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const handleEventChange = (evtId: string) => {
     setSelectedEventId(evtId);
     if (!evtId) {
-      setStructEventType('payment_successful_order_failed');
+      setStructEventType('');
       setStructEventTitle('');
       setStructTransactionId('');
       setStructOrderId('');
       setStructAmount('');
       setStructVerifiedFacts('');
-      setStructResolutionStatus('Refund Initiated');
+      setStructResolutionStatus('');
       setEventText('');
       setEventPills([]);
       return;
@@ -299,7 +388,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const handleObjectiveChange = (objId: string) => {
     setSelectedObjectiveId(objId);
     if (!objId) {
-      setStructPrimaryObjective('resolve_issue');
+      setStructPrimaryObjective('');
       setStructSecondaryObjective('');
       setObjectiveText('');
       setObjectivePills([]);
@@ -314,12 +403,21 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     }
   };
 
-  // Toggle filter pills
+  // Multi-select pill toggle for Column 1
   const togglePill = (pill: string, list: string[], setList: (l: string[]) => void) => {
     if (list.includes(pill)) {
       setList(list.filter((p) => p !== pill));
     } else {
       setList([...list, pill]);
+    }
+  };
+
+  // Single-select pill toggle (radio behavior) for Columns 2 and 3
+  const selectSinglePill = (pill: string, list: string[], setList: (l: string[]) => void) => {
+    if (list.includes(pill)) {
+      setList([]);
+    } else {
+      setList([pill]);
     }
   };
 
@@ -351,8 +449,19 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Mandatory Event Gating: Column 2 requires either structured eventType OR an event pill / custom event title
+    const hasEventInStructured = Boolean(structEventType || structEventTitle.trim());
+    const hasEventInPillsOrText = Boolean(eventPills.length > 0 || eventText.trim().length > 0);
+
+    if (!hasEventInStructured && !hasEventInPillsOrText) {
+      setValidationError("Column 2 (Business Event *) is mandatory. Please select an Event Type in the Structured Form or choose an Event Pill in Text & Pills.");
+      return;
+    }
+
+    setValidationError(null);
+
     const finalCustomerName = structCustomerName.trim() || 'Customer';
-    const finalEventTitle = structEventTitle.trim() || structEventType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const finalEventTitle = structEventTitle.trim() || (structEventType ? structEventType.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()) : (eventPills[0] || 'Business Event'));
     const finalTxId = structTransactionId.trim();
     const finalOrderId = structOrderId.trim();
     const finalAmount = structAmount.trim();
@@ -364,14 +473,14 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       if (finalTxId) finalVerifiedFacts.push(`Transaction ID: ${finalTxId}`);
       if (finalOrderId) finalVerifiedFacts.push(`Order ID: ${finalOrderId}`);
       if (finalAmount) finalVerifiedFacts.push(`Amount: ${finalAmount}`);
-      if (finalVerifiedFacts.length === 0) {
-        finalVerifiedFacts.push(`Event: ${finalEventTitle}`);
-        finalVerifiedFacts.push(`Status: ${structResolutionStatus}`);
+      if (finalVerifiedFacts.length === 0 && (finalEventTitle || structResolutionStatus)) {
+        if (finalEventTitle) finalVerifiedFacts.push(`Event: ${finalEventTitle}`);
+        if (structResolutionStatus) finalVerifiedFacts.push(`Status: ${structResolutionStatus}`);
       }
     }
 
-    const finalCustomerEmail = structEmail.trim() || `${finalCustomerName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com`;
-    const finalCustomerPhone = structPhone.trim() || '+91 98765 43210';
+    const finalCustomerEmail = structEmail.trim() || (structCustomerName.trim() ? `${finalCustomerName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@example.com` : undefined);
+    const finalCustomerPhone = structPhone.trim() || undefined;
     const computedPreferredChannel: PreferredChannel =
       structDigitalProfile === 'Assisted' || structAgeGroup === '55+'
         ? 'Email'
@@ -383,9 +492,9 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       id: `CUST-${Date.now()}`,
       name: finalCustomerName,
       age: structAgeGroup === '18–24' ? 22 : structAgeGroup === '55+' ? 66 : structAgeGroup === '45–54' ? 48 : structAgeGroup === '35–44' ? 38 : 34,
-      ageGroup: structAgeGroup,
-      segment: structSegment,
-      digitalProfile: structDigitalProfile,
+      ageGroup: structAgeGroup || '25–34',
+      segment: structSegment || 'Standard',
+      digitalProfile: structDigitalProfile || 'Digital-first',
       preferredLanguage: 'English' as const,
       preferredChannel: computedPreferredChannel,
       consent: { transactional: structConsentTx, promotional: structConsentPromo, voice: structDigitalProfile === 'Assisted' },
@@ -393,72 +502,66 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       tenureMonths: 18,
       recentCommunicationCount24h: { transactional: 1, promotional: 0 },
       previousSupportContacts: structSupportContacts,
-      sentiment: structSentiment,
-      email: finalCustomerEmail,
-      phone: finalCustomerPhone,
+      sentiment: structSentiment || 'Neutral',
+      email: finalCustomerEmail || 'customer@example.com',
+      phone: finalCustomerPhone || '+91 98765 43210',
     };
 
     const eventPayload: BusinessEvent = {
       id: `EVT-${Date.now()}`,
-      eventType: structEventType,
+      eventType: structEventType || (eventPills[0]?.toLowerCase().includes('failed') ? 'payment_failed' : 'payment_successful_order_failed'),
       title: finalEventTitle,
       description: eventText.trim() || `${finalEventTitle} status update.`,
       timestamp: 'Just now',
       verifiedFacts: finalVerifiedFacts,
-      resolutionStatus: structResolutionStatus,
+      resolutionStatus: structResolutionStatus || 'In Progress',
       transactionId: finalTxId || undefined,
       orderId: finalOrderId || undefined,
       amount: finalAmount || undefined,
     };
 
     const objectivePayload: BusinessObjective = {
-      primary: structPrimaryObjective,
-      secondary: structSecondaryObjective.trim() || structPrimaryObjective.replace(/_/g, ' '),
-      customNote: objectiveText,
+      primary: structPrimaryObjective || 'resolve_issue',
+      secondary: structSecondaryObjective.trim() || (structPrimaryObjective ? structPrimaryObjective.replace(/_/g, ' ') : 'Resolve issue proactively'),
+      customNote: objectiveText.trim() || undefined,
     };
 
-    if (customerTab === 'structured' && eventTab === 'structured' && objectiveTab === 'structured') {
-      onRunOrchestration({
-        customer: customerPayload,
-        event: eventPayload,
-        objective: objectivePayload,
-        useSamplePolicyTree: true,
-      });
-    } else {
-      const finalCustomerProfileText = customerTab === 'structured' 
-        ? `Customer: ${finalCustomerName}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}, Sentiment: ${structSentiment}, Contacts: ${structSupportContacts}` 
-        : (customerText.trim() || `Customer: ${finalCustomerName || 'Customer'}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}`);
+    const finalCustomerProfileText = customerTab === 'structured' 
+      ? `Customer: ${finalCustomerName}, Age: ${structAgeGroup || 'Not specified'}, Segment: ${structSegment || 'Standard'}, Digital: ${structDigitalProfile || 'Digital-first'}, Sentiment: ${structSentiment || 'Neutral'}, Contacts: ${structSupportContacts}` 
+      : (customerText.trim() || `Customer: ${finalCustomerName || 'Customer'}`);
 
-      const finalCustomerPills = customerTab === 'structured'
-        ? [structAgeGroup, structSegment, structDigitalProfile, structSentiment]
-        : (customerPills.length > 0 ? customerPills : [structAgeGroup, structSegment, structDigitalProfile]);
+    const finalCustomerPills = customerTab === 'structured'
+      ? [structAgeGroup, structSegment, structDigitalProfile, structSentiment].filter(Boolean)
+      : customerPills;
 
-      const finalEventHistoryText = eventTab === 'structured' 
-        ? `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}` 
-        : (eventText.trim() || `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}`);
+    const finalEventHistoryText = eventTab === 'structured' 
+      ? `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}` 
+      : (eventText.trim() || `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}`);
 
-      const finalEventPills = eventTab === 'structured'
-        ? [structEventType.replace(/_/g, ' ')]
-        : (eventPills.length > 0 ? eventPills : [structEventType.replace(/_/g, ' ')]);
+    const finalEventPills = eventTab === 'structured'
+      ? (structEventType ? [structEventType.replace(/_/g, ' ')] : [])
+      : eventPills;
 
-      const finalObjectiveText = objectiveTab === 'structured'
-        ? `${structPrimaryObjective.replace(/_/g, ' ')}. ${structSecondaryObjective}`
-        : (objectiveText.trim() || `${structPrimaryObjective.replace(/_/g, ' ')}. Resolve issue and reassure customer.`);
+    const finalObjectiveText = objectiveTab === 'structured'
+      ? `${(structPrimaryObjective || 'resolve issue').replace(/_/g, ' ')}. ${structSecondaryObjective}`
+      : (objectiveText.trim() || `${(structPrimaryObjective || 'resolve issue').replace(/_/g, ' ')}. Resolve issue and reassure customer.`);
 
-      const finalObjectivePills = objectiveTab === 'structured'
-        ? [structPrimaryObjective.replace(/_/g, ' ')]
-        : (objectivePills.length > 0 ? objectivePills : ['Resolve issue proactively']);
+    const finalObjectivePills = objectiveTab === 'structured'
+      ? (structPrimaryObjective ? [structPrimaryObjective.replace(/_/g, ' ')] : [])
+      : objectivePills;
 
-      onRunOrchestration({
-        customerProfileText: finalCustomerProfileText,
-        customerPills: finalCustomerPills,
-        eventHistoryText: finalEventHistoryText,
-        eventPills: finalEventPills,
-        objectiveText: finalObjectiveText,
-        objectivePills: finalObjectivePills,
-        useSamplePolicyTree: true,
-      });
-    }
+    onRunOrchestration({
+      customerProfileText: finalCustomerProfileText,
+      customerPills: finalCustomerPills,
+      structuredCustomer: customerPayload,
+      eventHistoryText: finalEventHistoryText,
+      eventPills: finalEventPills,
+      structuredEvent: eventPayload,
+      objectiveText: finalObjectiveText,
+      objectivePills: finalObjectivePills,
+      structuredObjective: objectivePayload,
+      useSamplePolicyTree: true,
+    });
   };
 
   return (
@@ -620,6 +723,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         onChange={(e) => setStructAgeGroup(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
+                        <option value="">-- Select Age Cohort --</option>
                         <option value="18–24">18–24 (Gen Z)</option>
                         <option value="25–34">25–34 (Millennial)</option>
                         <option value="35–44">35–44 (Mid Millennial)</option>
@@ -634,6 +738,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         onChange={(e) => setStructSegment(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
+                        <option value="">-- Select Account Tier --</option>
                         <option value="Standard">Standard Tier</option>
                         <option value="Premium">Premium Tier</option>
                         <option value="High Value">High Value VIP</option>
@@ -650,6 +755,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         onChange={(e) => setStructDigitalProfile(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
+                        <option value="">-- Select Digital Profile --</option>
                         <option value="Digital-first">Digital-first (App/WA)</option>
                         <option value="Mixed">Mixed (Email/SMS)</option>
                         <option value="Assisted">Assisted (Email/Voice)</option>
@@ -662,6 +768,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                         onChange={(e) => setStructSentiment(e.target.value)}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
+                        <option value="">-- Select Sentiment --</option>
                         <option value="Neutral">Neutral</option>
                         <option value="Frustrated">Frustrated</option>
                         <option value="Anxious">Anxious</option>
@@ -704,7 +811,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 mb-2">
-                      Filter Pills
+                      Quick Filter Pills <span className="text-aurora-neutral-400 font-normal lowercase">(select multiple)</span>
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {availableCustomerPills.map((pill) => {
@@ -743,7 +850,9 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
               <div className="p-4 bg-aurora-neutral-50/80 border-b border-aurora-neutral-200 space-y-3">
                 <div className="flex items-center space-x-2">
                   <AlertCircle strokeWidth={1.5} className="w-4 h-4 text-aurora-primary" />
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">2. Business Event</h3>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
+                    2. Business Event <span className="text-red-500 font-black text-sm">*</span>
+                  </h3>
                 </div>
                 <div className="flex bg-aurora-neutral-200/70 p-0.5 rounded-lg text-[11px] font-semibold">
                   <button
@@ -786,12 +895,15 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                           const nextType = e.target.value;
                           setStructEventType(nextType);
                           const nextConfig = EVENT_TYPE_CONFIGS[nextType];
-                          if (nextConfig && !nextConfig.statusOptions.some((opt) => opt.value === structResolutionStatus)) {
+                          if (nextConfig) {
                             setStructResolutionStatus(nextConfig.statusOptions[0].value);
+                          } else {
+                            setStructResolutionStatus('');
                           }
                         }}
                         className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                       >
+                        <option value="">-- Select Event Type * --</option>
                         <option value="payment_successful_order_failed">Payment Ok / Order Failed</option>
                         <option value="payment_failed">Payment Failed (Card Decline)</option>
                         <option value="application_incomplete">Pending KYC / Incomplete Application</option>
@@ -841,6 +953,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                           onChange={(e) => setStructResolutionStatus(e.target.value)}
                           className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                         >
+                          <option value="">-- Select Status --</option>
                           {currentConfig.statusOptions.map((opt) => (
                             <option key={opt.value} value={opt.value}>
                               {opt.label}
@@ -883,7 +996,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 mb-2">
-                      Event Category Pills
+                      Event Category Pills <span className="text-aurora-neutral-400 font-normal lowercase">(select one)</span>
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {availableEventPills.map((pill) => {
@@ -892,7 +1005,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                           <button
                             key={pill}
                             type="button"
-                            onClick={() => togglePill(pill, eventPills, setEventPills)}
+                            onClick={() => selectSinglePill(pill, eventPills, setEventPills)}
                             className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition flex items-center space-x-1 ${
                               isSelected
                                 ? 'bg-aurora-primary text-white border-aurora-primary shadow-2xs'
@@ -911,7 +1024,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             </div>
 
             <div className="p-3 bg-aurora-neutral-100 border-t border-aurora-neutral-200 text-[11px] text-aurora-neutral-600">
-              Specifies the transaction event and system status to generate an accurate resolution message.
+              <span className="text-red-600 font-bold">* Mandatory:</span> Select an event type in Structured Form or pick an Event Category Pill in Text & Pills to proceed.
             </div>
           </div>
 
@@ -962,6 +1075,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                       onChange={(e) => setStructPrimaryObjective(e.target.value)}
                       className="w-full p-2 bg-aurora-neutral-100 border border-aurora-neutral-300 rounded text-aurora-neutral-900 font-semibold focus:bg-aurora-neutral-0 focus:ring-1 focus:ring-aurora-primary"
                     >
+                      <option value="">-- Select Primary Objective --</option>
                       <option value="resolve_issue">Resolve issue proactively</option>
                       <option value="reduce_support_contacts">Minimise incoming support contacts (Deflection)</option>
                       <option value="reassure_customer">Reassure customer / Calm anxiety</option>
@@ -1003,7 +1117,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
                   <div>
                     <label className="block text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 mb-2">
-                      Objective Goal Pills
+                      Objective Goal Pills <span className="text-aurora-neutral-400 font-normal lowercase">(select one)</span>
                     </label>
                     <div className="flex flex-wrap gap-1.5">
                       {availableObjectivePills.map((pill) => {
@@ -1012,7 +1126,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                           <button
                             key={pill}
                             type="button"
-                            onClick={() => togglePill(pill, objectivePills, setObjectivePills)}
+                            onClick={() => selectSinglePill(pill, objectivePills, setObjectivePills)}
                             className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border transition flex items-center space-x-1 ${
                               isSelected
                                 ? 'bg-aurora-primary text-white border-aurora-primary shadow-2xs'
@@ -1151,6 +1265,17 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             </div>
           )}
         </div>
+
+        {/* Validation Error Alert Banner */}
+        {validationError && (
+          <div className="p-4 bg-red-50 border border-red-300 rounded-xl text-red-900 flex items-start space-x-3 shadow-2xs animate-fadeIn">
+            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <div className="flex-1">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-red-900">Required Selection Missing</h4>
+              <p className="text-xs text-red-800 mt-0.5 leading-relaxed">{validationError}</p>
+            </div>
+          </div>
+        )}
 
         {/* ACTION BUTTONS (Policy Rules + Primary Submit CTA) */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-3">

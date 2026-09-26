@@ -24,15 +24,80 @@ import { ArrowLeft, RefreshCw, AlertCircle, Sparkles, ShieldCheck, CheckCircle2,
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'home' | 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history'>('home');
   const [isLoading, setIsLoading] = useState(false);
-  const [currentResult, setCurrentResult] = useState<OrchestrationResult | null>(null);
+
+  // Session storage state initialization with reload check (cleared on reload/close)
+  const [initialSessionResult] = useState<OrchestrationResult | null>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const navEntry = window.performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming | undefined;
+        const isReload = navEntry?.type === 'reload' || (window.performance as any)?.navigation?.type === 1;
+        if (!isReload) {
+          const raw = sessionStorage.getItem('aurora_session_current_result');
+          if (raw) return JSON.parse(raw);
+        } else {
+          sessionStorage.removeItem('aurora_session_current_result');
+        }
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  const [initialPolicySessionState] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const navEntry = window.performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming | undefined;
+        const isReload = navEntry?.type === 'reload' || (window.performance as any)?.navigation?.type === 1;
+        if (!isReload) {
+          const raw = sessionStorage.getItem('aurora_session_policy_state');
+          if (raw) return JSON.parse(raw);
+        } else {
+          sessionStorage.removeItem('aurora_session_policy_state');
+        }
+      } catch (e) {}
+    }
+    return null;
+  });
+
+  const [currentResult, setCurrentResult] = useState<OrchestrationResult | null>(initialSessionResult);
   const [history, setHistory] = useState<OrchestrationResult[]>([]);
   const [selectedPolicyNode, setSelectedPolicyNode] = useState<PolicyTreeNode | null>(null);
-  const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(null);
-  const [customPolicyRules, setCustomPolicyRules] = useState<any[]>([]);
-  const [customPolicyDocText, setCustomPolicyDocText] = useState<string | null>(null);
-  const [customStructuredDoc, setCustomStructuredDoc] = useState<StructuredPolicyDocument | null>(null);
+  const [customPolicyTree, setCustomPolicyTree] = useState<PolicyTreeNode | null>(initialPolicySessionState?.customPolicyTree ?? null);
+  const [customPolicyRules, setCustomPolicyRules] = useState<any[]>(initialPolicySessionState?.customPolicyRules ?? []);
+  const [customPolicyDocText, setCustomPolicyDocText] = useState<string | null>(initialPolicySessionState?.customPolicyDocText ?? null);
+  const [customStructuredDoc, setCustomStructuredDoc] = useState<StructuredPolicyDocument | null>(initialPolicySessionState?.customStructuredDoc ?? null);
   const [isApplyingPolicy, setIsApplyingPolicy] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Sync currentResult to sessionStorage across navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (currentResult) {
+          sessionStorage.setItem('aurora_session_current_result', JSON.stringify(currentResult));
+        } else {
+          sessionStorage.removeItem('aurora_session_current_result');
+        }
+      } catch (e) {}
+    }
+  }, [currentResult]);
+
+  // Sync policy state to sessionStorage across navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        if (customPolicyTree || customPolicyRules.length > 0 || customPolicyDocText) {
+          sessionStorage.setItem('aurora_session_policy_state', JSON.stringify({
+            customPolicyTree,
+            customPolicyRules,
+            customPolicyDocText,
+            customStructuredDoc,
+          }));
+        } else {
+          sessionStorage.removeItem('aurora_session_policy_state');
+        }
+      } catch (e) {}
+    }
+  }, [customPolicyTree, customPolicyRules, customPolicyDocText, customStructuredDoc]);
 
   // Scroll to top whenever active tab changes or page loads
   useEffect(() => {
@@ -50,10 +115,22 @@ export default function Home() {
     }
   }, [activeTab]);
 
-  // On mount/refresh, ensure any old cached brief or current result keys are cleared
+  // On mount/refresh, ensure browser reload completely purges session data
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
+        const navEntry = window.performance?.getEntriesByType?.('navigation')?.[0] as PerformanceNavigationTiming | undefined;
+        const isReload = navEntry?.type === 'reload' || (window.performance as any)?.navigation?.type === 1;
+        if (isReload) {
+          sessionStorage.removeItem('aurora_session_brief_state');
+          sessionStorage.removeItem('aurora_session_current_result');
+          sessionStorage.removeItem('aurora_session_policy_state');
+          setCurrentResult(null);
+          setCustomPolicyTree(null);
+          setCustomPolicyRules([]);
+          setCustomPolicyDocText(null);
+          setCustomStructuredDoc(null);
+        }
         localStorage.removeItem('aurora_current_result');
         localStorage.removeItem('aurora_brief_state');
         const savedHistory = localStorage.getItem('aurora_orchestration_history');
@@ -69,6 +146,11 @@ export default function Home() {
   // Clear current active output
   const handleResetCurrentResult = () => {
     setCurrentResult(null);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('aurora_session_current_result');
+      } catch (e) {}
+    }
   };
 
   // Run orchestration
@@ -78,10 +160,16 @@ export default function Home() {
       setErrorMessage(null);
 
       // Validate that all 3 columns have at least 1 input
-      if (payload.customerProfileText !== undefined) {
-        const hasCol1 = payload.customerProfileText.trim().length > 0 || (payload.customerPills && payload.customerPills.length > 0);
-        const hasCol2 = payload.eventHistoryText.trim().length > 0 || (payload.eventPills && payload.eventPills.length > 0);
-        const hasCol3 = payload.objectiveText.trim().length > 0 || (payload.objectivePills && payload.objectivePills.length > 0);
+      if (payload.customerProfileText !== undefined || payload.structuredCustomer !== undefined) {
+        const hasCol1 = Boolean(payload.customerProfileText && payload.customerProfileText.trim().length > 0) || 
+          Boolean(payload.customerPills && payload.customerPills.length > 0) || 
+          Boolean(payload.structuredCustomer && payload.structuredCustomer.name);
+        const hasCol2 = Boolean(payload.eventHistoryText && payload.eventHistoryText.trim().length > 0) || 
+          Boolean(payload.eventPills && payload.eventPills.length > 0) || 
+          Boolean(payload.structuredEvent && (payload.structuredEvent.eventType || payload.structuredEvent.title));
+        const hasCol3 = Boolean(payload.objectiveText && payload.objectiveText.trim().length > 0) || 
+          Boolean(payload.objectivePills && payload.objectivePills.length > 0) || 
+          Boolean(payload.structuredObjective && payload.structuredObjective.primary);
 
         if (!hasCol1 || !hasCol2 || !hasCol3) {
           throw new Error("Please provide at least one detail (text description, filter pill, or structured field) in each of the 3 columns to proceed.");

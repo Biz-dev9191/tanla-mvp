@@ -1,12 +1,12 @@
 import { ClauseCitation, ReflectionLoopIteration } from './types';
 
 export interface LLMOrchestrationInput {
-  customerProfileText: string;
-  customerPills: string[];
-  eventHistoryText: string;
-  eventPills: string[];
-  objectiveText: string;
-  objectivePills: string[];
+  customerProfileText?: string;
+  customerPills?: string[];
+  eventHistoryText?: string;
+  eventPills?: string[];
+  objectiveText?: string;
+  objectivePills?: string[];
   customRulesText?: string;
 }
 
@@ -109,15 +109,15 @@ Return a strictly valid JSON object matching the requested schema.`;
   const userPrompt = `
 CUSTOMER PROFILE:
 Description: ${input.customerProfileText || 'N/A'}
-Filter Pills: ${input.customerPills.join(', ') || 'Standard'}
+Filter Pills: ${(input.customerPills || []).join(', ') || 'Standard'}
 
 CUSTOMER EVENT & HISTORY:
 Description: ${input.eventHistoryText || 'N/A'}
-Filter Pills: ${input.eventPills.join(', ') || 'General update'}
+Filter Pills: ${(input.eventPills || []).join(', ') || 'General update'}
 
 BUSINESS OBJECTIVE:
 Description: ${input.objectiveText || 'N/A'}
-Filter Pills: ${input.objectivePills.join(', ') || 'Resolve issue'}
+Filter Pills: ${(input.objectivePills || []).join(', ') || 'Resolve issue'}
 
 ${input.customRulesText ? `CUSTOM POLICY DOCUMENT:\n${input.customRulesText}` : 'CUSTOM POLICY DOCUMENT: None uploaded (Skip dynamic policy tree generation and use Enterprise Baseline).'}
 

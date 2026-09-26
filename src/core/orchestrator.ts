@@ -15,8 +15,8 @@ import {
   BusinessObjectiveType
 } from './types';
 import { runDeterministicPreChecks, redactSensitiveData } from './guardrails/deterministic';
-import { runCustomerContextAgent } from './agents/context-agent';
-import { runObjectiveResolutionAgent } from './agents/objective-agent';
+import { runCustomerContextAgent, synthesizeCustomerProfile } from './agents/context-agent';
+import { runObjectiveResolutionAgent, synthesizeEventAndObjective } from './agents/objective-agent';
 import { runPolicyTreeGeneratorAgent } from './agents/policy-tree-agent';
 import { runPolicyAgent } from './agents/policy-agent';
 import { runCommunicationStrategyAgent } from './agents/strategy-agent';
@@ -33,7 +33,7 @@ export async function orchestrateCommunication(
   customPolicyDocText?: string,
   useSamplePolicyTreeArg?: boolean
 ): Promise<OrchestrationResult> {
-  const isStreamlined = 'customerProfileText' in customerOrPayload;
+  const isStreamlined = 'customerProfileText' in customerOrPayload || 'structuredCustomer' in customerOrPayload;
   let customer: CustomerProfile;
   let event: BusinessEvent;
   let objective: BusinessObjective;
@@ -48,228 +48,25 @@ export async function orchestrateCommunication(
       customPolicyDocText = p.customPolicyDocText;
     }
 
-    const custText = p.customerProfileText || '';
-    const pillsStr = (p.customerPills || []).join(' ').toLowerCase();
+    // Agent 1 Purview: Ingestion & 3-Tier Information Hierarchy for Customer Profile (Column 1 ONLY)
+    const custSynthesis = synthesizeCustomerProfile({
+      structuredCustomer: p.structuredCustomer,
+      customerPills: p.customerPills,
+      customerProfileText: p.customerProfileText,
+    });
+    customer = custSynthesis.customer;
 
-    // 1. Accurate Customer Name Extraction
-    let cleanName = 'Customer';
-    const nameMatch = custText.match(/(?:Customer|Name|User|Account Holder|Client)[\s:]+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
-    if (nameMatch && nameMatch[1]) {
-      const extracted = nameMatch[1].split(/[,;\n]/)[0].trim();
-      if (extracted.toLowerCase() !== 'valued customer' && extracted.toLowerCase() !== 'valued') {
-        cleanName = extracted;
-      }
-    } else {
-      // Split on comma or newline first (preserve title abbreviations like Dr., Mr., Ms.)
-      const firstSegment = custText.split(/[\n;,]/)[0].trim();
-      const firstLineClean = firstSegment
-        .replace(/^(?:Customer|Name|User|Account Holder|Profile)[\s:-]*/i, '')
-        .trim();
-      if (firstLineClean && firstLineClean.length >= 2 && firstLineClean.length < 40 && !firstLineClean.toLowerCase().includes('account') && firstLineClean.toLowerCase() !== 'valued' && firstLineClean.toLowerCase() !== 'valued customer') {
-        cleanName = firstLineClean;
-      }
-    }
-
-    // 2. Age & Generational Cohort Extraction
-    let age = 34;
-    let ageGroup: AgeGroup = '25–34';
-    const ageMatch = custText.match(/(\d{2})\s*(?:years?\s*old|yo|\b)/i);
-    if (ageMatch && parseInt(ageMatch[1]) >= 18 && parseInt(ageMatch[1]) <= 99) {
-      age = parseInt(ageMatch[1]);
-      if (age <= 26) ageGroup = '18–24';
-      else if (age <= 34) ageGroup = '25–34';
-      else if (age <= 44) ageGroup = '35–44';
-      else if (age <= 54) ageGroup = '45–54';
-      else ageGroup = '55+';
-    } else if (pillsStr.includes('18–24') || pillsStr.includes('gen z') || pillsStr.includes('student')) {
-      age = 22; ageGroup = '18–24';
-    } else if (pillsStr.includes('55+') || pillsStr.includes('senior') || pillsStr.includes('boomer') || pillsStr.includes('retired')) {
-      age = 65; ageGroup = '55+';
-    } else if (pillsStr.includes('45–54') || pillsStr.includes('gen x')) {
-      age = 48; ageGroup = '45–54';
-    } else if (pillsStr.includes('35–44')) {
-      age = 38; ageGroup = '35–44';
-    }
-
-    // 3. Segment & Value
-    const isVIP = pillsStr.includes('vip') || custText.toLowerCase().includes('vip') || pillsStr.includes('high ltv');
-    const isPremium = pillsStr.includes('premium') || custText.toLowerCase().includes('premium') || isVIP;
-    const isNew = pillsStr.includes('new') || custText.toLowerCase().includes('new customer');
-    const segment: CustomerSegment = isVIP ? 'High Value' : isPremium ? 'Premium' : isNew ? 'New' : 'Standard';
-    const customerValue = isVIP ? 'VIP' : isPremium ? 'High' : 'Standard';
-
-    // 4. Digital Maturity & Channel
-    const isAssisted = pillsStr.includes('assisted') || custText.toLowerCase().includes('assisted') || ageGroup === '55+';
-    const isMixed = pillsStr.includes('mixed') || custText.toLowerCase().includes('mixed');
-    const digitalProfile: DigitalProfile = isAssisted ? 'Assisted' : isMixed ? 'Mixed' : 'Digital-first';
-    const preferredChannel: PreferredChannel = isAssisted ? 'Email' : 'WhatsApp';
-
-    // 5. Sentiment & History
-    const combinedHistory = (custText + ' ' + (p.eventHistoryText || '')).toLowerCase();
-    const isFrustrated = combinedHistory.includes('frustrated') || combinedHistory.includes('angry') || combinedHistory.includes('complaint');
-    const isAnxious = combinedHistory.includes('anxious') || combinedHistory.includes('worried') || combinedHistory.includes('concerned');
-    const sentiment = isFrustrated ? 'Frustrated' : isAnxious ? 'Anxious' : 'Neutral';
-
-    customer = {
-      id: `CUST-${Math.floor(10000 + Math.random() * 90000)}`,
-      name: cleanName,
-      age,
-      ageGroup,
-      segment,
-      digitalProfile,
-      preferredLanguage: 'English',
-      preferredChannel,
-      consent: { transactional: true, promotional: !pillsStr.includes('opt-out'), voice: isAssisted },
-      customerValue,
-      tenureMonths: pillsStr.includes('long-term') ? 36 : 14,
-      recentCommunicationCount24h: {
-        transactional: (p.eventPills || []).some((ep) => ep.toLowerCase().includes('fatigue')) ? 3 : 1,
-        promotional: 0,
-      },
-      previousSupportContacts: combinedHistory.includes('contacted support') ? 2 : 1,
-      sentiment,
-      email: `${cleanName.toLowerCase().replace(/[^a-z0-9]/g, '.').replace(/^\.+|\.+$/g, '') || 'customer'}@example.com`,
-      phone: '+91 98765 43210',
-    };
-
-    // Parse Event & Telemetry
-    const eventPillsStr = (p.eventPills || []).join(' ').toLowerCase();
-    const eventText = p.eventHistoryText || '';
-
-    const isOrderDelayed = eventPillsStr.includes('shipment') || eventPillsStr.includes('delivery') || eventPillsStr.includes('delay') || eventText.toLowerCase().includes('shipment delay') || eventText.toLowerCase().includes('delayed by') || eventText.toLowerCase().includes('delay');
-    const isServiceDisruption = eventPillsStr.includes('service disruption') || eventPillsStr.includes('maintenance') || eventPillsStr.includes('outage') || eventPillsStr.includes('downtime') || eventText.toLowerCase().includes('maintenance') || eventText.toLowerCase().includes('disruption') || eventText.toLowerCase().includes('outage');
-    const isSubscription = eventPillsStr.includes('subscription') || eventPillsStr.includes('renewal') || eventPillsStr.includes('expiring') || eventText.toLowerCase().includes('subscription') || eventText.toLowerCase().includes('renewal');
-    const isAppIncomplete = eventPillsStr.includes('application') || eventPillsStr.includes('kyc') || eventText.toLowerCase().includes('application') || eventText.toLowerCase().includes('kyc');
-    const isComplaint = eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint') || eventPillsStr.includes('escalation') || eventText.toLowerCase().includes('dispute') || eventText.toLowerCase().includes('complaint');
-    const isPayFailed = eventPillsStr.includes('payment failed') || eventPillsStr.includes('card decline') || eventText.toLowerCase().includes('payment failed') || eventText.toLowerCase().includes('declined');
-
-    const payMatch = eventText.match(/(?:PAY|TXN)[_-][A-Za-z0-9_-]+/i);
-    const orderMatch = eventText.match(/(?:#\s*([A-Za-z0-9_-]+)|(?:ORD|APP|ENT|DISP|SUB|TRK|INV)[_-][A-Za-z0-9_-]+)/i);
-    const amountMatch = eventText.match(/[\$₹]\s*\d+(?:\.\d{2})?|\b\d+(?:\.\d{2})?\s*(?:USD|dollars?)/i);
-
-    const transactionId = payMatch ? payMatch[0].toUpperCase() : undefined;
-    let orderId: string | undefined = undefined;
-    if (orderMatch) {
-      const rawId = orderMatch[1] || orderMatch[0];
-      orderId = rawId.replace(/^#\s*/, '').trim().toUpperCase();
-    }
-    const amount = amountMatch ? amountMatch[0] : undefined;
-
-    const facts: string[] = [];
-    if (transactionId) facts.push(`Transaction ID: ${transactionId}`);
-    if (orderId && amount) facts.push(`Reference ID: ${orderId} (${amount})`);
-    else if (orderId) facts.push(`Reference ID: ${orderId}`);
-    else if (amount) facts.push(`Amount: ${amount}`);
-
-    if (eventText.trim().length > 0) {
-      const sentences = eventText
-        .split(/[.\n]/)
-        .map((s) => s.trim())
-        .filter((s) => s.length > 8 && !s.toLowerCase().startsWith('customer:'));
-      for (const sent of sentences.slice(0, 3)) {
-        if (!facts.some((f) => f.toLowerCase().includes(sent.toLowerCase().slice(0, 15)))) {
-          facts.push(sent);
-        }
-      }
-    }
-
-    if (facts.length === 0) {
-      facts.push(isOrderDelayed ? 'Priority parcel tracking active in transit hub' : 'Verified in system telemetry');
-    }
-
-    // Classify event type accurately giving primary precedence to user-selected pills
-    let resolvedEventType: EventType = 'payment_successful_order_failed';
-
-    if (eventPillsStr.includes('payment failed') || eventPillsStr.includes('card decline') || eventPillsStr.includes('decline')) {
-      resolvedEventType = 'payment_failed';
-    } else if (eventPillsStr.includes('payment ok') || eventPillsStr.includes('order failed')) {
-      resolvedEventType = 'payment_successful_order_failed';
-    } else if (eventPillsStr.includes('shipment') || eventPillsStr.includes('delivery') || eventPillsStr.includes('delay')) {
-      resolvedEventType = 'order_delayed';
-    } else if (eventPillsStr.includes('service disruption') || eventPillsStr.includes('maintenance') || eventPillsStr.includes('outage')) {
-      resolvedEventType = 'service_disruption';
-    } else if (eventPillsStr.includes('application') || eventPillsStr.includes('kyc') || eventPillsStr.includes('incomplete')) {
-      resolvedEventType = 'application_incomplete';
-    } else if (eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint') || eventPillsStr.includes('escalation')) {
-      resolvedEventType = 'customer_complaint';
-    } else if (eventPillsStr.includes('subscription') || eventPillsStr.includes('renewal') || eventPillsStr.includes('expiring')) {
-      resolvedEventType = 'subscription_expiring';
-    } else {
-      // Pill was not specific or empty; classify from eventText
-      const eventTextLower = eventText.toLowerCase();
-      if (eventTextLower.includes('payment failed') || eventTextLower.includes('card expired') || eventTextLower.includes('declined') || eventTextLower.includes('card decline')) {
-        resolvedEventType = 'payment_failed';
-      } else if (eventTextLower.includes('shipment delay') || eventTextLower.includes('delayed by') || eventTextLower.includes('shipment delayed')) {
-        resolvedEventType = 'order_delayed';
-      } else if (eventTextLower.includes('maintenance') || eventTextLower.includes('disruption') || eventTextLower.includes('outage') || eventTextLower.includes('downtime')) {
-        resolvedEventType = 'service_disruption';
-      } else if (eventTextLower.includes('kyc') || eventTextLower.includes('incomplete application') || eventTextLower.includes('missing document')) {
-        resolvedEventType = 'application_incomplete';
-      } else if (eventTextLower.includes('dispute') || eventTextLower.includes('complaint') || eventTextLower.includes('grievance')) {
-        resolvedEventType = 'customer_complaint';
-      } else if (eventTextLower.includes('subscription') || eventTextLower.includes('renewal') || eventTextLower.includes('expiring')) {
-        resolvedEventType = 'subscription_expiring';
-      } else if (eventTextLower.includes('order failed') || eventTextLower.includes('refund')) {
-        resolvedEventType = 'payment_successful_order_failed';
-      } else {
-        resolvedEventType = 'payment_successful_order_failed';
-      }
-    }
-
-    const resolvedTitle = p.eventPills?.[0] || (
-      resolvedEventType === 'order_delayed' ? 'Shipment Delayed' :
-      resolvedEventType === 'service_disruption' ? 'Service Disruption / Maintenance' :
-      resolvedEventType === 'subscription_expiring' ? 'Subscription Renewal' :
-      resolvedEventType === 'application_incomplete' ? 'Application Incomplete / Pending KYC' :
-      resolvedEventType === 'customer_complaint' ? 'Billing Dispute / Escalation Review' :
-      resolvedEventType === 'payment_failed' ? 'Payment Failed' :
-      'Payment Received / Order Provisioning Update'
-    );
-
-    const resolvedResolutionStatus = 
-      resolvedEventType === 'order_delayed' ? 'In Progress' :
-      resolvedEventType === 'service_disruption' ? 'In Progress' :
-      resolvedEventType === 'subscription_expiring' ? 'Requires Customer Action' :
-      resolvedEventType === 'application_incomplete' ? 'Requires Customer Action' :
-      resolvedEventType === 'customer_complaint' ? 'Pending Approval' :
-      resolvedEventType === 'payment_failed' ? 'Requires Customer Action' :
-      'Refund Initiated';
-
-    event = {
-      id: `EVT-${Math.floor(10000 + Math.random() * 90000)}`,
-      eventType: resolvedEventType,
-      title: resolvedTitle,
-      description: eventText || `${resolvedTitle} update requiring governed orchestration.`,
-      timestamp: 'Just now',
-      verifiedFacts: facts,
-      resolutionStatus: resolvedResolutionStatus,
-      transactionId,
-      orderId,
-      amount,
-    };
-
-    // Parse Objective
-    const objPills = p.objectivePills || [];
-    const objTextLower = (p.objectiveText || '').toLowerCase();
-
-    let primaryObj: BusinessObjectiveType = 'resolve_issue';
-    if (objPills.some((op) => op.toLowerCase().includes('support')) || objTextLower.includes('deflect') || objTextLower.includes('support')) {
-      primaryObj = 'reduce_support_contacts';
-    } else if (objPills.some((op) => op.toLowerCase().includes('reassure')) || objTextLower.includes('reassure') || objTextLower.includes('anxiety')) {
-      primaryObj = 'reassure_customer';
-    } else if (objPills.some((op) => op.toLowerCase().includes('retain')) || objTextLower.includes('retain') || objTextLower.includes('churn')) {
-      primaryObj = 'retain_customer';
-    } else if (objPills.some((op) => op.toLowerCase().includes('onboarding')) || objTextLower.includes('onboard') || objTextLower.includes('kyc')) {
-      primaryObj = 'complete_application';
-    } else if (objPills.some((op) => op.toLowerCase().includes('recover')) || objTextLower.includes('recover') || objTextLower.includes('retry')) {
-      primaryObj = 'recover_payment';
-    }
-
-    objective = {
-      primary: primaryObj,
-      secondary: objPills.join(', ') || p.objectiveText,
-      customNote: p.objectiveText,
-    };
+    // Agent 2 Purview: Ingestion & 3-Tier Information Hierarchy for Business Event & Objectives (Columns 2 & 3 ONLY)
+    const evtObjSynthesis = synthesizeEventAndObjective({
+      structuredEvent: p.structuredEvent,
+      eventPills: p.eventPills,
+      eventHistoryText: p.eventHistoryText,
+      structuredObjective: p.structuredObjective,
+      objectivePills: p.objectivePills,
+      objectiveText: p.objectiveText,
+    });
+    event = evtObjSynthesis.event;
+    objective = evtObjSynthesis.objective;
   } else {
     customer = customerOrPayload as CustomerProfile;
     event = eventArg!;
