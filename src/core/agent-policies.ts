@@ -466,11 +466,18 @@ export const AGENT_6_MESSAGE_POLICY: AgentGovernancePolicy = {
     'Adapt WhatsApp and Voice language, phrasing, and pacing dynamically based on customer persona',
     'Enforce standard DLT-compliant templates for SMS across all cohorts with dynamic variable substitution',
     'For Email: Use formal institutional standard templates for critical events; adapt tone to customer persona for non-critical events',
+    'Ensure every new paragraph and sentence strictly begins with a capital letter across all channels',
+    'Enforce standard grammar and punctuation: greetings followed cleanly by double-newlines, zero comma splices',
+    'Elevate language for VIP personas to natural, polished executive prose, and younger personas to crisp, modern, active phrasing',
+    'Minimize brand fatigue by eliminating repetitive brand name mentions in message bodies when the channel identity already identifies the company',
     'Include verified transaction ID, order ID, and actual timelines when available',
     'Direct customers to the official app and web dashboard for tracking and updates'
   ],
   prohibitedActions: [
     'NEVER USE EXCLAMATION MARKS (!) UNDER ANY CIRCUMSTANCES (STRICT CORPORATE RAILGUARD)',
+    'NEVER start a new paragraph or sentence with a lowercase letter',
+    'NEVER combine greetings and body clauses on the same line with comma splices',
+    'NEVER repetitively spam the brand name in body copy across verified channels',
     'NEVER manufacture external URLs or fake phone numbers',
     'NEVER manufacture non-existent order IDs or amounts when not present in the verified event',
     'NEVER introduce conversational persona drift into SMS (must adhere to registered DLT template)',
@@ -483,7 +490,8 @@ export const AGENT_6_MESSAGE_POLICY: AgentGovernancePolicy = {
     'RG-MSG-02: SMS DLT Compliance — Body must match registered template with dynamic variables and be <= 160 characters strictly.',
     'RG-MSG-03: Factual Fidelity — Every ID, amount, and timeframe must match the verified event facts exactly; no manufactured data.',
     'RG-MSG-04: Email Gravity Bifurcation — High-gravity/critical events require formal institutional standard; non-critical events calibrate to persona.',
-    'RG-MSG-05: WhatsApp & Voice Persona Alignment — Dynamic calibration to customer demographic cohort, digital maturity, and sentiment.'
+    'RG-MSG-05: Capitalization & Grammar Integrity — Every new paragraph and sentence must start with a capital letter; greetings must be separated by clean double-newlines.',
+    'RG-MSG-06: WhatsApp & Voice Persona Alignment — Dynamic calibration to customer demographic cohort, digital maturity, and sentiment.'
   ],
   antiHallucinationConstraints: [
     'Do not invent external URLs, fake phone numbers, discount coupons, or compensation vouchers.',

@@ -429,7 +429,77 @@ async function runCoherenceTests() {
   }
   console.log('✅ Test 13 Passed: Zero manufactured telephone numbers or URLs across all generated messages.\n');
 
-  console.log('🎉 ALL 13 ACTIVE COHERENCE, HIERARCHY, PERSONA & GOVERNANCE TESTS PASSED SUCCESSFULLY!');
+  // Test 14: Universal Capitalization & Punctuation Invariance
+  console.log('--- Test 14: Universal Capitalization & Punctuation Invariance ---');
+  for (let i = 0; i < allOutputs.length; i++) {
+    const text = allOutputs[i];
+    const lines = text.split('\n').map((l) => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      // Check if bullet point or regular line
+      const bulletMatch = line.match(/^([-*]|\d+\.)\s+(.*)$/);
+      if (bulletMatch) {
+        const content = bulletMatch[2];
+        if (content.length > 0 && /[a-zA-Z]/.test(content[0])) {
+          assert(
+            content[0] === content[0].toUpperCase(),
+            `Bullet point must start with a capital letter: "${line}"`
+          );
+        }
+      } else {
+        if (line.length > 0 && /[a-zA-Z]/.test(line[0])) {
+          assert(
+            line[0] === line[0].toUpperCase(),
+            `Paragraph/line must start with a capital letter: "${line}"`
+          );
+        }
+      }
+    }
+  }
+  console.log('✅ Test 14 Passed: Every paragraph, line, and bullet point strictly begins with an uppercase letter.\n');
+
+  // Test 15: VIP & Younger Persona Tone & Brand De-Duplication Gate
+  console.log('--- Test 15: VIP Persona Tone & Brand De-Duplication Gate ---');
+  const payloadVIPApplication: StreamlinedBriefPayload = {
+    structuredCustomer: {
+      id: 'CUST-VIP-15',
+      name: 'Vikram Malhotra',
+      age: 38,
+      ageGroup: '35–44',
+      segment: 'High Value',
+      customerValue: 'VIP',
+      digitalProfile: 'Digital-first',
+      sentiment: 'Neutral',
+    },
+    customerPills: ['35–44', 'High Value', 'VIP'],
+    structuredEvent: {
+      id: 'EVT-TEST-15',
+      eventType: 'application_incomplete',
+      title: 'Pending Identity Verification',
+      description: 'Customer application missing identity verification document.',
+      resolutionStatus: 'Requires Customer Action',
+    },
+    eventPills: ['Incomplete Application / Pending KYC'],
+    structuredObjective: { primary: 'complete_application' },
+    useSamplePolicyTree: true,
+  };
+
+  const resVIP = await orchestrateCommunication(payloadVIPApplication);
+  const vipWhatsApp = resVIP.messages.whatsapp.body;
+  console.log(`- VIP WhatsApp Body:\n"${vipWhatsApp}"`);
+
+  // Verify proper salutation format and no comma splices
+  assert(vipWhatsApp.startsWith('Hello Vikram,\n\n'), 'Salutation must be followed by double-newlines, avoiding comma splices');
+  // Verify VIP priority statement is elevated and capitalized
+  assert(vipWhatsApp.includes('As a valued VIP member, your request has been prioritized.'), 'VIP priority statement must be refined and capitalized');
+  // Verify main body starts with capitalized 'Thank you'
+  assert(vipWhatsApp.includes('\n\nThank you for submitting your application.'), 'Body paragraph must start with capitalized "Thank you"');
+  // Verify brand is not repeatedly spammed in body
+  assert(!vipWhatsApp.includes('Aurora Cloud Team'), 'Must not redundantly sign off with Aurora Cloud Team in WhatsApp body');
+  assert(!vipWhatsApp.includes('As an Aurora VIP member'), 'Must avoid robotic "Aurora VIP member" boilerplate');
+
+  console.log('✅ Test 15 Passed: VIP copy adheres to executive standards, clean paragraph breaks, and brand de-duplication.\n');
+
+  console.log('🎉 ALL 15 ACTIVE COHERENCE, HIERARCHY, PERSONA, CAPITALIZATION & GOVERNANCE TESTS PASSED SUCCESSFULLY!');
 }
 
 runCoherenceTests().catch((err) => {

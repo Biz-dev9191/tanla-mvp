@@ -31,6 +31,10 @@ export const BRAND_VOICE_GUIDELINES = {
     "Second person ('you', 'your'), never refer to the customer in third person.",
     "Never invent unverified delivery dates, refund timelines, or discount promises.",
     "Never manufacture unapproved external URLs or fake phone numbers; direct customers to the official app and web dashboard.",
+    "Every new paragraph and sentence across all communication channels must strictly begin with a capital letter.",
+    "Standard punctuation and grammar rules must be observed; greetings must end with a comma followed by clean double newlines (\\n\\n), eliminating comma splices.",
+    "Brand de-duplication: Avoid redundant repetitive mentions of brand name inside message bodies; rely on verified channel identity headers and natural first-person pronouns ('we', 'our team').",
+    "Elevated VIP & Younger persona standards: VIP communications must use natural, executive priority phrasing; younger persona communications must be crisp, modern, active, and grammatically complete.",
     "One clear outcome or call to action per message.",
   ],
 };
@@ -57,10 +61,10 @@ export const CHANNEL_GUIDELINES = {
   WhatsApp: {
     maxCharacters: 600,
     structure: "Persona-adaptive conversational layout. 1-2 focused paragraphs, outcome in first sentence, verified reference ID, and clear dashboard guidance. Dynamically adapts phrasing, pacing, and tone to the customer's generational cohort (Gen Z direct and modern, Senior patient and reassuring, Millennial data-efficient, VIP priority concierge).",
-    greeting: "Persona-calibrated greeting (e.g. 'Hi [Name],' for Gen Z, 'Hello [Name],' for Senior/Millennial)",
-    signoff: "Aurora Cloud Team",
+    greeting: "Persona-calibrated greeting (e.g. 'Hi [Name],' for Gen Z, 'Hello [Name],' for Senior/Millennial) followed cleanly by double line breaks",
+    signoff: "Customer Support Team",
     permittedElements: ["Plain text", "Bold formatting (*word*)", "App and web dashboard references", "Verified Telemetry IDs"],
-    prohibitions: ["Manufactured external links", "Invented phone numbers", "Exclamation marks", "Excessive emojis"],
+    prohibitions: ["Manufactured external links", "Invented phone numbers", "Exclamation marks", "Excessive emojis", "Lowercase paragraph starts", "Repetitive brand mentions"],
   },
   SMS: {
     maxCharacters: 160,
@@ -76,15 +80,15 @@ export const CHANNEL_GUIDELINES = {
     greeting: "Formal salutation 'Dear [Name],' for critical events; Persona-calibrated for non-critical events",
     signoff: "Formal compliance closing for critical events; Persona-calibrated for non-critical events",
     permittedElements: ["Structured headings", "Bullet points", "Verified telemetry", "App and web dashboard references"],
-    prohibitions: ["Manufactured external links", "Invented phone numbers", "Exclamation marks", "Informal slang during critical events"],
+    prohibitions: ["Manufactured external links", "Invented phone numbers", "Exclamation marks", "Informal slang during critical events", "Lowercase paragraph starts"],
   },
   Voice: {
     maxCharacters: 500,
     structure: "Persona-calibrated spoken audio script. Adapts phrasing, pacing, and salutations to the customer persona (Gen Z: fast, friendly, direct; Senior: unhurried, reassuring, patient guidance; Millennial: crisp, data-first; VIP: executive priority acknowledgement).",
-    greeting: "Persona-calibrated spoken greeting (e.g. 'Hi [Name], quick update...' for Gen Z vs. 'Hello [Name], this is Aurora Cloud with an important update...' for Senior)",
+    greeting: "Persona-calibrated spoken greeting (e.g. 'Hi [Name], quick update...' for Gen Z vs. 'Hello [Name], this is an important update...' for Senior)",
     signoff: "Warm, professional conversational closing",
     permittedElements: ["Phonetic clarity", "Pacing pauses", "App and web dashboard guidance", "Reassurance statements"],
-    prohibitions: ["Invented phone numbers", "Fast speech for seniors", "Exclamation marks", "Robotic jargon"],
+    prohibitions: ["Invented phone numbers", "Fast speech for seniors", "Exclamation marks", "Robotic jargon", "Repetitive brand name callouts"],
   },
 };
 
