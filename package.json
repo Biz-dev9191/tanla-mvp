@@ -8,7 +8,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "tsx tests/contradictory-scenarios.test.ts && tsx tests/governance-and-policy.test.ts && tsx tests/policy-tree-generation.test.ts && tsx tests/user-policy-document.test.ts"
+    "test": "tsx tests/contradictory-scenarios.test.ts && tsx tests/governance-and-policy.test.ts && tsx tests/policy-tree-generation.test.ts && tsx tests/user-policy-document.test.ts && tsx tests/text-and-pills-coherence.test.ts"
   },
   "keywords": [],
   "author": "",

@@ -119,7 +119,7 @@ export function runCommunicationStrategyAgent(
   );
 
   // Chain-of-thought 3: Action Friction & CTA Configuration
-  let ctaType: 'None' | 'Click Link' | 'Upload Document' | 'Contact Support' | 'Retry Payment' = 'None';
+  let ctaType: 'None' | 'Click Link' | 'Upload Document' | 'Contact Support' | 'Retry Payment' | 'Track Shipment' | 'Confirm Renewal' | 'View Status' = 'None';
   let ctaText: string | undefined = undefined;
 
   if (objRes.recommendedCustomerAction === 'Upload Document') {
@@ -128,7 +128,19 @@ export function runCommunicationStrategyAgent(
   } else if (objRes.recommendedCustomerAction === 'Retry Payment') {
     ctaType = 'Retry Payment';
     ctaText = 'Retry Payment Securely';
-  } else if (objRes.recommendedCustomerAction === 'None') {
+  } else if (objRes.recommendedCustomerAction === 'Track Shipment') {
+    ctaType = 'Track Shipment';
+    ctaText = 'Track Your Package';
+  } else if (objRes.recommendedCustomerAction === 'Confirm Renewal') {
+    ctaType = 'Confirm Renewal';
+    ctaText = 'Confirm Plan Renewal';
+  } else if (objRes.recommendedCustomerAction === 'View Status') {
+    ctaType = 'View Status';
+    ctaText = 'Check Live Status';
+  } else if (objRes.recommendedCustomerAction === 'Contact Support') {
+    ctaType = 'Contact Support';
+    ctaText = 'Speak with Specialist';
+  } else {
     ctaType = 'None';
     ctaText = undefined;
   }

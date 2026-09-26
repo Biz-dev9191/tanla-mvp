@@ -30,6 +30,9 @@ interface CommunicationBriefProps {
   onRunOrchestration: (payload: any) => void;
   isLoading?: boolean;
   onNavigateToPolicyTree?: () => void;
+  currentResult?: any;
+  onViewCurrentResult?: () => void;
+  onResetCurrentResult?: () => void;
 }
 
 interface EventTypeFieldConfig {
@@ -131,54 +134,184 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onRunOrchestration,
   isLoading,
   onNavigateToPolicyTree,
+  currentResult,
+  onViewCurrentResult,
+  onResetCurrentResult,
 }) => {
+  // Helper to load stored brief state from localStorage on first mount
+  const [initialState] = useState<any>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem('aurora_brief_state');
+        if (raw) return JSON.parse(raw);
+      } catch (e) {}
+    }
+    return null;
+  });
+
   // Scenario Presets Selection State (Unselected and Minimized by default)
-  const [isMatrixExpanded, setIsMatrixExpanded] = useState(false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>('');
+  const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(initialState?.isMatrixExpanded ?? false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(initialState?.selectedCustomerId ?? '');
+  const [selectedEventId, setSelectedEventId] = useState<string>(initialState?.selectedEventId ?? '');
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(initialState?.selectedObjectiveId ?? '');
 
   // Column Tabs: Default to 'structured' on the LEFT
-  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>('structured');
-  const [eventTab, setEventTab] = useState<'structured' | 'text'>('structured');
-  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>('structured');
+  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>(initialState?.customerTab ?? 'structured');
+  const [eventTab, setEventTab] = useState<'structured' | 'text'>(initialState?.eventTab ?? 'structured');
+  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>(initialState?.objectiveTab ?? 'structured');
 
   // Column 1 Structured & Text State (Default Empty)
-  const [structCustomerName, setStructCustomerName] = useState('');
-  const [structEmail, setStructEmail] = useState('');
-  const [structPhone, setStructPhone] = useState('');
-  const [structAgeGroup, setStructAgeGroup] = useState<any>('25–34');
-  const [structSegment, setStructSegment] = useState<any>('Standard');
-  const [structDigitalProfile, setStructDigitalProfile] = useState<any>('Digital-first');
-  const [structConsentTx, setStructConsentTx] = useState(true);
-  const [structConsentPromo, setStructConsentPromo] = useState(true);
-  const [structSentiment, setStructSentiment] = useState<any>('Neutral');
-  const [structSupportContacts, setStructSupportContacts] = useState(0);
-  const [customerText, setCustomerText] = useState('');
-  const [customerPills, setCustomerPills] = useState<string[]>([]);
+  const [structCustomerName, setStructCustomerName] = useState(initialState?.structCustomerName ?? '');
+  const [structEmail, setStructEmail] = useState(initialState?.structEmail ?? '');
+  const [structPhone, setStructPhone] = useState(initialState?.structPhone ?? '');
+  const [structAgeGroup, setStructAgeGroup] = useState<any>(initialState?.structAgeGroup ?? '25–34');
+  const [structSegment, setStructSegment] = useState<any>(initialState?.structSegment ?? 'Standard');
+  const [structDigitalProfile, setStructDigitalProfile] = useState<any>(initialState?.structDigitalProfile ?? 'Digital-first');
+  const [structConsentTx, setStructConsentTx] = useState(initialState?.structConsentTx ?? true);
+  const [structConsentPromo, setStructConsentPromo] = useState(initialState?.structConsentPromo ?? true);
+  const [structSentiment, setStructSentiment] = useState<any>(initialState?.structSentiment ?? 'Neutral');
+  const [structSupportContacts, setStructSupportContacts] = useState(initialState?.structSupportContacts ?? 0);
+  const [customerText, setCustomerText] = useState(initialState?.customerText ?? '');
+  const [customerPills, setCustomerPills] = useState<string[]>(initialState?.customerPills ?? []);
   const [customCustomerPillInput, setCustomCustomerPillInput] = useState('');
   const [isAddingCustomerPill, setIsAddingCustomerPill] = useState(false);
 
   // Column 2 Structured & Text State (Default Empty)
-  const [structEventType, setStructEventType] = useState<any>('payment_successful_order_failed');
-  const [structEventTitle, setStructEventTitle] = useState('');
-  const [structTransactionId, setStructTransactionId] = useState('');
-  const [structOrderId, setStructOrderId] = useState('');
-  const [structAmount, setStructAmount] = useState('');
-  const [structVerifiedFacts, setStructVerifiedFacts] = useState('');
-  const [structResolutionStatus, setStructResolutionStatus] = useState<any>('Refund Initiated');
-  const [eventText, setEventText] = useState('');
-  const [eventPills, setEventPills] = useState<string[]>([]);
+  const [structEventType, setStructEventType] = useState<any>(initialState?.structEventType ?? 'payment_successful_order_failed');
+  const [structEventTitle, setStructEventTitle] = useState(initialState?.structEventTitle ?? '');
+  const [structTransactionId, setStructTransactionId] = useState(initialState?.structTransactionId ?? '');
+  const [structOrderId, setStructOrderId] = useState(initialState?.structOrderId ?? '');
+  const [structAmount, setStructAmount] = useState(initialState?.structAmount ?? '');
+  const [structVerifiedFacts, setStructVerifiedFacts] = useState(initialState?.structVerifiedFacts ?? '');
+  const [structResolutionStatus, setStructResolutionStatus] = useState<any>(initialState?.structResolutionStatus ?? 'Refund Initiated');
+  const [eventText, setEventText] = useState(initialState?.eventText ?? '');
+  const [eventPills, setEventPills] = useState<string[]>(initialState?.eventPills ?? []);
   const [customEventPillInput, setCustomEventPillInput] = useState('');
   const [isAddingEventPill, setIsAddingEventPill] = useState(false);
 
   // Column 3 Structured & Text State (Default Empty)
-  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>('resolve_issue');
-  const [structSecondaryObjective, setStructSecondaryObjective] = useState('');
-  const [objectiveText, setObjectiveText] = useState('');
-  const [objectivePills, setObjectivePills] = useState<string[]>([]);
+  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>(initialState?.structPrimaryObjective ?? 'resolve_issue');
+  const [structSecondaryObjective, setStructSecondaryObjective] = useState(initialState?.structSecondaryObjective ?? '');
+  const [objectiveText, setObjectiveText] = useState(initialState?.objectiveText ?? '');
+  const [objectivePills, setObjectivePills] = useState<string[]>(initialState?.objectivePills ?? []);
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
+
+  // Save brief state to localStorage on any modification so state survives tab/page changes and reloads
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const briefData = {
+          isMatrixExpanded,
+          selectedCustomerId,
+          selectedEventId,
+          selectedObjectiveId,
+          customerTab,
+          eventTab,
+          objectiveTab,
+          structCustomerName,
+          structEmail,
+          structPhone,
+          structAgeGroup,
+          structSegment,
+          structDigitalProfile,
+          structConsentTx,
+          structConsentPromo,
+          structSentiment,
+          structSupportContacts,
+          customerText,
+          customerPills,
+          structEventType,
+          structEventTitle,
+          structTransactionId,
+          structOrderId,
+          structAmount,
+          structVerifiedFacts,
+          structResolutionStatus,
+          eventText,
+          eventPills,
+          structPrimaryObjective,
+          structSecondaryObjective,
+          objectiveText,
+          objectivePills,
+        };
+        localStorage.setItem('aurora_brief_state', JSON.stringify(briefData));
+      } catch (e) {}
+    }
+  }, [
+    isMatrixExpanded,
+    selectedCustomerId,
+    selectedEventId,
+    selectedObjectiveId,
+    customerTab,
+    eventTab,
+    objectiveTab,
+    structCustomerName,
+    structEmail,
+    structPhone,
+    structAgeGroup,
+    structSegment,
+    structDigitalProfile,
+    structConsentTx,
+    structConsentPromo,
+    structSentiment,
+    structSupportContacts,
+    customerText,
+    customerPills,
+    structEventType,
+    structEventTitle,
+    structTransactionId,
+    structOrderId,
+    structAmount,
+    structVerifiedFacts,
+    structResolutionStatus,
+    eventText,
+    eventPills,
+    structPrimaryObjective,
+    structSecondaryObjective,
+    objectiveText,
+    objectivePills,
+  ]);
+
+  // Reset entire brief state
+  const handleResetBrief = () => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('aurora_brief_state');
+      } catch (e) {}
+    }
+    setSelectedCustomerId('');
+    setSelectedEventId('');
+    setSelectedObjectiveId('');
+    setStructCustomerName('');
+    setStructEmail('');
+    setStructPhone('');
+    setStructAgeGroup('25–34');
+    setStructSegment('Standard');
+    setStructDigitalProfile('Digital-first');
+    setStructConsentTx(true);
+    setStructConsentPromo(true);
+    setStructSentiment('Neutral');
+    setStructSupportContacts(0);
+    setCustomerText('');
+    setCustomerPills([]);
+    setStructEventType('payment_successful_order_failed');
+    setStructEventTitle('');
+    setStructTransactionId('');
+    setStructOrderId('');
+    setStructAmount('');
+    setStructVerifiedFacts('');
+    setStructResolutionStatus('Refund Initiated');
+    setEventText('');
+    setEventPills([]);
+    setStructPrimaryObjective('resolve_issue');
+    setStructSecondaryObjective('');
+    setObjectiveText('');
+    setObjectivePills([]);
+    if (onResetCurrentResult) {
+      onResetCurrentResult();
+    }
+  };
 
   // Synchronize fields when Customer dropdown changes
   const handleCustomerChange = (custId: string) => {
@@ -304,7 +437,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     
     const finalVerifiedFacts: string[] = [];
     if (structVerifiedFacts.trim().length > 0) {
-      finalVerifiedFacts.push(...structVerifiedFacts.split(',').map((f) => f.trim()).filter(Boolean));
+      finalVerifiedFacts.push(...structVerifiedFacts.split(',').map((f: string) => f.trim()).filter(Boolean));
     } else {
       if (finalTxId) finalVerifiedFacts.push(`Transaction ID: ${finalTxId}`);
       if (finalOrderId) finalVerifiedFacts.push(`Order ID: ${finalOrderId}`);
@@ -370,17 +503,37 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         useSamplePolicyTree: true,
       });
     } else {
+      const finalCustomerProfileText = customerTab === 'structured' 
+        ? `Customer: ${finalCustomerName}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}, Sentiment: ${structSentiment}, Contacts: ${structSupportContacts}` 
+        : (customerText.trim() || `Customer: ${finalCustomerName || 'Customer'}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}`);
+
+      const finalCustomerPills = customerTab === 'structured'
+        ? [structAgeGroup, structSegment, structDigitalProfile, structSentiment]
+        : (customerPills.length > 0 ? customerPills : [structAgeGroup, structSegment, structDigitalProfile]);
+
+      const finalEventHistoryText = eventTab === 'structured' 
+        ? `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}` 
+        : (eventText.trim() || `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}`);
+
+      const finalEventPills = eventTab === 'structured'
+        ? [structEventType.replace(/_/g, ' ')]
+        : (eventPills.length > 0 ? eventPills : [structEventType.replace(/_/g, ' ')]);
+
+      const finalObjectiveText = objectiveTab === 'structured'
+        ? `${structPrimaryObjective.replace(/_/g, ' ')}. ${structSecondaryObjective}`
+        : (objectiveText.trim() || `${structPrimaryObjective.replace(/_/g, ' ')}. Resolve issue and reassure customer.`);
+
+      const finalObjectivePills = objectiveTab === 'structured'
+        ? [structPrimaryObjective.replace(/_/g, ' ')]
+        : (objectivePills.length > 0 ? objectivePills : ['Resolve issue proactively']);
+
       onRunOrchestration({
-        customerProfileText: customerTab === 'structured' 
-          ? `Customer: ${finalCustomerName}, Age: ${structAgeGroup}, Segment: ${structSegment}, Digital: ${structDigitalProfile}, Sentiment: ${structSentiment}` 
-          : (customerText.trim() || `Customer: Customer, Age: 25–34, Segment: Standard, Digital: Digital-first, Sentiment: Neutral`),
-        customerPills: customerTab === 'structured' ? [structAgeGroup, structSegment, structDigitalProfile] : (customerPills.length > 0 ? customerPills : ['25–34', 'Standard', 'Digital-first']),
-        eventHistoryText: eventTab === 'structured' 
-          ? `${finalEventTitle}. ${finalVerifiedFacts.join(', ')}` 
-          : (eventText.trim() || `${finalEventTitle}. Auto-refund initiated to original payment method.`),
-        eventPills: eventTab === 'structured' ? [structEventType.replace(/_/g, ' ')] : (eventPills.length > 0 ? eventPills : [structEventType.replace(/_/g, ' ')]),
-        objectiveText: objectiveTab === 'structured' ? `${structPrimaryObjective.replace(/_/g, ' ')}. ${structSecondaryObjective}` : (objectiveText.trim() || 'Resolve issue and reassure customer.'),
-        objectivePills: objectiveTab === 'structured' ? [structPrimaryObjective.replace(/_/g, ' ')] : (objectivePills.length > 0 ? objectivePills : ['Resolve issue']),
+        customerProfileText: finalCustomerProfileText,
+        customerPills: finalCustomerPills,
+        eventHistoryText: finalEventHistoryText,
+        eventPills: finalEventPills,
+        objectiveText: finalObjectiveText,
+        objectivePills: finalObjectivePills,
         useSamplePolicyTree: true,
       });
     }
@@ -388,7 +541,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Title & Eyebrow */}
+      {/* Title & Eyebrow & Reset Button */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b border-aurora-neutral-200 gap-4">
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
@@ -400,7 +553,65 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             Enter customer profile details, event information, and business goals—or choose from pre-configured scenarios below. The AI engine automatically adapts tone, channel routing, and policy guardrails.
           </p>
         </div>
+
+        <div className="flex items-center space-x-2 self-start md:self-auto flex-shrink-0">
+          <button
+            type="button"
+            onClick={handleResetBrief}
+            className="px-3.5 py-2 bg-white hover:bg-aurora-neutral-100 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-2xs transition flex items-center space-x-1.5 cursor-pointer"
+            title="Clear all fields and start fresh"
+          >
+            <RotateCcw strokeWidth={1.75} className="w-3.5 h-3.5 text-aurora-neutral-500" />
+            <span>Reset Brief</span>
+          </button>
+        </div>
       </div>
+
+      {/* Active Generated Output Notification (Ensures output remains visible & accessible on page change) */}
+      {currentResult && (
+        <div className="p-4 bg-emerald-50/90 border border-emerald-300/80 rounded-xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fadeIn">
+          <div className="flex items-center space-x-3">
+            <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
+              <Check strokeWidth={2.5} className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">
+                  Active Generated Decision & Output Available
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded">
+                  {currentResult.strategy?.selectedChannel || 'Ready'}
+                </span>
+              </div>
+              <p className="text-xs text-emerald-800 mt-0.5">
+                Response active for <strong>{currentResult.customer?.name || 'Customer'}</strong> • Event: <strong>{currentResult.event?.title || 'Event'}</strong>. This information remains in the system across page changes.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 self-start sm:self-auto flex-shrink-0">
+            {onViewCurrentResult && (
+              <button
+                type="button"
+                onClick={onViewCurrentResult}
+                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5 cursor-pointer"
+              >
+                <span>View Decision & Previews</span>
+                <ArrowRight strokeWidth={2} className="w-3.5 h-3.5" />
+              </button>
+            )}
+            {onResetCurrentResult && (
+              <button
+                type="button"
+                onClick={onResetCurrentResult}
+                className="px-3 py-2 bg-white hover:bg-red-50 text-aurora-neutral-600 hover:text-red-700 border border-aurora-neutral-300 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
+                title="Discard this generated response"
+              >
+                <span>Clear Output</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* 3-COLUMN BRIEF FORM */}
       <form onSubmit={handleSubmit} className="space-y-6">

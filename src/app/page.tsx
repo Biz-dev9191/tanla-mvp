@@ -50,7 +50,7 @@ export default function Home() {
     }
   }, [activeTab]);
 
-  // Load history from localStorage on mount
+  // Load history and current active output from localStorage on mount
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -58,11 +58,25 @@ export default function Home() {
         if (savedHistory) {
           setHistory(JSON.parse(savedHistory));
         }
+        const savedResult = localStorage.getItem('aurora_current_result');
+        if (savedResult) {
+          setCurrentResult(JSON.parse(savedResult));
+        }
       } catch (e) {
-        console.warn('Could not load history from storage:', e);
+        console.warn('Could not load history or current result from storage:', e);
       }
     }
   }, []);
+
+  // Clear current active output from storage
+  const handleResetCurrentResult = () => {
+    setCurrentResult(null);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('aurora_current_result');
+      } catch (e) {}
+    }
+  };
 
   // Run orchestration
   const handleRunOrchestration = async (payload: any) => {
@@ -107,6 +121,11 @@ export default function Home() {
       }
 
       setCurrentResult(data);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('aurora_current_result', JSON.stringify(data));
+        } catch (e) {}
+      }
       setActiveTab('control-room');
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred during agent orchestration.');
@@ -239,14 +258,18 @@ export default function Home() {
   // Human approval handlers
   const handleApprove = () => {
     if (!currentResult) return;
-    setCurrentResult({
+    const updated = {
       ...currentResult,
-      humanApprovalStatus: 'Approved',
+      humanApprovalStatus: 'Approved' as const,
       strategy: {
         ...currentResult.strategy,
-        decision: 'SEND',
+        decision: 'SEND' as const,
       },
-    });
+    };
+    setCurrentResult(updated);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('aurora_current_result', JSON.stringify(updated)); } catch (e) {}
+    }
   };
 
   const handleRequestRevision = () => {
@@ -263,14 +286,18 @@ export default function Home() {
 
   const handleSuppress = () => {
     if (!currentResult) return;
-    setCurrentResult({
+    const updated = {
       ...currentResult,
-      humanApprovalStatus: 'Rejected',
+      humanApprovalStatus: 'Rejected' as const,
       strategy: {
         ...currentResult.strategy,
-        decision: 'SUPPRESS',
+        decision: 'SUPPRESS' as const,
       },
-    });
+    };
+    setCurrentResult(updated);
+    if (typeof window !== 'undefined') {
+      try { localStorage.setItem('aurora_current_result', JSON.stringify(updated)); } catch (e) {}
+    }
   };
 
   return (
@@ -350,6 +377,9 @@ export default function Home() {
               onRunOrchestration={handleRunOrchestration}
               isLoading={isLoading}
               onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
+              currentResult={currentResult}
+              onViewCurrentResult={() => setActiveTab('control-room')}
+              onResetCurrentResult={handleResetCurrentResult}
             />
           </div>
         )}

@@ -111,6 +111,23 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
             {/* Right: Direct Navigation Links on Top Bar (Hidden on Home page) */}
             {activeTab !== 'home' && (
               <div className="flex items-center space-x-1.5 sm:space-x-2 animate-fadeIn">
+                {hasActiveRun && (
+                  <button
+                    type="button"
+                    onClick={() => handleSelectTab('control-room')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition ${
+                      activeTab === 'control-room'
+                        ? 'bg-aurora-primary text-white shadow-2xs font-bold'
+                        : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 font-bold'
+                    }`}
+                  >
+                    <Activity strokeWidth={1.75} className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="hidden sm:inline">Decision & Previews</span>
+                    <span className="sm:hidden">Previews</span>
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse ml-0.5"></span>
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => handleSelectTab('knowledge-base')}
@@ -221,6 +238,10 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                               {isActive ? (
                                 <span className="text-[10px] font-bold uppercase tracking-wider bg-aurora-primary text-white px-2 py-0.5 rounded">
                                   Active
+                                </span>
+                              ) : item.id === 'control-room' && hasActiveRun ? (
+                                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded">
+                                  Output Ready
                                 </span>
                               ) : isDisabled ? (
                                 <span className="text-[9px] font-mono text-aurora-neutral-400 bg-aurora-neutral-200/80 px-1.5 py-0.5 rounded font-medium">

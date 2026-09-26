@@ -10,7 +10,9 @@ import {
   PolicyRule,
   AgeGroup,
   CustomerSegment,
-  DigitalProfile
+  DigitalProfile,
+  EventType,
+  BusinessObjectiveType
 } from './types';
 import { runDeterministicPreChecks, redactSensitiveData } from './guardrails/deterministic';
 import { runCustomerContextAgent } from './agents/context-agent';
@@ -53,15 +55,17 @@ export async function orchestrateCommunication(
     let cleanName = 'Customer';
     const nameMatch = custText.match(/(?:Customer|Name|User|Account Holder|Client)[\s:]+([A-Za-z]+(?:\s+[A-Za-z]+)*)/i);
     if (nameMatch && nameMatch[1]) {
-      const extracted = nameMatch[1].split(/[,.\n]/)[0].trim();
+      const extracted = nameMatch[1].split(/[,;\n]/)[0].trim();
       if (extracted.toLowerCase() !== 'valued customer' && extracted.toLowerCase() !== 'valued') {
         cleanName = extracted;
       }
     } else {
-      const firstLineClean = custText.split(/[,.\n]/)[0]
+      // Split on comma or newline first (preserve title abbreviations like Dr., Mr., Ms.)
+      const firstSegment = custText.split(/[\n;,]/)[0].trim();
+      const firstLineClean = firstSegment
         .replace(/^(?:Customer|Name|User|Account Holder|Profile)[\s:-]*/i, '')
         .trim();
-      if (firstLineClean && firstLineClean.length >= 2 && firstLineClean.length < 35 && !firstLineClean.toLowerCase().includes('account') && firstLineClean.toLowerCase() !== 'valued' && firstLineClean.toLowerCase() !== 'valued customer') {
+      if (firstLineClean && firstLineClean.length >= 2 && firstLineClean.length < 40 && !firstLineClean.toLowerCase().includes('account') && firstLineClean.toLowerCase() !== 'valued' && firstLineClean.toLowerCase() !== 'valued customer') {
         cleanName = firstLineClean;
       }
     }
@@ -131,43 +135,114 @@ export async function orchestrateCommunication(
     // Parse Event & Telemetry
     const eventPillsStr = (p.eventPills || []).join(' ').toLowerCase();
     const eventText = p.eventHistoryText || '';
-    const isAppIncomplete = eventPillsStr.includes('application') || eventPillsStr.includes('kyc') || eventText.toLowerCase().includes('application');
-    const isComplaint = eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint') || eventText.toLowerCase().includes('dispute');
-    const isPayFailed = eventPillsStr.includes('payment failed') || eventText.toLowerCase().includes('payment failed');
 
-    const payMatch = eventText.match(/(?:PAY[_-]?\w+|TXN[_-]?\w+)/i);
-    const orderMatch = eventText.match(/(?:ORD[_-]?\w+|APP[_-]?\w+|ENT[_-]?\w+|#\w+)/i);
-    const amountMatch = eventText.match(/\$\s*\d+(?:\.\d{2})?|\b\d+(?:\.\d{2})?\s*(?:USD|dollars?)/i);
+    const isOrderDelayed = eventPillsStr.includes('shipment') || eventPillsStr.includes('delivery') || eventPillsStr.includes('delay') || eventText.toLowerCase().includes('shipment delay') || eventText.toLowerCase().includes('delayed by') || eventText.toLowerCase().includes('delay');
+    const isServiceDisruption = eventPillsStr.includes('service disruption') || eventPillsStr.includes('maintenance') || eventPillsStr.includes('outage') || eventPillsStr.includes('downtime') || eventText.toLowerCase().includes('maintenance') || eventText.toLowerCase().includes('disruption') || eventText.toLowerCase().includes('outage');
+    const isSubscription = eventPillsStr.includes('subscription') || eventPillsStr.includes('renewal') || eventPillsStr.includes('expiring') || eventText.toLowerCase().includes('subscription') || eventText.toLowerCase().includes('renewal');
+    const isAppIncomplete = eventPillsStr.includes('application') || eventPillsStr.includes('kyc') || eventText.toLowerCase().includes('application') || eventText.toLowerCase().includes('kyc');
+    const isComplaint = eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint') || eventPillsStr.includes('escalation') || eventText.toLowerCase().includes('dispute') || eventText.toLowerCase().includes('complaint');
+    const isPayFailed = eventPillsStr.includes('payment failed') || eventPillsStr.includes('card decline') || eventText.toLowerCase().includes('payment failed') || eventText.toLowerCase().includes('declined');
+
+    const payMatch = eventText.match(/(?:PAY|TXN)[_-][A-Za-z0-9_-]+/i);
+    const orderMatch = eventText.match(/(?:#\s*([A-Za-z0-9_-]+)|(?:ORD|APP|ENT|DISP|SUB|TRK|INV)[_-][A-Za-z0-9_-]+)/i);
+    const amountMatch = eventText.match(/[\$₹]\s*\d+(?:\.\d{2})?|\b\d+(?:\.\d{2})?\s*(?:USD|dollars?)/i);
 
     const transactionId = payMatch ? payMatch[0].toUpperCase() : undefined;
-    const orderId = orderMatch ? orderMatch[0].replace('#', '').toUpperCase() : undefined;
+    let orderId: string | undefined = undefined;
+    if (orderMatch) {
+      const rawId = orderMatch[1] || orderMatch[0];
+      orderId = rawId.replace(/^#\s*/, '').trim().toUpperCase();
+    }
     const amount = amountMatch ? amountMatch[0] : undefined;
 
     const facts: string[] = [];
     if (transactionId) facts.push(`Transaction ID: ${transactionId}`);
-    if (orderId && amount) facts.push(`Order Reference: ${orderId} (${amount})`);
-    else if (orderId) facts.push(`Order Reference: ${orderId}`);
-    else if (amount) facts.push(`Captured Amount: ${amount}`);
-    facts.push(eventText.toLowerCase().includes('refund') ? 'Auto-refund initiated to original payment method' : 'Verified in billing telemetry');
+    if (orderId && amount) facts.push(`Reference ID: ${orderId} (${amount})`);
+    else if (orderId) facts.push(`Reference ID: ${orderId}`);
+    else if (amount) facts.push(`Amount: ${amount}`);
+
+    if (eventText.trim().length > 0) {
+      const sentences = eventText
+        .split(/[.\n]/)
+        .map((s) => s.trim())
+        .filter((s) => s.length > 8 && !s.toLowerCase().startsWith('customer:'));
+      for (const sent of sentences.slice(0, 3)) {
+        if (!facts.some((f) => f.toLowerCase().includes(sent.toLowerCase().slice(0, 15)))) {
+          facts.push(sent);
+        }
+      }
+    }
+
+    if (facts.length === 0) {
+      facts.push(isOrderDelayed ? 'Priority parcel tracking active in transit hub' : 'Verified in system telemetry');
+    }
+
+    // Classify event type accurately giving primary precedence to user-selected pills
+    let resolvedEventType: EventType = 'payment_successful_order_failed';
+
+    if (eventPillsStr.includes('payment failed') || eventPillsStr.includes('card decline') || eventPillsStr.includes('decline')) {
+      resolvedEventType = 'payment_failed';
+    } else if (eventPillsStr.includes('payment ok') || eventPillsStr.includes('order failed')) {
+      resolvedEventType = 'payment_successful_order_failed';
+    } else if (eventPillsStr.includes('shipment') || eventPillsStr.includes('delivery') || eventPillsStr.includes('delay')) {
+      resolvedEventType = 'order_delayed';
+    } else if (eventPillsStr.includes('service disruption') || eventPillsStr.includes('maintenance') || eventPillsStr.includes('outage')) {
+      resolvedEventType = 'service_disruption';
+    } else if (eventPillsStr.includes('application') || eventPillsStr.includes('kyc') || eventPillsStr.includes('incomplete')) {
+      resolvedEventType = 'application_incomplete';
+    } else if (eventPillsStr.includes('dispute') || eventPillsStr.includes('complaint') || eventPillsStr.includes('escalation')) {
+      resolvedEventType = 'customer_complaint';
+    } else if (eventPillsStr.includes('subscription') || eventPillsStr.includes('renewal') || eventPillsStr.includes('expiring')) {
+      resolvedEventType = 'subscription_expiring';
+    } else {
+      // Pill was not specific or empty; classify from eventText
+      const eventTextLower = eventText.toLowerCase();
+      if (eventTextLower.includes('payment failed') || eventTextLower.includes('card expired') || eventTextLower.includes('declined') || eventTextLower.includes('card decline')) {
+        resolvedEventType = 'payment_failed';
+      } else if (eventTextLower.includes('shipment delay') || eventTextLower.includes('delayed by') || eventTextLower.includes('shipment delayed')) {
+        resolvedEventType = 'order_delayed';
+      } else if (eventTextLower.includes('maintenance') || eventTextLower.includes('disruption') || eventTextLower.includes('outage') || eventTextLower.includes('downtime')) {
+        resolvedEventType = 'service_disruption';
+      } else if (eventTextLower.includes('kyc') || eventTextLower.includes('incomplete application') || eventTextLower.includes('missing document')) {
+        resolvedEventType = 'application_incomplete';
+      } else if (eventTextLower.includes('dispute') || eventTextLower.includes('complaint') || eventTextLower.includes('grievance')) {
+        resolvedEventType = 'customer_complaint';
+      } else if (eventTextLower.includes('subscription') || eventTextLower.includes('renewal') || eventTextLower.includes('expiring')) {
+        resolvedEventType = 'subscription_expiring';
+      } else if (eventTextLower.includes('order failed') || eventTextLower.includes('refund')) {
+        resolvedEventType = 'payment_successful_order_failed';
+      } else {
+        resolvedEventType = 'payment_successful_order_failed';
+      }
+    }
+
+    const resolvedTitle = p.eventPills?.[0] || (
+      resolvedEventType === 'order_delayed' ? 'Shipment Delayed' :
+      resolvedEventType === 'service_disruption' ? 'Service Disruption / Maintenance' :
+      resolvedEventType === 'subscription_expiring' ? 'Subscription Renewal' :
+      resolvedEventType === 'application_incomplete' ? 'Application Incomplete / Pending KYC' :
+      resolvedEventType === 'customer_complaint' ? 'Billing Dispute / Escalation Review' :
+      resolvedEventType === 'payment_failed' ? 'Payment Failed' :
+      'Payment Received / Order Provisioning Update'
+    );
+
+    const resolvedResolutionStatus = 
+      resolvedEventType === 'order_delayed' ? 'In Progress' :
+      resolvedEventType === 'service_disruption' ? 'In Progress' :
+      resolvedEventType === 'subscription_expiring' ? 'Requires Customer Action' :
+      resolvedEventType === 'application_incomplete' ? 'Requires Customer Action' :
+      resolvedEventType === 'customer_complaint' ? 'Pending Approval' :
+      resolvedEventType === 'payment_failed' ? 'Requires Customer Action' :
+      'Refund Initiated';
 
     event = {
       id: `EVT-${Math.floor(10000 + Math.random() * 90000)}`,
-      eventType: isAppIncomplete
-        ? 'application_incomplete'
-        : isComplaint
-        ? 'customer_complaint'
-        : isPayFailed
-        ? 'payment_failed'
-        : 'payment_successful_order_failed',
-      title: p.eventPills?.[0] || (isAppIncomplete ? 'Application Incomplete' : isComplaint ? 'Customer Dispute Review' : 'Payment Received / Order Provisioning Update'),
-      description: eventText || 'Event update requiring governed orchestration.',
+      eventType: resolvedEventType,
+      title: resolvedTitle,
+      description: eventText || `${resolvedTitle} update requiring governed orchestration.`,
       timestamp: 'Just now',
       verifiedFacts: facts,
-      resolutionStatus: isAppIncomplete
-        ? 'Requires Customer Action'
-        : isComplaint
-        ? 'Pending Approval'
-        : 'Refund Initiated',
+      resolutionStatus: resolvedResolutionStatus,
       transactionId,
       orderId,
       amount,
@@ -175,15 +250,24 @@ export async function orchestrateCommunication(
 
     // Parse Objective
     const objPills = p.objectivePills || [];
+    const objTextLower = (p.objectiveText || '').toLowerCase();
+
+    let primaryObj: BusinessObjectiveType = 'resolve_issue';
+    if (objPills.some((op) => op.toLowerCase().includes('support')) || objTextLower.includes('deflect') || objTextLower.includes('support')) {
+      primaryObj = 'reduce_support_contacts';
+    } else if (objPills.some((op) => op.toLowerCase().includes('reassure')) || objTextLower.includes('reassure') || objTextLower.includes('anxiety')) {
+      primaryObj = 'reassure_customer';
+    } else if (objPills.some((op) => op.toLowerCase().includes('retain')) || objTextLower.includes('retain') || objTextLower.includes('churn')) {
+      primaryObj = 'retain_customer';
+    } else if (objPills.some((op) => op.toLowerCase().includes('onboarding')) || objTextLower.includes('onboard') || objTextLower.includes('kyc')) {
+      primaryObj = 'complete_application';
+    } else if (objPills.some((op) => op.toLowerCase().includes('recover')) || objTextLower.includes('recover') || objTextLower.includes('retry')) {
+      primaryObj = 'recover_payment';
+    }
+
     objective = {
-      primary: objPills.some((op) => op.toLowerCase().includes('support'))
-        ? 'reduce_support_contacts'
-        : objPills.some((op) => op.toLowerCase().includes('reassure'))
-        ? 'reassure_customer'
-        : objPills.some((op) => op.toLowerCase().includes('retain'))
-        ? 'retain_customer'
-        : 'resolve_issue',
-      secondary: objPills.join(', '),
+      primary: primaryObj,
+      secondary: objPills.join(', ') || p.objectiveText,
       customNote: p.objectiveText,
     };
   } else {
@@ -578,14 +662,25 @@ export async function orchestrateCommunication(
 
   const genericTemplateText = event.eventType === 'payment_successful_order_failed'
     ? 'Dear Customer, Your order could not be processed. If money was deducted, it will be refunded. For queries contact support@company.com.'
+    : event.eventType === 'order_delayed'
+    ? 'Dear Customer, Your package is running behind schedule. Tracking details will update once scanned by the shipping carrier. For questions contact support.'
+    : event.eventType === 'service_disruption'
+    ? 'Dear Customer, System maintenance is taking place. Certain online features may be temporarily unavailable.'
+    : event.eventType === 'subscription_expiring'
+    ? 'Dear Customer, Your subscription is approaching expiration. Please renew soon to avoid loss of access.'
+    : event.eventType === 'payment_failed'
+    ? 'Dear Customer, Your payment failed. Please log in and try again.'
+    : event.eventType === 'customer_complaint'
+    ? 'Dear Customer, We received your inquiry and a support representative will follow up in 2-3 business days.'
     : 'Dear Customer, An update is pending on your account. Please log in to take action.';
 
   const comparisonDifferences = [
     `Persona Alignment: Tailored to ${customer.name} via '${contextOutput.matchedPersona.name}' (${contextOutput.matchedPersona.cohort}) tone rather than generic blast.`,
-    `Grounded Resolution: ${event.transactionId ? `Explicitly cites payment reference (${event.transactionId}) and confirms automated refund without forcing customer to contact support.` : 'Confirms automated refund and provides clear status without forcing customer to contact support.'}`,
-    `Governance Railguards: Enforced brand tone, verified telemetry facts, PII masking, and zero unauthorized compensation.`,
+    `Grounded Resolution: Explicitly cites verified details (${event.orderId || event.transactionId || event.title}) and executes proactive resolution without support contact friction.`,
+    `Objective Driven: Directly implements primary business target ('${objective.primary.replace(/_/g, ' ')}') and addresses customer sentiment.`,
+    `Governance Railguards: Enforced brand tone, verified telemetry facts, PII masking, and zero unauthorized claims.`,
     `Channel Optimised: Formatted specifically for ${stratOutput.strategy.selectedChannel} rather than copy-pasting across all channels.`,
-    `Autonomous Reflection: Verified across ${revisionLoop + 1} validation cycles with ZERO exclamation marks and zero customer friction.`,
+    `Autonomous Reflection: Verified across ${revisionLoop + 1} validation cycles with ZERO exclamation marks and calibrated action friction.`,
   ];
 
   const isHumanApprovalNeeded = stratOutput.strategy.humanApprovalRequired || guardrailOutput.evaluation.status === 'ESCALATE';

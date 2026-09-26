@@ -117,7 +117,7 @@ export interface CommunicationStrategy {
   messageLength: 'Ultra-concise' | 'Concise' | 'Detailed';
   language: PreferredLanguage;
   personalisationLevel: 'Standard' | 'High' | 'Deep';
-  ctaType: 'None' | 'Click Link' | 'Upload Document' | 'Contact Support' | 'Retry Payment';
+  ctaType: 'None' | 'Click Link' | 'Upload Document' | 'Contact Support' | 'Retry Payment' | 'Track Shipment' | 'Confirm Renewal' | 'View Status';
   ctaText?: string;
   urgency: 'Low' | 'Medium' | 'High';
   customerActionRequired: boolean;
