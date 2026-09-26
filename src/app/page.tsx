@@ -305,33 +305,17 @@ export default function Home() {
     }
   };
 
-  // 2. Apply generated policy tree to current run and regenerate output
-  const handleApplyToCurrentRun = async () => {
-    try {
-      setIsApplyingPolicy(true);
-      if (currentResult) {
-        await handleRunOrchestration({
-          customer: currentResult.customer,
-          event: currentResult.event,
-          objective: currentResult.objective,
-          customRules: customPolicyRules,
-          customPolicyDocText: customPolicyDocText || undefined,
-          useSamplePolicyTree: true,
-        });
-      } else {
-        await handleRunOrchestration({
-          customerProfileText: "Customer: Standard Customer, Segment: Standard",
-          eventHistoryText: "Payment succeeded for online transaction, order confirmation pending",
-          objectiveText: "Primary Objective: Reassure customer of order status and payment safety",
-          customRules: customPolicyRules,
-          customPolicyDocText: customPolicyDocText || undefined,
-          useSamplePolicyTree: true,
-        });
-      }
-      setActiveTab('control-room');
-    } finally {
-      setIsApplyingPolicy(false);
+  // 2. Apply generated policy tree and return to Communication Brief (no premature generation)
+  const handleApplyPolicy = () => {
+    // Clear stale session result so Decision & Previews only activates once user generates a fresh message
+    setCurrentResult(null);
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem('aurora_session_current_result');
+      } catch (e) {}
     }
+    // Land user cleanly on the Communication Brief
+    setActiveTab('brief');
   };
 
 
@@ -623,7 +607,7 @@ export default function Home() {
                   const el = document.getElementById('policy-uploader-card');
                   if (el) el.scrollIntoView({ behavior: 'smooth' });
                 }}
-                onApplyToCurrentRun={handleApplyToCurrentRun}
+                onApplyToCurrentRun={handleApplyPolicy}
                 canApplyToCurrentRun={Boolean(customPolicyTree || (customPolicyRules && customPolicyRules.length > 0))}
                 isApplying={isApplyingPolicy}
               />
@@ -636,7 +620,7 @@ export default function Home() {
           </div>
         )}
 
-        {/* Tab 4: Knowledge Base */}
+        {/* Tab 4: Communication Governance & Standards */}
         {activeTab === 'knowledge-base' && (
           <KnowledgeBaseView
             customPolicyTree={customPolicyTree}

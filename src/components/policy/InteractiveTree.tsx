@@ -168,7 +168,7 @@ export const InteractiveTree: React.FC<InteractiveTreeProps> = ({
               }`}
             >
               <Sparkles strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>{isApplying ? 'Applying & Regenerating...' : 'Apply to Current Run'}</span>
+              <span>Apply the Policy</span>
             </button>
           )}
         </div>

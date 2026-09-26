@@ -68,8 +68,8 @@ export const Header: React.FC<HeaderProps> = ({
     },
     {
       id: 'knowledge-base' as const,
-      label: 'Knowledge Rules',
-      description: 'Explore agent rules, personas, pipeline steps, and scoring formulas',
+      label: 'Communication Governance & Standards',
+      description: 'Review corporate policy trees, channel guidelines, personas, and safety guardrails',
       icon: BookOpen,
     },
     {
@@ -156,8 +156,8 @@ export const Header: React.FC<HeaderProps> = ({
                       activeTab === 'knowledge-base' ? 'text-white' : 'text-aurora-neutral-500'
                     }`}
                   />
-                  <span className="hidden sm:inline">Knowledge Rules</span>
-                  <span className="sm:hidden">Rules</span>
+                  <span className="hidden sm:inline">Governance & Standards</span>
+                  <span className="sm:hidden">Standards</span>
                 </button>
 
                 <button

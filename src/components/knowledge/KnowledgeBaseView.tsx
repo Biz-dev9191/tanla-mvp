@@ -200,11 +200,11 @@ export const KnowledgeBaseView: React.FC<KnowledgeBaseViewProps> = ({
         <div>
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-aurora-primary bg-aurora-primary-light px-3 py-1.5 rounded-md">
-              Knowledge Rules
+              Communication Governance & Standards
             </span>
           </div>
           <p className="text-sm text-aurora-neutral-700 mt-1 max-w-3xl leading-relaxed">
-            The central guide for AI agent governance rules, customer personas, multi-agent execution pipeline, channel guidelines, and scoring formulas.
+            The central enterprise reference for corporate policy trees, omnichannel guidelines, customer personas, agent directives, and scoring models.
           </p>
         </div>
 
