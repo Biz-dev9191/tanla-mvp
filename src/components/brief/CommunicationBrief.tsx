@@ -592,52 +592,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         </div>
       </div>
 
-      {/* Active Generated Output Notification (Ensures output remains visible & accessible on page change) */}
-      {currentResult && (
-        <div className="p-4 bg-emerald-50/90 border border-emerald-300/80 rounded-xl shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fadeIn">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-lg bg-emerald-600 text-white flex items-center justify-center flex-shrink-0 shadow-2xs">
-              <Check strokeWidth={2.5} className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-900">
-                  Active Generated Decision & Output Available
-                </span>
-                <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-200/80 text-emerald-900 px-2 py-0.5 rounded">
-                  {currentResult.strategy?.selectedChannel || 'Ready'}
-                </span>
-              </div>
-              <p className="text-xs text-emerald-800 mt-0.5">
-                Response active for <strong>{currentResult.customer?.name || 'Customer'}</strong> • Event: <strong>{currentResult.event?.title || 'Event'}</strong>. This information remains in the system across page changes.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 self-start sm:self-auto flex-shrink-0">
-            {onViewCurrentResult && (
-              <button
-                type="button"
-                onClick={onViewCurrentResult}
-                className="px-4 py-2 bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold rounded-lg shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5 cursor-pointer"
-              >
-                <span>View Decision & Previews</span>
-                <ArrowRight strokeWidth={2} className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {onResetCurrentResult && (
-              <button
-                type="button"
-                onClick={onResetCurrentResult}
-                className="px-3 py-2 bg-white hover:bg-red-50 text-aurora-neutral-600 hover:text-red-700 border border-aurora-neutral-300 text-xs font-semibold rounded-lg shadow-2xs transition cursor-pointer"
-                title="Discard this generated response"
-              >
-                <span>Clear Output</span>
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* 3-COLUMN BRIEF FORM */}
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
