@@ -203,9 +203,9 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
 
-  // Validation Error State & Gradual Disappearing Timers (1.2s visible + 0.6s gradual fade = 1.8s)
-  const [validationError, setValidationError] = useState<string | null>(null);
-  const [isValidationErrorFading, setIsValidationErrorFading] = useState<boolean>(false);
+  // Validation Error State & Gradual Full-Width Disappearing Timers (1.4s visible + 0.6s gradual collapse/fade = 2.0s)
+  const [displayedValidationError, setDisplayedValidationError] = useState<string | null>(null);
+  const [isValidationErrorVisible, setIsValidationErrorVisible] = useState<boolean>(false);
   const validationFadeTimerRef = useRef<NodeJS.Timeout | null>(null);
   const validationRemoveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -221,22 +221,21 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   };
 
   const triggerValidationError = (msg: string) => {
-    // If clicked multiple times, clear active timers, reset opacity, and override error message cleanly
+    // If clicked multiple times, clear active timers and override error message cleanly
     clearValidationTimers();
-    setIsValidationErrorFading(false);
-    setValidationError(msg);
+    setDisplayedValidationError(msg);
+    setIsValidationErrorVisible(true);
 
-    // Stay fully visible for 1.2s, then start gradual fade-out
+    // Stay fully visible for 1.4s, then start gradual smooth fade-out and collapse
     validationFadeTimerRef.current = setTimeout(() => {
-      setIsValidationErrorFading(true);
-    }, 1200);
+      setIsValidationErrorVisible(false);
+    }, 1400);
 
-    // Completely remove from DOM at 1.8s (after 600ms smooth gradual fade)
+    // Completely remove from DOM at 2.0s (after 600ms transition has completed)
     validationRemoveTimerRef.current = setTimeout(() => {
-      setValidationError(null);
-      setIsValidationErrorFading(false);
+      setDisplayedValidationError(null);
       clearValidationTimers();
-    }, 1800);
+    }, 2000);
   };
 
   // Cleanup timers on component unmount
@@ -248,31 +247,20 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
 
   // Remove validation error completely if no longer valid (user filled in required selection)
   useEffect(() => {
-    if (!validationError) return;
+    if (!displayedValidationError) return;
     const hasEvent = Boolean(structEventType || structEventTitle.trim() || eventPills.length > 0 || eventText.trim().length > 0);
-    const hasObjective = Boolean(structPrimaryObjective || structSecondaryObjective.trim() || objectivePills.length > 0 || objectiveText.trim().length > 0);
 
-    const clearAndReset = () => {
+    if (hasEvent) {
       clearValidationTimers();
-      setIsValidationErrorFading(false);
-      setValidationError(null);
-    };
-
-    if (validationError.includes('Business Event') && hasEvent) {
-      clearAndReset();
-    } else if (validationError.includes('Business Objective') && hasObjective) {
-      clearAndReset();
+      setIsValidationErrorVisible(false);
+      setDisplayedValidationError(null);
     }
   }, [
     structEventType,
     structEventTitle,
     eventPills,
     eventText,
-    structPrimaryObjective,
-    structSecondaryObjective,
-    objectivePills,
-    objectiveText,
-    validationError,
+    displayedValidationError,
   ]);
 
   // Save brief state to sessionStorage on any modification so state survives in-app tab/page changes
@@ -360,8 +348,8 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
       } catch (e) {}
     }
     clearValidationTimers();
-    setIsValidationErrorFading(false);
-    setValidationError(null);
+    setIsValidationErrorVisible(false);
+    setDisplayedValidationError(null);
     setSelectedCustomerId('');
     setSelectedEventId('');
     setSelectedObjectiveId('');
@@ -525,13 +513,13 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     const hasEventInPillsOrText = Boolean(eventPills.length > 0 || eventText.trim().length > 0);
 
     if (!hasEventInStructured && !hasEventInPillsOrText) {
-      triggerValidationError("Please select a Business Event (dropdown or pill) to proceed.");
+      triggerValidationError("Column 2 (Business Event *) is mandatory. Please select an Event Type in the Structured Form or choose an Event Pill in Text & Pills.");
       return;
     }
 
     clearValidationTimers();
-    setIsValidationErrorFading(false);
-    setValidationError(null);
+    setIsValidationErrorVisible(false);
+    setDisplayedValidationError(null);
 
     const hasSelectedObjective = Boolean(
       (objectiveTab === 'structured' && (structPrimaryObjective || structSecondaryObjective.trim())) ||
@@ -1348,21 +1336,21 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             </button>
           </div>
 
-          {/* Validation Error Alert Banner - Positioned BELOW Action Buttons with Smooth Height/Opacity Transitions */}
-          <div
-            className={`flex justify-end transition-all duration-500 ease-in-out overflow-hidden ${
-              validationError ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0 pointer-events-none'
-            }`}
-          >
+          {/* Validation Error Alert Banner - Covers Full Width of Page with Smooth Gradual Fade & Zero Ghost Box */}
+          {displayedValidationError && (
             <div
-              className={`w-full sm:w-auto min-w-[320px] max-w-md py-2 px-3 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2 text-xs font-medium shadow-2xs transition-all duration-600 ease-out transform ${
-                isValidationErrorFading ? 'opacity-0 -translate-y-1' : 'opacity-100 translate-y-0'
+              className={`w-full overflow-hidden transition-all duration-500 ease-in-out ${
+                isValidationErrorVisible
+                  ? 'max-h-24 opacity-100 mt-2'
+                  : 'max-h-0 opacity-0 mt-0 pointer-events-none'
               }`}
             >
-              <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />
-              <span>{validationError}</span>
+              <div className="w-full py-2.5 px-4 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2.5 text-xs font-medium shadow-2xs">
+                <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                <span>{displayedValidationError}</span>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </form>
     </div>
