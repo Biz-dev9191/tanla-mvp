@@ -50,32 +50,25 @@ export default function Home() {
     }
   }, [activeTab]);
 
-  // Load history and current active output from localStorage on mount
+  // On mount/refresh, ensure any old cached brief or current result keys are cleared
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
+        localStorage.removeItem('aurora_current_result');
+        localStorage.removeItem('aurora_brief_state');
         const savedHistory = localStorage.getItem('aurora_orchestration_history');
         if (savedHistory) {
           setHistory(JSON.parse(savedHistory));
         }
-        const savedResult = localStorage.getItem('aurora_current_result');
-        if (savedResult) {
-          setCurrentResult(JSON.parse(savedResult));
-        }
       } catch (e) {
-        console.warn('Could not load history or current result from storage:', e);
+        console.warn('Could not load history from storage:', e);
       }
     }
   }, []);
 
-  // Clear current active output from storage
+  // Clear current active output
   const handleResetCurrentResult = () => {
     setCurrentResult(null);
-    if (typeof window !== 'undefined') {
-      try {
-        localStorage.removeItem('aurora_current_result');
-      } catch (e) {}
-    }
   };
 
   // Run orchestration
@@ -121,11 +114,6 @@ export default function Home() {
       }
 
       setCurrentResult(data);
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.setItem('aurora_current_result', JSON.stringify(data));
-        } catch (e) {}
-      }
       setActiveTab('control-room');
     } catch (err: any) {
       setErrorMessage(err.message || 'An error occurred during agent orchestration.');
@@ -267,9 +255,6 @@ export default function Home() {
       },
     };
     setCurrentResult(updated);
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('aurora_current_result', JSON.stringify(updated)); } catch (e) {}
-    }
   };
 
   const handleRequestRevision = () => {
@@ -295,9 +280,6 @@ export default function Home() {
       },
     };
     setCurrentResult(updated);
-    if (typeof window !== 'undefined') {
-      try { localStorage.setItem('aurora_current_result', JSON.stringify(updated)); } catch (e) {}
-    }
   };
 
   return (
@@ -371,18 +353,16 @@ export default function Home() {
         )}
 
         {/* Tab 1: Communication Brief */}
-        {activeTab === 'brief' && (
-          <div id="brief-section">
-            <CommunicationBrief
-              onRunOrchestration={handleRunOrchestration}
-              isLoading={isLoading}
-              onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
-              currentResult={currentResult}
-              onViewCurrentResult={() => setActiveTab('control-room')}
-              onResetCurrentResult={handleResetCurrentResult}
-            />
-          </div>
-        )}
+        <div id="brief-section" className={activeTab === 'brief' ? 'block' : 'hidden'}>
+          <CommunicationBrief
+            onRunOrchestration={handleRunOrchestration}
+            isLoading={isLoading}
+            onNavigateToPolicyTree={() => setActiveTab('policy-tree')}
+            currentResult={currentResult}
+            onViewCurrentResult={() => setActiveTab('control-room')}
+            onResetCurrentResult={handleResetCurrentResult}
+          />
+        </div>
 
         {/* Tab 2: Agent Control Room */}
         {activeTab === 'control-room' && (

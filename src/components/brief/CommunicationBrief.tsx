@@ -138,140 +138,62 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   onViewCurrentResult,
   onResetCurrentResult,
 }) => {
-  // Helper to load stored brief state from localStorage on first mount
-  const [initialState] = useState<any>(() => {
+  // Ensure any stale brief storage from previous sessions is removed on mount
+  useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const raw = localStorage.getItem('aurora_brief_state');
-        if (raw) return JSON.parse(raw);
+        localStorage.removeItem('aurora_brief_state');
       } catch (e) {}
     }
-    return null;
-  });
+  }, []);
 
   // Scenario Presets Selection State (Unselected and Minimized by default)
-  const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(initialState?.isMatrixExpanded ?? false);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(initialState?.selectedCustomerId ?? '');
-  const [selectedEventId, setSelectedEventId] = useState<string>(initialState?.selectedEventId ?? '');
-  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>(initialState?.selectedObjectiveId ?? '');
+  const [isMatrixExpanded, setIsMatrixExpanded] = useState<boolean>(false);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState<string>('');
 
   // Column Tabs: Default to 'structured' on the LEFT
-  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>(initialState?.customerTab ?? 'structured');
-  const [eventTab, setEventTab] = useState<'structured' | 'text'>(initialState?.eventTab ?? 'structured');
-  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>(initialState?.objectiveTab ?? 'structured');
+  const [customerTab, setCustomerTab] = useState<'structured' | 'text'>('structured');
+  const [eventTab, setEventTab] = useState<'structured' | 'text'>('structured');
+  const [objectiveTab, setObjectiveTab] = useState<'structured' | 'text'>('structured');
 
   // Column 1 Structured & Text State (Default Empty)
-  const [structCustomerName, setStructCustomerName] = useState(initialState?.structCustomerName ?? '');
-  const [structEmail, setStructEmail] = useState(initialState?.structEmail ?? '');
-  const [structPhone, setStructPhone] = useState(initialState?.structPhone ?? '');
-  const [structAgeGroup, setStructAgeGroup] = useState<any>(initialState?.structAgeGroup ?? '25–34');
-  const [structSegment, setStructSegment] = useState<any>(initialState?.structSegment ?? 'Standard');
-  const [structDigitalProfile, setStructDigitalProfile] = useState<any>(initialState?.structDigitalProfile ?? 'Digital-first');
-  const [structConsentTx, setStructConsentTx] = useState(initialState?.structConsentTx ?? true);
-  const [structConsentPromo, setStructConsentPromo] = useState(initialState?.structConsentPromo ?? true);
-  const [structSentiment, setStructSentiment] = useState<any>(initialState?.structSentiment ?? 'Neutral');
-  const [structSupportContacts, setStructSupportContacts] = useState(initialState?.structSupportContacts ?? 0);
-  const [customerText, setCustomerText] = useState(initialState?.customerText ?? '');
-  const [customerPills, setCustomerPills] = useState<string[]>(initialState?.customerPills ?? []);
+  const [structCustomerName, setStructCustomerName] = useState('');
+  const [structEmail, setStructEmail] = useState('');
+  const [structPhone, setStructPhone] = useState('');
+  const [structAgeGroup, setStructAgeGroup] = useState<any>('25–34');
+  const [structSegment, setStructSegment] = useState<any>('Standard');
+  const [structDigitalProfile, setStructDigitalProfile] = useState<any>('Digital-first');
+  const [structConsentTx, setStructConsentTx] = useState(true);
+  const [structConsentPromo, setStructConsentPromo] = useState(true);
+  const [structSentiment, setStructSentiment] = useState<any>('Neutral');
+  const [structSupportContacts, setStructSupportContacts] = useState(0);
+  const [customerText, setCustomerText] = useState('');
+  const [customerPills, setCustomerPills] = useState<string[]>([]);
   const [customCustomerPillInput, setCustomCustomerPillInput] = useState('');
   const [isAddingCustomerPill, setIsAddingCustomerPill] = useState(false);
 
   // Column 2 Structured & Text State (Default Empty)
-  const [structEventType, setStructEventType] = useState<any>(initialState?.structEventType ?? 'payment_successful_order_failed');
-  const [structEventTitle, setStructEventTitle] = useState(initialState?.structEventTitle ?? '');
-  const [structTransactionId, setStructTransactionId] = useState(initialState?.structTransactionId ?? '');
-  const [structOrderId, setStructOrderId] = useState(initialState?.structOrderId ?? '');
-  const [structAmount, setStructAmount] = useState(initialState?.structAmount ?? '');
-  const [structVerifiedFacts, setStructVerifiedFacts] = useState(initialState?.structVerifiedFacts ?? '');
-  const [structResolutionStatus, setStructResolutionStatus] = useState<any>(initialState?.structResolutionStatus ?? 'Refund Initiated');
-  const [eventText, setEventText] = useState(initialState?.eventText ?? '');
-  const [eventPills, setEventPills] = useState<string[]>(initialState?.eventPills ?? []);
+  const [structEventType, setStructEventType] = useState<any>('payment_successful_order_failed');
+  const [structEventTitle, setStructEventTitle] = useState('');
+  const [structTransactionId, setStructTransactionId] = useState('');
+  const [structOrderId, setStructOrderId] = useState('');
+  const [structAmount, setStructAmount] = useState('');
+  const [structVerifiedFacts, setStructVerifiedFacts] = useState('');
+  const [structResolutionStatus, setStructResolutionStatus] = useState<any>('Refund Initiated');
+  const [eventText, setEventText] = useState('');
+  const [eventPills, setEventPills] = useState<string[]>([]);
   const [customEventPillInput, setCustomEventPillInput] = useState('');
   const [isAddingEventPill, setIsAddingEventPill] = useState(false);
 
   // Column 3 Structured & Text State (Default Empty)
-  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>(initialState?.structPrimaryObjective ?? 'resolve_issue');
-  const [structSecondaryObjective, setStructSecondaryObjective] = useState(initialState?.structSecondaryObjective ?? '');
-  const [objectiveText, setObjectiveText] = useState(initialState?.objectiveText ?? '');
-  const [objectivePills, setObjectivePills] = useState<string[]>(initialState?.objectivePills ?? []);
+  const [structPrimaryObjective, setStructPrimaryObjective] = useState<any>('resolve_issue');
+  const [structSecondaryObjective, setStructSecondaryObjective] = useState('');
+  const [objectiveText, setObjectiveText] = useState('');
+  const [objectivePills, setObjectivePills] = useState<string[]>([]);
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
-
-  // Save brief state to localStorage on any modification so state survives tab/page changes and reloads
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const briefData = {
-          isMatrixExpanded,
-          selectedCustomerId,
-          selectedEventId,
-          selectedObjectiveId,
-          customerTab,
-          eventTab,
-          objectiveTab,
-          structCustomerName,
-          structEmail,
-          structPhone,
-          structAgeGroup,
-          structSegment,
-          structDigitalProfile,
-          structConsentTx,
-          structConsentPromo,
-          structSentiment,
-          structSupportContacts,
-          customerText,
-          customerPills,
-          structEventType,
-          structEventTitle,
-          structTransactionId,
-          structOrderId,
-          structAmount,
-          structVerifiedFacts,
-          structResolutionStatus,
-          eventText,
-          eventPills,
-          structPrimaryObjective,
-          structSecondaryObjective,
-          objectiveText,
-          objectivePills,
-        };
-        localStorage.setItem('aurora_brief_state', JSON.stringify(briefData));
-      } catch (e) {}
-    }
-  }, [
-    isMatrixExpanded,
-    selectedCustomerId,
-    selectedEventId,
-    selectedObjectiveId,
-    customerTab,
-    eventTab,
-    objectiveTab,
-    structCustomerName,
-    structEmail,
-    structPhone,
-    structAgeGroup,
-    structSegment,
-    structDigitalProfile,
-    structConsentTx,
-    structConsentPromo,
-    structSentiment,
-    structSupportContacts,
-    customerText,
-    customerPills,
-    structEventType,
-    structEventTitle,
-    structTransactionId,
-    structOrderId,
-    structAmount,
-    structVerifiedFacts,
-    structResolutionStatus,
-    eventText,
-    eventPills,
-    structPrimaryObjective,
-    structSecondaryObjective,
-    objectiveText,
-    objectivePills,
-  ]);
 
   // Reset entire brief state
   const handleResetBrief = () => {
