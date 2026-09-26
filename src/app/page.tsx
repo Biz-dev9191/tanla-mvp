@@ -410,12 +410,12 @@ export default function Home() {
               {/* Minimal Trust Indicator Badges */}
               <div className="pt-8 sm:pt-10 grid grid-cols-2 sm:grid-cols-4 gap-4 text-left border-t border-aurora-neutral-200 text-xs font-medium text-aurora-neutral-700">
                 <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
-                  <div className="font-bold text-aurora-neutral-900">Context Grounded</div>
-                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Dual-mode brief input</p>
+                  <div className="font-bold text-aurora-neutral-900">Context Aware</div>
+                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Real-time customer signals & event history</p>
                 </div>
                 <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
                   <div className="font-bold text-aurora-neutral-900">Policy Governed</div>
-                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Dynamic document tree</p>
+                  <p className="text-aurora-neutral-500 text-[11px] mt-0.5">Automated enterprise compliance rules</p>
                 </div>
                 <div className="p-3 bg-aurora-neutral-0 rounded-lg border border-aurora-neutral-200">
                   <div className="font-bold text-aurora-neutral-900">Multi-Channel</div>
