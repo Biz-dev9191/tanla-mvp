@@ -10,6 +10,7 @@ import {
   X,
   ChevronRight,
   Home as HomeIcon,
+  Trash2,
 } from 'lucide-react';
 
 export type TabType = 'brief' | 'control-room' | 'policy-tree' | 'knowledge-base' | 'history' | 'home';
@@ -18,9 +19,17 @@ interface HeaderProps {
   activeTab?: TabType;
   onTabChange?: (tab: TabType) => void;
   hasActiveRun?: boolean;
+  onClearHistory?: () => void;
+  historyCount?: number;
 }
 
-export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange, hasActiveRun = false }) => {
+export const Header: React.FC<HeaderProps> = ({
+  activeTab = 'brief',
+  onTabChange,
+  hasActiveRun = false,
+  onClearHistory,
+  historyCount = 0,
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Close menu on ESC key
@@ -120,7 +129,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                       : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
                   }`}
                 >
-                  <BookOpen strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                  <BookOpen
+                    strokeWidth={1.5}
+                    className={`w-3.5 h-3.5 transition-colors ${
+                      activeTab === 'knowledge-base' ? 'text-white' : 'text-aurora-neutral-500'
+                    }`}
+                  />
                   <span className="hidden sm:inline">Knowledge Rules</span>
                   <span className="sm:hidden">Rules</span>
                 </button>
@@ -134,7 +148,12 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                       : 'text-aurora-neutral-700 hover:bg-aurora-neutral-100 hover:text-aurora-neutral-900 border border-transparent'
                   }`}
                 >
-                  <History strokeWidth={1.5} className="w-3.5 h-3.5 text-aurora-primary" />
+                  <History
+                    strokeWidth={1.5}
+                    className={`w-3.5 h-3.5 transition-colors ${
+                      activeTab === 'history' ? 'text-white' : 'text-aurora-neutral-500'
+                    }`}
+                  />
                   <span className="hidden sm:inline">Audit History</span>
                   <span className="sm:hidden">History</span>
                 </button>
@@ -227,6 +246,35 @@ export const Header: React.FC<HeaderProps> = ({ activeTab = 'brief', onTabChange
                     })}
                   </nav>
                 </div>
+              </div>
+
+              {/* Settings & Data Section */}
+              <div className="p-6 border-t border-aurora-neutral-200 bg-aurora-neutral-50/70 space-y-3">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-aurora-neutral-500 block">
+                  Settings & Data
+                </span>
+                {onClearHistory && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete all audit history records?')) {
+                        onClearHistory();
+                        setIsMenuOpen(false);
+                      }
+                    }}
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-white hover:bg-red-50 text-aurora-neutral-700 hover:text-red-700 border border-aurora-neutral-200 hover:border-red-200 text-xs font-semibold shadow-2xs transition group cursor-pointer"
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      <Trash2 strokeWidth={1.5} className="w-4 h-4 text-aurora-neutral-500 group-hover:text-red-600 transition" />
+                      <span>Delete Audit History</span>
+                    </div>
+                    {historyCount !== undefined && historyCount > 0 && (
+                      <span className="text-[10px] font-mono bg-aurora-neutral-100 group-hover:bg-red-100 text-aurora-neutral-600 group-hover:text-red-700 px-2 py-0.5 rounded font-bold transition">
+                        {historyCount} records
+                      </span>
+                    )}
+                  </button>
+                )}
               </div>
 
               {/* Drawer Footer */}

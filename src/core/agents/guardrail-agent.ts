@@ -113,11 +113,29 @@ export function runGuardrailAgent(
     `[Check 6 - Attention Fatigue Limit] 24h message count: ${totalRecent}/4 limit. Status: ${fatiguePass ? (isCriticalFinancial ? 'EXEMPTED (Critical Financial Event)' : 'PASSED') : 'FAILED (Suppression required)'}.`
   );
 
-  // Chain-of-thought 7: Verdict Computation & Revision Loop Decision
+  // Chain-of-thought 7: Strict Zero Unapproved Links Gate
+  // Regulations & User Mandate: Do not use unapproved links in generated communication; direct customer to app and web dashboard
+  const unapprovedLinkRegex = /https?:\/\/[^\s]+|auroracloud\.app[^\s]*|status\.auroracloud\.app[^\s]*/i;
+  const hasUnapprovedLinks =
+    unapprovedLinkRegex.test(fullText) ||
+    unapprovedLinkRegex.test(messages.whatsapp.body) ||
+    unapprovedLinkRegex.test(messages.sms.body) ||
+    unapprovedLinkRegex.test(messages.email.body);
+
+  if (hasUnapprovedLinks) {
+    violationCodes.push('UNAPPROVED_LINK_DETECTED');
+    actionableFeedback.push('Remove all raw or unapproved external URLs. Direct customer to take action via the app and web dashboard.');
+  }
+
+  chainOfThought.push(
+    `[Check 7 - Zero Unapproved Links & Dashboard Gate] External URL scan: ${hasUnapprovedLinks ? 'FAILED (Unapproved external link detected)' : 'PASSED (0 unapproved links; customer routed to app and web dashboard)'}.`
+  );
+
+  // Verdict Computation & Revision Loop Decision
   let status: 'PASS' | 'REVISE' | 'ESCALATE' | 'SUPPRESS' = 'PASS';
   let feedbackForRevision: string | undefined = undefined;
 
-  if (hasUnmaskedCard || hasExclamation || !lengthPass) {
+  if (hasUnmaskedCard || hasExclamation || !lengthPass || hasUnapprovedLinks) {
     if (revisionCount < 2) {
       status = 'REVISE';
       feedbackForRevision = actionableFeedback.join(' ');

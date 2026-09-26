@@ -68,21 +68,10 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
         </div>
 
         <div className="flex items-center space-x-2 self-start sm:self-auto">
-          {history.length > 0 && onClearHistory && (
-            <button
-              type="button"
-              onClick={onClearHistory}
-              className="px-3 py-2 bg-aurora-neutral-100 hover:bg-red-50 hover:text-red-700 hover:border-red-300 border border-aurora-neutral-300 text-aurora-neutral-700 rounded-md text-xs font-semibold shadow-xs transition flex items-center space-x-1.5"
-            >
-              <Trash2 strokeWidth={1.5} className="w-3.5 h-3.5" />
-              <span>Clear History</span>
-            </button>
-          )}
-
           <button
             type="button"
             onClick={onNewRun}
-            className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5"
+            className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-bold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center space-x-1.5 cursor-pointer"
           >
             <span>New Communication</span>
             <ArrowRight strokeWidth={1.5} className="w-4 h-4" />
@@ -124,9 +113,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               <tbody className="divide-y divide-aurora-neutral-200/70">
                 {history.map((run) => (
                   <tr key={run.id} className="hover:bg-aurora-neutral-100/60 transition">
-                    <td className="py-3 px-4 font-mono text-[11px] text-aurora-neutral-500">
-                      <div>{run.id}</div>
-                      <div className="text-[10px]">{new Date(run.timestamp).toLocaleTimeString()}</div>
+                    <td className="py-3 px-4 font-mono text-[11px]">
+                      <div className="font-bold text-aurora-neutral-900">{run.id}</div>
+                      <div className="text-[10px] text-aurora-neutral-500 font-sans mt-0.5 whitespace-nowrap">
+                        {new Date(run.timestamp).toLocaleDateString([], { day: '2-digit', month: 'short' })}, {new Date(run.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </div>
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-bold text-aurora-neutral-900">{run.customer.name}</div>
@@ -137,8 +128,15 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
                     <td className="py-3 px-4 max-w-xs truncate text-aurora-neutral-700">
                       {run.event.title}
                     </td>
-                    <td className="py-3 px-4 text-aurora-neutral-900 font-medium">
-                      {run.objective.primary.replace(/_/g, ' ')}
+                    <td className="py-3 px-4 max-w-xs">
+                      <div className="font-semibold text-aurora-neutral-900 capitalize">
+                        {run.objective.primary.replace(/_/g, ' ')}
+                      </div>
+                      {run.objective.secondary && run.objective.secondary.toLowerCase() !== run.objective.primary.replace(/_/g, ' ').toLowerCase() && (
+                        <div className="text-[11px] text-aurora-neutral-500 truncate mt-0.5" title={run.objective.secondary}>
+                          {run.objective.secondary}
+                        </div>
+                      )}
                     </td>
                     <td className="py-3 px-4 font-semibold text-aurora-primary font-mono text-[11px]">
                       {(() => {

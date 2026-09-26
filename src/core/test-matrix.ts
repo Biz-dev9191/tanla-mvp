@@ -146,8 +146,8 @@ export const MATRIX_EVENTS: MatrixBusinessEvent[] = [
     orderId: 'ORD-8832',
     amount: '$120.00',
     resolutionStatus: 'Requires Customer Action',
-    verifiedFacts: 'Payment attempt PAY_FAIL_1092 ($120.00) declined by issuer, Order #ORD-8832 held in pending reserve for 2 hours, Secure 1-tap retry link generated',
-    descriptionText: 'Payment attempt of $120.00 (ID: PAY_FAIL_1092) for order #ORD-8832 was declined by your bank. Order is held for 2 hours. Secure retry link: https://auroracloud.app/pay/ORD-8832',
+    verifiedFacts: 'Payment attempt PAY_FAIL_1092 ($120.00) declined by issuer, Order #ORD-8832 held in pending reserve for 2 hours, Retry via app and web dashboard',
+    descriptionText: 'Payment attempt of $120.00 (ID: PAY_FAIL_1092) for order #ORD-8832 was declined by your bank. Order is held for 2 hours. Retry payment securely via your app or web dashboard.',
     pills: ['Payment Failed'],
   },
   {
@@ -160,7 +160,7 @@ export const MATRIX_EVENTS: MatrixBusinessEvent[] = [
     amount: 'N/A',
     resolutionStatus: 'Requires Customer Action',
     verifiedFacts: 'Application #APP-9921 identity approved, Address verification document needed by Oct 15, Utility bill or bank statement acceptable',
-    descriptionText: 'Application #APP-9921 identity check approved. Residential address proof (utility bill or bank statement from last 3 months) required by October 15, 2026. Secure upload: https://auroracloud.app/verify/APP-9921',
+    descriptionText: 'Application #APP-9921 identity check approved. Residential address proof (utility bill or bank statement from last 3 months) required by October 15, 2026. Upload securely through your app or web dashboard.',
     pills: ['Incomplete Application / Pending KYC'],
   },
   {
@@ -228,8 +228,8 @@ export const MATRIX_OBJECTIVES: MatrixBusinessObjective[] = [
     id: 'obj-5-action-resumption',
     label: '5. Drive Single-Click Resumption & Completion (KYC / Payment Retry)',
     primary: 'complete_application',
-    secondary: 'Clear deadline, acceptable document list, single-tap secure upload link',
-    descriptionText: 'Drive fast, frictionless document submission or payment retry with clear deadline and single-click secure action link.',
+    secondary: 'Clear deadline, acceptable document list, app and web dashboard guidance',
+    descriptionText: 'Drive fast, frictionless document submission or payment retry with clear deadline via your app and web dashboard.',
     pills: ['Complete Onboarding', 'Recover Revenue'],
   },
 ];

@@ -521,8 +521,12 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     };
 
     const objectivePayload: BusinessObjective = {
-      primary: structPrimaryObjective || 'resolve_issue',
-      secondary: structSecondaryObjective.trim() || (structPrimaryObjective ? structPrimaryObjective.replace(/_/g, ' ') : 'Resolve issue proactively'),
+      primary: objectiveTab === 'structured'
+        ? (structPrimaryObjective || 'resolve_issue')
+        : (structPrimaryObjective || (undefined as any)),
+      secondary: objectiveTab === 'structured'
+        ? (structSecondaryObjective.trim() || (structPrimaryObjective ? structPrimaryObjective.replace(/_/g, ' ') : 'Resolve issue proactively'))
+        : (objectivePills[0] || structSecondaryObjective.trim() || (objectiveText.trim() ? objectiveText.trim().slice(0, 40) : undefined)),
       customNote: objectiveText.trim() || undefined,
     };
 

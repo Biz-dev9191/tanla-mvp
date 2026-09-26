@@ -35,7 +35,8 @@ async function runCoherenceTests() {
   assert(res1.event.amount === '$135.00', `Expected amount $135.00, got '${res1.event.amount}'`);
   assert(res1.messages.whatsapp.body.includes('ORD-5541') || res1.messages.whatsapp.body.includes('delayed'), 'WhatsApp message should ground in order ORD-5541 or delay');
   assert(res1.messages.whatsapp.body.includes('SHIPFREE') || res1.messages.whatsapp.body.includes('waive') || res1.messages.whatsapp.body.includes('$15'), 'WhatsApp message should cite voucher SHIPFREE or fee waiver');
-  assert(res1.messages.whatsapp.body.includes('auroracloud.app/track'), 'WhatsApp should provide tracking link');
+  assert(res1.messages.whatsapp.body.toLowerCase().includes('dashboard'), 'WhatsApp should direct customer to dashboard');
+  assert(!res1.messages.whatsapp.body.includes('https://'), 'WhatsApp must not contain raw unapproved URLs');
   assert(!res1.messages.whatsapp.body.includes('!'), 'WhatsApp must have zero exclamation marks');
   assert(!res1.messages.sms.body.includes('!'), 'SMS must have zero exclamation marks');
   assert(!res1.messages.email.body.includes('!'), 'Email must have zero exclamation marks');
@@ -50,7 +51,7 @@ async function runCoherenceTests() {
     customerPills: ["45–54", "High Value", "Mixed"],
     eventHistoryText: "Emergency database maintenance scheduled for Sunday Oct 4 from 02:00 UTC to 04:00 UTC. Cloud APIs will experience up to 15 mins latency.",
     eventPills: ["Service Disruption / Maintenance"],
-    objectiveText: "Notify admin in advance, reassure that all data is encrypted and backed up, provide status link status.auroracloud.app, and minimize support tickets.",
+    objectiveText: "Notify admin in advance, reassure that all data is encrypted and backed up, provide status via dashboard, and minimize support tickets.",
     objectivePills: ["Resolve Issue Proactively", "Minimise Support Contacts"],
     useSamplePolicyTree: true,
   };
@@ -62,7 +63,8 @@ async function runCoherenceTests() {
   console.log(`- SMS Message (${res2.messages.sms.characterCount} chars):\n  "${res2.messages.sms.body}"`);
 
   assert(res2.event.eventType === 'service_disruption', `Expected 'service_disruption', got '${res2.event.eventType}'`);
-  assert(res2.messages.whatsapp.body.includes('status.auroracloud.app') || res2.messages.email.body.includes('status.auroracloud.app'), 'Should include live status URL');
+  assert(res2.messages.whatsapp.body.toLowerCase().includes('dashboard') || res2.messages.email.body.toLowerCase().includes('dashboard'), 'Should direct customer to dashboard');
+  assert(!res2.messages.whatsapp.body.includes('status.auroracloud.app'), 'Should not contain raw unapproved URL');
   assert(res2.messages.whatsapp.body.toLowerCase().includes('maintenance') || res2.messages.whatsapp.body.toLowerCase().includes('advisory'), 'Should cite maintenance/advisory');
   assert(!res2.messages.whatsapp.body.includes('!'), 'Zero exclamation marks verified in WhatsApp');
   assert(!res2.messages.email.body.includes('!'), 'Zero exclamation marks verified in Email');
@@ -76,7 +78,7 @@ async function runCoherenceTests() {
     customerPills: ["18–24", "Standard", "Digital-first"],
     eventHistoryText: "Payment of $49.00 declined by issuing bank for annual subscription renewal. Card ending 3381 expired.",
     eventPills: ["Payment Failed"],
-    objectiveText: "Prompt customer to update payment card with secure 1-click retry link before midnight to prevent service interruption.",
+    objectiveText: "Prompt customer to update payment card securely via app and web dashboard before midnight to prevent service interruption.",
     objectivePills: ["Recover Revenue", "Resolve Issue Proactively"],
     useSamplePolicyTree: true,
   };
@@ -87,7 +89,8 @@ async function runCoherenceTests() {
   console.log(`- WhatsApp Message:\n  "${res3.messages.whatsapp.body.slice(0, 150)}..."`);
 
   assert(res3.event.eventType === 'payment_failed', `Expected 'payment_failed', got '${res3.event.eventType}'`);
-  assert(res3.messages.whatsapp.body.includes('auroracloud.app/pay/retry'), 'WhatsApp should provide retry URL');
+  assert(res3.messages.whatsapp.body.toLowerCase().includes('dashboard'), 'WhatsApp should provide retry guidance in dashboard');
+  assert(!res3.messages.whatsapp.body.includes('auroracloud.app/pay'), 'WhatsApp must not contain unapproved URLs');
   assert(res3.messages.whatsapp.body.includes('$49.00') || res3.messages.whatsapp.body.includes('declined'), 'Should cite decline / amount');
   assert(!res3.messages.whatsapp.body.includes('!'), 'Zero exclamation marks in WhatsApp');
   assert(res3.messages.sms.characterCount <= 160, `SMS character limit exceeded (${res3.messages.sms.characterCount})`);
@@ -101,7 +104,7 @@ async function runCoherenceTests() {
     customerPills: ["35–44", "New Customer", "Digital-first"],
     eventHistoryText: "Loan application APP-8820: Identity verified, but recent electricity utility bill / address proof missing.",
     eventPills: ["Incomplete Application / Pending KYC"],
-    objectiveText: "Guide customer to upload utility bill through secure portal by Friday to finalize loan approval.",
+    objectiveText: "Guide customer to upload utility bill through app and web dashboard by Friday to finalize loan approval.",
     objectivePills: ["Complete Onboarding"],
     useSamplePolicyTree: true,
   };
@@ -113,7 +116,8 @@ async function runCoherenceTests() {
 
   assert(res4.event.eventType === 'application_incomplete', `Expected 'application_incomplete', got '${res4.event.eventType}'`);
   assert(res4.event.orderId === 'APP-8820', `Expected orderId APP-8820, got '${res4.event.orderId}'`);
-  assert(res4.messages.whatsapp.body.includes('auroracloud.app/verify'), 'Should include verify URL');
+  assert(res4.messages.whatsapp.body.toLowerCase().includes('dashboard'), 'Should direct to upload in dashboard');
+  assert(!res4.messages.whatsapp.body.includes('auroracloud.app/verify'), 'Should not contain unapproved verify URL');
   assert(res4.messages.whatsapp.body.toLowerCase().includes('utility bill') || res4.messages.whatsapp.body.toLowerCase().includes('document'), 'Should specify document');
   assert(!res4.messages.whatsapp.body.includes('!'), 'Zero exclamation marks');
   assert(res4.messages.sms.characterCount <= 160, `SMS character limit exceeded (${res4.messages.sms.characterCount})`);

@@ -303,29 +303,29 @@ export function runObjectiveResolutionAgent(
     case 'payment_failed':
       recommendedCustomerAction = 'Retry Payment';
       customerActionFriction = 'Low (1-Click)';
-      resolutionSummary = `Secure 1-click retry link provided to re-attempt authorization without re-entering billing details (${event.amount ? `Amount: ${event.amount}` : 'captured amount'}).`;
-      deflectionStrategy = "Eliminate checkout abandonment and inbound queries by offering an instant idempotent retry link.";
+      resolutionSummary = `Secure payment retry instructions provided via app and web dashboard to re-attempt authorization without re-entering billing details (${event.amount ? `Amount: ${event.amount}` : 'captured amount'}).`;
+      deflectionStrategy = "Eliminate checkout abandonment and inbound queries by offering frictionless retry via app and web dashboard.";
       break;
 
     case 'application_incomplete':
       recommendedCustomerAction = 'Upload Document';
       customerActionFriction = 'Moderate (Doc Upload)';
-      resolutionSummary = `Direct secure upload link provided to submit missing documentation for ${event.orderId || 'your application'} before the stated deadline.`;
+      resolutionSummary = `Direct secure upload guidance provided to submit missing documentation for ${event.orderId || 'your application'} via app and web dashboard before the stated deadline.`;
       deflectionStrategy = "Specify exact document formats and a clear deadline to prevent incomplete or duplicate submissions.";
       break;
 
     case 'order_delayed':
       recommendedCustomerAction = 'Track Shipment';
       customerActionFriction = 'Zero Friction';
-      resolutionSummary = `Proactive delay notification for ${event.orderId ? `Order ${event.orderId}` : 'your shipment'}. Real-time tracking link and revised delivery ETA provided. Zero customer inquiry needed.`;
-      deflectionStrategy = "Proactively communicate delay cause and live tracking link to eliminate status-check support tickets.";
+      resolutionSummary = `Proactive delay notification for ${event.orderId ? `Order ${event.orderId}` : 'your shipment'}. Real-time tracking via app and web dashboard and revised delivery ETA provided. Zero customer inquiry needed.`;
+      deflectionStrategy = "Proactively communicate delay cause and live tracking in app and web dashboard to eliminate status-check support tickets.";
       break;
 
     case 'service_disruption':
       recommendedCustomerAction = 'View Status';
       customerActionFriction = 'Zero Friction';
-      resolutionSummary = `Transparent maintenance and service availability update with live telemetry status link. Data integrity verified and restoration ETA provided.`;
-      deflectionStrategy = "Provide live system telemetry URL and advance notice to absorb inbound status checks.";
+      resolutionSummary = `Transparent maintenance and service availability update with live telemetry status in app and web dashboard. Data integrity verified and restoration ETA provided.`;
+      deflectionStrategy = "Provide live system telemetry updates on app and web dashboard with advance notice to absorb inbound status checks.";
       break;
 
     case 'customer_complaint':
@@ -338,8 +338,8 @@ export function runObjectiveResolutionAgent(
     case 'subscription_expiring':
       recommendedCustomerAction = 'Confirm Renewal';
       customerActionFriction = 'Low (1-Click)';
-      resolutionSummary = `Proactive subscription renewal notice for ${event.orderId ? `Plan ${event.orderId}` : 'your account'}${event.amount ? ` (${event.amount})` : ''} with 1-click confirmation link.`;
-      deflectionStrategy = "Provide transparent renewal terms and frictionless 1-click update to prevent involuntary churn and billing disputes.";
+      resolutionSummary = `Proactive subscription renewal notice for ${event.orderId ? `Plan ${event.orderId}` : 'your account'}${event.amount ? ` (${event.amount})` : ''} via app and web dashboard.`;
+      deflectionStrategy = "Provide transparent renewal terms and frictionless update via app and web dashboard to prevent involuntary churn and billing disputes.";
       break;
 
     default:

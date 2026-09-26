@@ -238,10 +238,15 @@ export default function Home() {
       }
     }
 
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const dateCompact = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}`;
+    const timeCompact = `${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
     const dispatchedRun: any = {
       ...currentResult,
-      id: `DISP-${Date.now()}`,
-      timestamp: new Date().toISOString(),
+      id: `DISP-${dateCompact}-${timeCompact}`,
+      timestamp: now.toISOString(),
       dispatchedChannel: dispatchedChannelName,
       strategy: {
         ...currentResult.strategy,
@@ -376,6 +381,8 @@ export default function Home() {
         activeTab={activeTab}
         onTabChange={(t) => setActiveTab(t)}
         hasActiveRun={Boolean(currentResult)}
+        onClearHistory={handleClearHistory}
+        historyCount={history.length}
       />
 
       {errorMessage && (

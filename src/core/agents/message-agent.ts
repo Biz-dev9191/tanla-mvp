@@ -119,77 +119,71 @@ export function runMessageGenerationAgent(
       : event.description.toLowerCase().includes('logistics') || event.description.toLowerCase().includes('hub')
       ? 'logistics sorting congestion at our regional hub'
       : 'unexpected transit delays';
-    
-    const trackUrl = hasOrderId ? `https://auroracloud.app/track/${event.orderId}` : 'https://auroracloud.app/track';
 
     if (isGenZ) {
-      waText = `${waGreeting} heads up that ${orderRef} is running slightly behind schedule due to ${delayReason}. We are prioritizing delivery and expect it to arrive within 2 to 3 business days.\n\nTrack package: ${trackUrl}${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nNo action needed on your end.`;
-      smsText = `Aurora Cloud: Hi ${firstName}, ${orderRef} delayed due to transit conditions. Live tracking: auroracloud.app/track/${event.orderId || 'pkg'}. No action needed.`;
+      waText = `${waGreeting} heads up that ${orderRef} is running slightly behind schedule due to ${delayReason}. We are prioritizing delivery and expect it to arrive within 2 to 3 business days.\n\nTrack package live in your app and web dashboard.${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nNo action needed on your end.`;
+      smsText = `Aurora Cloud: Hi ${firstName}, ${orderRef} delayed due to transit conditions. Track live in your app and web dashboard. No action needed.`;
     } else if (isSenior) {
-      waText = `${waGreeting}\n\nWe are writing to provide you with a personal delivery update regarding ${orderRef}. Due to ${delayReason}, shipment delivery has been rescheduled to arrive within 2 to 3 business days.\n\nOur operations team is closely monitoring your shipment. You can track real-time delivery progress here:\n${trackUrl}${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nYou do not need to contact support or take any action. If you have any questions, our support team is available at 1800-000-287.\n\n${emailClosing}`;
-      smsText = `Aurora Cloud: Delivery update for ${orderRefCap}. Shipment rescheduled. Track live: auroracloud.app/track. No action required.`;
+      waText = `${waGreeting}\n\nWe are writing to provide you with a personal delivery update regarding ${orderRef}. Due to ${delayReason}, shipment delivery has been rescheduled to arrive within 2 to 3 business days.\n\nOur operations team is closely monitoring your shipment. You can track real-time delivery progress directly in your app and web dashboard.\n${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nYou do not need to contact support or take any action. If you have any questions, our support team is available at 1800-000-287.\n\n${emailClosing}`;
+      smsText = `Aurora Cloud: Delivery update for ${orderRefCap}. Shipment rescheduled. Track live in your app and web dashboard. No action required.`;
     } else {
-      waText = `${waGreeting} we wanted to proactively inform you that ${orderRef} is delayed due to ${delayReason}.\n\nOur logistics team has prioritized your parcel, and delivery is now estimated within 2 to 3 business days.\n\nLive tracking link:\n${trackUrl}${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nNo action is required from your side. We apologize for the delay and appreciate your understanding.`;
-      smsText = `Aurora Cloud: Hi ${firstName}, ${orderRef} delayed by transit congestion. Track live: auroracloud.app/track. No action needed.`;
+      waText = `${waGreeting} we wanted to proactively inform you that ${orderRef} is delayed due to ${delayReason}.\n\nOur logistics team has prioritized your parcel, and delivery is now estimated within 2 to 3 business days.\n\nYou can track real-time delivery progress directly in your app and web dashboard.${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nNo action is required from your side. We apologize for the delay and appreciate your understanding.`;
+      smsText = `Aurora Cloud: Hi ${firstName}, ${orderRef} delayed by transit congestion. Track live in your app and web dashboard. No action needed.`;
     }
 
     emailSubject = hasOrderId ? `Delivery update: Order ${event.orderId} status and tracking` : `Delivery update regarding your recent order`;
-    emailBody = `${emailGreeting}\n\nWe are reaching out with an update regarding your delivery for ${orderRef}.\n\nDue to ${delayReason}, your shipment has encountered a delay and is now scheduled for delivery within the next 2 to 3 business days.\n\nShipment details:\n- Order Reference: ${event.orderId || 'Aurora Order'}\n- Current Status: In transit (Priority routing)\n${hasAmount ? `- Order Value: ${event.amount}\n` : ''}${customGoodwillSentence ? `- Goodwill Resolution: ${customGoodwillSentence}\n` : ''}\nYou can track the updated delivery progress in real time here:\n${trackUrl}\n\nNext steps:\n- No action is needed from you. We are tracking the package to ensure safe arrival.\n- For any questions, please reply directly to this notification.\n\nThank you for your patience and support.\n\n${emailClosing}`;
+    emailBody = `${emailGreeting}\n\nWe are reaching out with an update regarding your delivery for ${orderRef}.\n\nDue to ${delayReason}, your shipment has encountered a delay and is now scheduled for delivery within the next 2 to 3 business days.\n\nShipment details:\n- Order Reference: ${event.orderId || 'Aurora Order'}\n- Current Status: In transit (Priority routing)\n${hasAmount ? `- Order Value: ${event.amount}\n` : ''}${customGoodwillSentence ? `- Goodwill Resolution: ${customGoodwillSentence}\n` : ''}\nYou can track the updated delivery progress in real time through your app and web dashboard.\n\nNext steps:\n- No action is needed from you. We are tracking the package to ensure safe arrival.\n- For any questions, please reply directly to this notification.\n\nThank you for your patience and support.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is a courtesy update from Aurora Cloud regarding ${orderRef}. Your delivery is slightly delayed due to transit conditions and is expected within 2 to 3 days. Live tracking has been sent to your email. No action is required on your part. Thank you.`;
+    voiceScript = `Hello ${firstName}, this is a courtesy update from Aurora Cloud regarding ${orderRef}. Your delivery is slightly delayed due to transit conditions and is expected within 2 to 3 days. Live tracking is available in your app and web dashboard. No action is required on your part. Thank you.`;
 
   } else if (event.eventType === 'service_disruption') {
-    const statusUrl = 'https://status.auroracloud.app';
     const maintenanceDetails = event.description || 'Scheduled infrastructure maintenance is underway to enhance system resilience.';
 
-    waText = `${waGreeting} this is an advance service advisory regarding your Aurora Cloud account.\n\n${maintenanceDetails}\n\nKey highlights:\n- Account data and security are fully protected\n- Zero permanent data loss\n- Live status and progress: ${statusUrl}\n\nNo action is required from your side. Thank you for your cooperation.`;
-    smsText = `Aurora Cloud: Service advisory for ${firstName}. Scheduled update in progress. Systems safe. Track status: status.auroracloud.app`;
+    waText = `${waGreeting} this is an advance service advisory regarding your Aurora Cloud account.\n\n${maintenanceDetails}\n\nKey highlights:\n- Account data and security are fully protected\n- Zero permanent data loss\n- Live status and service telemetry are available in your app and web dashboard.\n\nNo action is required from your side. Thank you for your cooperation.`;
+    smsText = `Aurora Cloud: Service advisory for ${firstName}. Scheduled update in progress. Systems safe. Track status in your app and web dashboard.`;
 
     emailSubject = `Service Advisory: Scheduled system update and telemetry status`;
-    emailBody = `${emailGreeting}\n\nWe are writing to provide advance notice of an upcoming system maintenance window affecting Aurora Cloud services.\n\nMaintenance Summary:\n${maintenanceDetails}\n\nOperational Assurances:\n- All customer account configurations, data, and security policies remain fully protected with zero loss.\n- Automated failovers are in place to minimize operational disruption.\n- Real-time updates and restoration telemetry will be continuously posted at ${statusUrl}.\n\nNext steps:\n- No customer intervention is required.\n- If you notice unexpected behavior following maintenance, our 24/7 Operations Desk is available to assist.\n\nThank you for your continued partnership.\n\n${emailClosing}`;
+    emailBody = `${emailGreeting}\n\nWe are writing to provide advance notice of an upcoming system maintenance window affecting Aurora Cloud services.\n\nMaintenance Summary:\n${maintenanceDetails}\n\nOperational Assurances:\n- All customer account configurations, data, and security policies remain fully protected with zero loss.\n- Automated failovers are in place to minimize operational disruption.\n- Real-time updates and restoration telemetry are continuously posted in your app and web dashboard.\n\nNext steps:\n- No customer intervention is required.\n- If you notice unexpected behavior following maintenance, our 24/7 Operations Desk is available to assist.\n\nThank you for your continued partnership.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is Aurora Cloud with an automated service advisory. Scheduled system maintenance is in progress. All customer accounts and data are secure. For live updates, please check status.auroracloud.app. Thank you.`;
+    voiceScript = `Hello ${firstName}, this is Aurora Cloud with an automated service advisory. Scheduled system maintenance is in progress. All customer accounts and data are secure. For live updates, please check your app and web dashboard. Thank you.`;
 
   } else if (event.eventType === 'subscription_expiring') {
-    const renewUrl = hasOrderId ? `https://auroracloud.app/billing/renew/${event.orderId}` : 'https://auroracloud.app/billing/renew';
     const planName = event.orderId ? event.orderId : 'Aurora Cloud Subscription';
 
-    waText = `${waGreeting} this is a friendly reminder that your ${planName} is scheduled for renewal shortly${hasAmount ? ` (${event.amount})` : ''}.\n\nTo ensure continuous, uninterrupted access to all enterprise features, please confirm or update your renewal details below:\n${renewUrl}${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nOur team is available if you have any questions.`;
-    smsText = `Aurora Cloud: Hi ${firstName}, your ${planName} renews soon${hasAmount ? ` (${event.amount})` : ''}. Confirm renewal: auroracloud.app/renew`;
+    waText = `${waGreeting} this is a friendly reminder that your ${planName} is scheduled for renewal shortly${hasAmount ? ` (${event.amount})` : ''}.\n\nTo ensure continuous, uninterrupted access to all enterprise features, please review and confirm your renewal details in your app or web dashboard.${customGoodwillSentence ? `\n\n${customGoodwillSentence}` : ''}\n\nOur team is available if you have any questions.`;
+    smsText = `Aurora Cloud: Hi ${firstName}, your ${planName} renews soon${hasAmount ? ` (${event.amount})` : ''}. Confirm renewal in your app and web dashboard.`;
 
     emailSubject = `Notice: Upcoming subscription renewal for ${planName}`;
-    emailBody = `${emailGreeting}\n\nThank you for choosing Aurora Cloud as your trusted communication platform.\n\nThis is an advance notice that your subscription for ${planName} is approaching its scheduled renewal date.\n\nRenewal details:\n- Subscription: ${planName}\n${hasAmount ? `- Renewal Amount: ${event.amount}\n` : ''}- Status: Active (Scheduled for auto-renewal)\n${customGoodwillSentence ? `- Special Offer: ${customGoodwillSentence}\n` : ''}\nNext steps:\n- To review your plan, update payment method, or adjust preferences, visit your billing dashboard:\n${renewUrl}\n\nThank you for being a valued customer.\n\n${emailClosing}`;
+    emailBody = `${emailGreeting}\n\nThank you for choosing Aurora Cloud as your trusted communication platform.\n\nThis is an advance notice that your subscription for ${planName} is approaching its scheduled renewal date.\n\nRenewal details:\n- Subscription: ${planName}\n${hasAmount ? `- Renewal Amount: ${event.amount}\n` : ''}- Status: Active (Scheduled for auto-renewal)\n${customGoodwillSentence ? `- Special Offer: ${customGoodwillSentence}\n` : ''}\nNext steps:\n- To review your plan, update payment method, or adjust preferences, log in to your app and web dashboard.\n\nThank you for being a valued customer.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is a courtesy reminder from Aurora Cloud that your subscription is scheduled for renewal soon. To review your plan or update payment details, please check your email or visit your account portal. Thank you.`;
+    voiceScript = `Hello ${firstName}, this is a courtesy reminder from Aurora Cloud that your subscription is scheduled for renewal soon. To review your plan or update payment details, please log in to your app and web dashboard. Thank you.`;
 
   } else if (event.eventType === 'payment_failed') {
-    const retryUrl = hasOrderId ? `https://auroracloud.app/pay/retry/${event.orderId}` : 'https://auroracloud.app/pay/retry';
     const declineCard = event.verifiedFacts.find((f) => f.toLowerCase().includes('card')) || 'your registered payment card';
 
-    waText = `${waGreeting} we were unable to process your payment${amountRef ? ` of ${amountRef}` : ''} for ${orderRef} using ${declineCard}.\n\nTo keep your order active and prevent cancellation, please use our secure 1-click link to complete your payment within 24 hours:\n${retryUrl}\n\nNo re-registration is required. If you already completed this payment, please disregard this message.`;
-    smsText = `Aurora Cloud: Hi ${firstName}, payment for ${orderRef} was declined (${amountRef}). Complete payment securely within 24h: auroracloud.app/pay/retry`;
+    waText = `${waGreeting} we were unable to process your payment${amountRef ? ` of ${amountRef}` : ''} for ${orderRef} using ${declineCard}.\n\nTo keep your order active and prevent cancellation, please log in to your app or web dashboard to securely retry your payment within 24 hours.\n\nNo re-registration is required. If you already completed this payment, please disregard this message.`;
+    smsText = `Aurora Cloud: Hi ${firstName}, payment for ${orderRef} was declined (${amountRef}). Retry payment securely in your app and web dashboard within 24h.`;
 
     emailSubject = `Action required: Complete payment for ${orderRef}`;
-    emailBody = `${emailGreeting}\n\nWe encountered an issue while processing your recent payment for ${orderRef}.\n\nPayment details:\n- Order Reference: ${event.orderId || 'Aurora Order'}\n- Declining Method: ${declineCard}\n${hasAmount ? `- Amount: ${event.amount}\n` : ''}- Reason: Bank authorization was unsuccessful\n\nNext steps to complete your order:\n1. Click the secure payment retry link below:\n${retryUrl}\n2. Verify or update your payment details.\n3. The link will remain active for 24 hours.\n\nIf you have any questions or need assistance, please reply directly to this email.\n\n${emailClosing}`;
+    emailBody = `${emailGreeting}\n\nWe encountered an issue while processing your recent payment for ${orderRef}.\n\nPayment details:\n- Order Reference: ${event.orderId || 'Aurora Order'}\n- Declining Method: ${declineCard}\n${hasAmount ? `- Amount: ${event.amount}\n` : ''}- Reason: Bank authorization was unsuccessful\n\nNext steps to complete your order:\n1. Log in to your app or web dashboard.\n2. Verify or update your payment details.\n3. Complete the payment within 24 hours to keep your order active.\n\nIf you have any questions or need assistance, please reply directly to this email.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent payment attempt for ${orderRef}. The bank authorization was declined. Please check your email for a secure link to complete your payment within 24 hours. Thank you.`;
+    voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent payment attempt for ${orderRef}. The bank authorization was declined. Please log in to your app and web dashboard to complete your payment within 24 hours. Thank you.`;
 
   } else if (event.eventType === 'application_incomplete') {
     const appIdText = hasOrderId ? ` (${event.orderId})` : '';
-    const uploadUrl = hasOrderId ? `https://auroracloud.app/verify/${event.orderId}` : 'https://auroracloud.app/verify';
     const missingDoc = event.description.toLowerCase().includes('utility') || event.description.toLowerCase().includes('bill')
       ? 'recent utility bill (electricity, water, or gas)'
       : event.description.toLowerCase().includes('address')
       ? 'valid address proof document'
       : 'identity verification document';
 
-    waText = `${waGreeting} thank you for submitting your application${appIdText}. Your initial identity verification has been approved. To finalize account activation, please upload your ${missingDoc} by the stated deadline.\n\nSecure upload portal:\n${uploadUrl}\n\nOur team is available if you need any assistance.`;
-    smsText = `Aurora Cloud: Hi ${firstName}, ${missingDoc} required for application${appIdText}. Upload securely: ${uploadUrl}`;
+    waText = `${waGreeting} thank you for submitting your application${appIdText}. Your initial identity verification has been approved. To finalize account activation, please upload your ${missingDoc} through your app or web dashboard by the stated deadline.\n\nOur team is available if you need any assistance.`;
+    smsText = `Aurora Cloud: Hi ${firstName}, ${missingDoc} required for application${appIdText}. Upload securely via your app and web dashboard.`;
 
     emailSubject = hasOrderId ? `Action required: Submit documentation for application ${event.orderId}` : `Action required: Complete your application verification`;
-    emailBody = `${emailGreeting}\n\nThank you for submitting your application${appIdText} with Aurora Cloud.\n\nYour preliminary identity review has been approved. To finalize your onboarding and activate your account, we require one additional verification document.\n\nRequired document:\n- ${missingDoc}\n- Must be clearly legible and issued within the last 3 months.\n\nNext step:\nPlease upload your document through our secure portal:\n${uploadUrl}\n\nIf you have questions, our onboarding specialists are here to guide you.\n\n${emailClosing}`;
+    emailBody = `${emailGreeting}\n\nThank you for submitting your application${appIdText} with Aurora Cloud.\n\nYour preliminary identity review has been approved. To finalize your onboarding and activate your account, we require one additional verification document.\n\nRequired document:\n- ${missingDoc}\n- Must be clearly legible and issued within the last 3 months.\n\nNext step:\nPlease upload your document securely through your app or web dashboard under account verification.\n\nIf you have questions, our onboarding specialists are here to guide you.\n\n${emailClosing}`;
 
-    voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent application. We need one additional document to complete your account setup. Please check your email for the secure upload link. Thank you.`;
+    voiceScript = `Hello ${firstName}, this is Aurora Cloud regarding your recent application. We need one additional document to complete your account setup. Please log in to your app and web dashboard to upload the document. Thank you.`;
 
   } else if (event.eventType === 'customer_complaint') {
     const disputeIdText = hasOrderId ? ` (${event.orderId})` : hasPayId ? ` (${event.transactionId})` : '';
