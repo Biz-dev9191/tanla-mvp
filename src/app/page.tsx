@@ -392,7 +392,7 @@ export default function Home() {
               </h1>
 
               <p className="text-base sm:text-lg text-aurora-neutral-700 leading-relaxed max-w-2xl mx-auto">
-                An AI agent system that understands customer context, consults company policies, determines the communication strategy, crafts channel-tailored messages, validates deterministic safety guardrails, and executes live communications.
+                A multi-agent AI system that understands customer context, consults company policies, determines the communication strategy, and crafts channel-tailored messages within defined business guardrails
               </p>
 
               {/* ONLY Get Started CTA */}
