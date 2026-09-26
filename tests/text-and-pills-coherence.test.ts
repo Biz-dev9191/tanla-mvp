@@ -280,7 +280,156 @@ async function runCoherenceTests() {
   assert(res9.messages.whatsapp.body.includes('PEACE20'), 'Objective voucher note PEACE20 should be integrated into final copy');
   console.log('✅ Test 9 Passed: Narrative text successfully supplements unselected fields and vouchers.\n');
 
-  console.log('🎉 ALL 9 ACTIVE COHERENCE, HIERARCHY & TEXT/PILLS INTEGRATION TESTS PASSED SUCCESSFULLY!');
+  // Test 10: Omnichannel Persona Customization (WhatsApp & Voice Adapt by Persona Cohort)
+  console.log('--- Test 10: Omnichannel Persona Customization (WhatsApp & Voice) ---');
+  const baseOrderDelayedEvent = {
+    id: 'EVT-TEST-10',
+    eventType: 'order_delayed',
+    title: 'Shipment Delayed in Transit',
+    description: 'Order ORD-8812 is delayed due to winter storms along transit corridor.',
+    resolutionStatus: 'Rescheduled',
+    orderId: 'ORD-8812',
+  };
+
+  const payloadGenZ: StreamlinedBriefPayload = {
+    structuredCustomer: {
+      id: 'CUST-GENZ-10',
+      name: 'Leo Chen',
+      age: 21,
+      ageGroup: '18–24',
+      segment: 'Standard',
+      digitalProfile: 'Digital-first',
+      sentiment: 'Neutral',
+    },
+    customerPills: ['18–24', 'Standard', 'Digital-first'],
+    structuredEvent: baseOrderDelayedEvent,
+    eventPills: ['Order Delayed in Transit'],
+    structuredObjective: { primary: 'resolve_issue' },
+    useSamplePolicyTree: true,
+  };
+
+  const payloadSenior: StreamlinedBriefPayload = {
+    structuredCustomer: {
+      id: 'CUST-SR-10',
+      name: 'Eleanor Vance',
+      age: 69,
+      ageGroup: '55+',
+      segment: 'Standard',
+      digitalProfile: 'Assisted',
+      sentiment: 'Neutral',
+    },
+    customerPills: ['55+', 'Standard', 'Assisted'],
+    structuredEvent: baseOrderDelayedEvent,
+    eventPills: ['Order Delayed in Transit'],
+    structuredObjective: { primary: 'resolve_issue' },
+    useSamplePolicyTree: true,
+  };
+
+  const resGenZ = await orchestrateCommunication(payloadGenZ);
+  const resSenior = await orchestrateCommunication(payloadSenior);
+
+  console.log(`- Gen Z WhatsApp:\n  "${resGenZ.messages.whatsapp.body.slice(0, 120)}..."`);
+  console.log(`- Senior WhatsApp:\n  "${resSenior.messages.whatsapp.body.slice(0, 120)}..."`);
+  console.log(`- Gen Z Voice:\n  "${resGenZ.messages.voice.body}"`);
+  console.log(`- Senior Voice:\n  "${resSenior.messages.voice.body}"`);
+
+  // WhatsApp must differ based on persona
+  assert(resGenZ.messages.whatsapp.body !== resSenior.messages.whatsapp.body, 'WhatsApp must adapt language dynamically by persona cohort');
+  assert(resGenZ.messages.whatsapp.body.toLowerCase().includes('heads up'), 'Gen Z WhatsApp uses concise, modern tone');
+  assert(resSenior.messages.whatsapp.body.toLowerCase().includes('personal delivery update'), 'Senior WhatsApp uses respectful, reassuring tone');
+
+  // Voice script must differ based on persona
+  assert(resGenZ.messages.voice.body !== resSenior.messages.voice.body, 'Voice script must adapt phrasing dynamically by persona cohort');
+  assert(resGenZ.messages.voice.body.toLowerCase().includes('slightly behind schedule'), 'Gen Z voice uses conversational phrasing');
+  assert(resSenior.messages.voice.body.toLowerCase().includes('closely monitoring'), 'Senior voice uses reassuring, supportive phrasing');
+  console.log('✅ Test 10 Passed: WhatsApp and Voice dynamically adapt to customer personas.\n');
+
+  // Test 11: Omnichannel Regulatory DLT SMS Standardization (Strictly Invariant Across Cohorts)
+  console.log('--- Test 11: Omnichannel Regulatory DLT SMS Standardization ---');
+  console.log(`- Gen Z SMS (${resGenZ.messages.sms.characterCount} chars):\n  "${resGenZ.messages.sms.body}"`);
+  console.log(`- Senior SMS (${resSenior.messages.sms.characterCount} chars):\n  "${resSenior.messages.sms.body}"`);
+
+  // Both must be <= 160 characters (DLT constraint)
+  assert(resGenZ.messages.sms.characterCount <= 160, `Gen Z SMS exceeds 160 chars (${resGenZ.messages.sms.characterCount})`);
+  assert(resSenior.messages.sms.characterCount <= 160, `Senior SMS exceeds 160 chars (${resSenior.messages.sms.characterCount})`);
+
+  // SMS template structure must be identical across cohorts, differing only by customer name variable
+  const normalizedGenZSMS = resGenZ.messages.sms.body.replace('Leo Chen', '{CustomerName}');
+  const normalizedSeniorSMS = resSenior.messages.sms.body.replace('Eleanor Vance', '{CustomerName}');
+  assert(normalizedGenZSMS === normalizedSeniorSMS, 'SMS must use registered standard template across all cohorts to satisfy DLT compliance');
+  console.log('✅ Test 11 Passed: SMS adheres to registered DLT standard template invariant across cohorts.\n');
+
+  // Test 12: Omnichannel Event Gravity Governing Email
+  console.log('--- Test 12: Omnichannel Event Gravity Governing Email ---');
+  // Part A: Non-Critical Event (order_delayed) -> Persona-adaptive Email
+  const normEmailNonCritGenZ = resGenZ.messages.email.body.replace('Leo', '{FirstName}');
+  const normEmailNonCritSenior = resSenior.messages.email.body.replace('Eleanor', '{FirstName}');
+  assert(normEmailNonCritGenZ !== normEmailNonCritSenior, 'Non-critical Email must adapt tone and tenor to customer persona');
+  console.log('  Part A Passed: Non-critical Email successfully adapts tone for Gen Z vs Senior.');
+
+  // Part B: Critical Event (payment_failed) -> Formal Institutional Standard Template across all cohorts
+  const criticalEvent = {
+    id: 'EVT-CRIT-12',
+    eventType: 'payment_failed',
+    title: 'Payment Authorization Failed',
+    description: 'Transaction failed due to card authorization timeout.',
+    orderId: 'ORD-9901',
+    amount: '$120.00',
+    resolutionStatus: 'Payment Required',
+  };
+
+  const payloadGenZCrit: StreamlinedBriefPayload = {
+    ...payloadGenZ,
+    structuredEvent: criticalEvent,
+    eventPills: ['Payment Failed / Retry Link'],
+  };
+
+  const payloadSeniorCrit: StreamlinedBriefPayload = {
+    ...payloadSenior,
+    structuredEvent: criticalEvent,
+    eventPills: ['Payment Failed / Retry Link'],
+  };
+
+  const resGenZCrit = await orchestrateCommunication(payloadGenZCrit);
+  const resSeniorCrit = await orchestrateCommunication(payloadSeniorCrit);
+
+  const normEmailCritGenZ = resGenZCrit.messages.email.body.replace('Leo Chen', '{CustomerName}');
+  const normEmailCritSenior = resSeniorCrit.messages.email.body.replace('Eleanor Vance', '{CustomerName}');
+  assert(normEmailCritGenZ === normEmailCritSenior, 'Critical Email must use uniform formal institutional template across all cohorts');
+  assert(resGenZCrit.messages.email.subject === resSeniorCrit.messages.email.subject, 'Critical Email subject must be uniform across cohorts');
+  console.log('  Part B Passed: Critical Email strictly enforces formal institutional standard template across cohorts.');
+  console.log('✅ Test 12 Passed: Email dynamically switches between persona-adaptive (non-critical) and institutional standard (critical).\n');
+
+  // Test 13: Zero Manufactured Information & No Hallucinated Phone Numbers
+  console.log('--- Test 13: Zero Manufactured Phone Numbers & Synthetic Data ---');
+  const allOutputs = [
+    resGenZ.messages.whatsapp.body,
+    resGenZ.messages.voice.body,
+    resGenZ.messages.sms.body,
+    resGenZ.messages.email.body,
+    resSenior.messages.whatsapp.body,
+    resSenior.messages.voice.body,
+    resSenior.messages.sms.body,
+    resSenior.messages.email.body,
+    resGenZCrit.messages.whatsapp.body,
+    resGenZCrit.messages.voice.body,
+    resGenZCrit.messages.sms.body,
+    resGenZCrit.messages.email.body,
+    resSeniorCrit.messages.whatsapp.body,
+    resSeniorCrit.messages.voice.body,
+    resSeniorCrit.messages.sms.body,
+    resSeniorCrit.messages.email.body,
+  ];
+
+  for (const text of allOutputs) {
+    assert(!text.includes('1800-000-287'), 'Must not contain legacy hardcoded phone number 1800-000-287');
+    assert(!text.includes('1800-'), 'Must not fabricate toll-free numbers');
+    assert(!text.includes('auroracloud.app/verify'), 'Must not fabricate unverified links');
+    assert(!text.includes('!'), 'Must contain zero exclamation marks');
+  }
+  console.log('✅ Test 13 Passed: Zero manufactured telephone numbers or URLs across all generated messages.\n');
+
+  console.log('🎉 ALL 13 ACTIVE COHERENCE, HIERARCHY, PERSONA & GOVERNANCE TESTS PASSED SUCCESSFULLY!');
 }
 
 runCoherenceTests().catch((err) => {

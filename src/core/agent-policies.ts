@@ -463,28 +463,31 @@ export const AGENT_6_MESSAGE_POLICY: AgentGovernancePolicy = {
     'Voice Interactive Script (Phonetic clarity, conversational pacing, <= 500 chars)'
   ],
   permittedActions: [
-    'Include verified transaction ID, order ID, and refund timelines (3–5 business days)',
-    'Use persona-appropriate greetings (e.g. "Hi Aria," for Gen Z vs. "Dear Robert," for Baby Boomer)',
-    'Adapt message layout to channel constraints (bullet points for email, single paragraph for SMS)',
-    'Include direct 1-tap tracking link for self-service status verification'
+    'Adapt WhatsApp and Voice language, phrasing, and pacing dynamically based on customer persona',
+    'Enforce standard DLT-compliant templates for SMS across all cohorts with dynamic variable substitution',
+    'For Email: Use formal institutional standard templates for critical events; adapt tone to customer persona for non-critical events',
+    'Include verified transaction ID, order ID, and actual timelines when available',
+    'Direct customers to the official app and web dashboard for tracking and updates'
   ],
   prohibitedActions: [
     'NEVER USE EXCLAMATION MARKS (!) UNDER ANY CIRCUMSTANCES (STRICT CORPORATE RAILGUARD)',
+    'NEVER manufacture external URLs or fake phone numbers',
+    'NEVER manufacture non-existent order IDs or amounts when not present in the verified event',
+    'NEVER introduce conversational persona drift into SMS (must adhere to registered DLT template)',
     'NEVER exceed 160 characters in the SMS body payload',
     'NEVER exceed 1024 characters in the WhatsApp payload',
-    'NEVER use unverified promises (e.g. "refund instantly" instead of "initiated within 3–5 days")',
     'NEVER display unmasked 16-digit credit card numbers'
   ],
   strictRailguards: [
     'RG-MSG-01: ZERO EXCLAMATION MARKS — Any exclamation mark (!) constitutes an instant generation failure.',
-    'RG-MSG-02: SMS Character Cap — Body must be <= 160 characters strictly.',
-    'RG-MSG-03: Factual Fidelity — Every ID, amount, and timeframe must match the verified event facts exactly.',
-    'RG-MSG-04: Channel-Density Optimization — For SMS, condense greetings and boilerplate to fit essential verified facts within <= 160 characters without truncation.',
-    'RG-MSG-05: Brevity and Accuracy — Present banking refund timelines in crisp, grounded phrasing for younger personas without legalistic filler.'
+    'RG-MSG-02: SMS DLT Compliance — Body must match registered template with dynamic variables and be <= 160 characters strictly.',
+    'RG-MSG-03: Factual Fidelity — Every ID, amount, and timeframe must match the verified event facts exactly; no manufactured data.',
+    'RG-MSG-04: Email Gravity Bifurcation — High-gravity/critical events require formal institutional standard; non-critical events calibrate to persona.',
+    'RG-MSG-05: WhatsApp & Voice Persona Alignment — Dynamic calibration to customer demographic cohort, digital maturity, and sentiment.'
   ],
   antiHallucinationConstraints: [
-    'Do not invent discount coupons, compensation vouchers, or fake phone numbers.',
-    'Timelines must match enterprise SLA (3–5 business days for card refunds).'
+    'Do not invent external URLs, fake phone numbers, discount coupons, or compensation vouchers.',
+    'If order ID or amount is absent, use natural contextual fallbacks without inventing values.'
   ],
   rules: [
     {
@@ -497,25 +500,25 @@ export const AGENT_6_MESSAGE_POLICY: AgentGovernancePolicy = {
     },
     {
       ruleCode: 'MSG-SMS-002',
-      name: 'SMS 160-Character Limit',
-      description: 'SMS messages must fit into a single standard telecom segment of 160 characters.',
+      name: 'SMS DLT Regulatory Standardization',
+      description: 'SMS messages must fit into a single standard telecom segment of 160 characters using registered templates with variables.',
       category: 'Channel Constraints',
       enforcementLevel: 'MANDATORY',
-      railguardCheck: 'sms.body.length <= 160.'
+      railguardCheck: 'sms.body.length <= 160 and matches registered DLT structure.'
     },
     {
       ruleCode: 'MSG-FACT-003',
-      name: 'Verified Fact Ingestion',
-      description: 'Messages must include verified event facts such as Order ID and Refund Status.',
+      name: 'Verified Fact Ingestion & Zero Hallucination',
+      description: 'Messages must strictly use verified event telemetry and never manufacture fake links, numbers, or IDs.',
       category: 'Anti-Hallucination',
       enforcementLevel: 'MANDATORY',
-      railguardCheck: 'Verified facts present in message content.'
+      railguardCheck: 'No manufactured links or synthetic values present.'
     }
   ],
   decisionHeuristics: [
-    'For Gen Z persona: Use 2 concise sentences, friendly opening, zero corporate filler.',
-    'For Baby Boomer persona: Use respectful greeting, clear 3-step timeline, reference ID, and support signature.',
-    'For VIP persona: Acknowledge account standing with white-glove executive reassurance.'
+    'For WhatsApp & Voice: Customize language, tone, and pacing to customer persona (Gen Z: direct/modern, Senior: patient/reassuring, Millennial: data-efficient, VIP: concierge).',
+    'For SMS: Use standard DLT-compliant template with dynamic variables identical across all customer cohorts.',
+    'For Email: Evaluate event gravity. Use formal institutional template for critical events (failures, disputes, outages); customize tone by persona for non-critical events (delays, renewals, KYC).'
   ],
   escalationTriggers: [
     'Model output fails punctuation or length constraints after revision.'
