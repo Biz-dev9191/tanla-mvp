@@ -648,10 +648,6 @@ export default function Home() {
         {activeTab === 'history' && (
           <HistoryView
             history={history}
-            onSelectRun={(run) => {
-              setCurrentResult(run);
-              setActiveTab('control-room');
-            }}
             onNewRun={() => setActiveTab('brief')}
             onClearHistory={handleClearHistory}
           />

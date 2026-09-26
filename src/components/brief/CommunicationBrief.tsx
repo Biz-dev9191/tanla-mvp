@@ -589,6 +589,16 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
             <RotateCcw strokeWidth={1.75} className="w-3.5 h-3.5 text-aurora-neutral-500" />
             <span>Reset Brief</span>
           </button>
+
+          {currentResult && onViewCurrentResult && (
+            <button
+              type="button"
+              onClick={onViewCurrentResult}
+              className="px-4 py-2 bg-aurora-primary hover:bg-aurora-primary-hover text-white rounded-md text-xs font-semibold shadow-sm transition-all transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center cursor-pointer"
+            >
+              <span>Decision & Previews</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -1120,11 +1130,6 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
                   <h3 className="text-xs font-bold uppercase tracking-wider text-aurora-neutral-900">
                     Prefilled Test Scenarios
                   </h3>
-                  {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
-                    <span className="text-[10px] text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.2 rounded font-bold">
-                      Scenario Loaded
-                    </span>
-                  ) : null}
                 </div>
                 <p className="text-[11px] text-aurora-neutral-500 mt-0.5">
                   {selectedCustomerId || selectedEventId || selectedObjectiveId ? (
