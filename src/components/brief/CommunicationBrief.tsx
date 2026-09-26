@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StreamlinedBriefPayload, CustomerProfile, BusinessEvent, BusinessObjective, PreferredChannel } from '@/core/types';
 import {
   MATRIX_CUSTOMERS,
@@ -203,8 +203,61 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
   const [customObjectivePillInput, setCustomObjectivePillInput] = useState('');
   const [isAddingObjectivePill, setIsAddingObjectivePill] = useState(false);
 
-  // Validation Error State
+  // Validation Error State & 0.7s Disappearing Timer
   const [validationError, setValidationError] = useState<string | null>(null);
+  const validationTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const triggerValidationError = (msg: string) => {
+    // If clicked multiple times, clear active timer and override error message cleanly
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
+    setValidationError(msg);
+    // Disappear in 0.7s (700ms)
+    validationTimerRef.current = setTimeout(() => {
+      setValidationError(null);
+      validationTimerRef.current = null;
+    }, 700);
+  };
+
+  // Cleanup timer on component unmount
+  useEffect(() => {
+    return () => {
+      if (validationTimerRef.current) clearTimeout(validationTimerRef.current);
+    };
+  }, []);
+
+  // Remove validation error completely if no longer valid (user filled in required selection)
+  useEffect(() => {
+    if (!validationError) return;
+    const hasEvent = Boolean(structEventType || structEventTitle.trim() || eventPills.length > 0 || eventText.trim().length > 0);
+    const hasObjective = Boolean(structPrimaryObjective || structSecondaryObjective.trim() || objectivePills.length > 0 || objectiveText.trim().length > 0);
+
+    if (validationError.includes('Business Event') && hasEvent) {
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current);
+        validationTimerRef.current = null;
+      }
+      setValidationError(null);
+    } else if (validationError.includes('Business Objective') && hasObjective) {
+      if (validationTimerRef.current) {
+        clearTimeout(validationTimerRef.current);
+        validationTimerRef.current = null;
+      }
+      setValidationError(null);
+    }
+  }, [
+    structEventType,
+    structEventTitle,
+    eventPills,
+    eventText,
+    structPrimaryObjective,
+    structSecondaryObjective,
+    objectivePills,
+    objectiveText,
+    validationError,
+  ]);
 
   // Save brief state to sessionStorage on any modification so state survives in-app tab/page changes
   useEffect(() => {
@@ -289,6 +342,10 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
         sessionStorage.removeItem('aurora_session_brief_state');
         localStorage.removeItem('aurora_brief_state');
       } catch (e) {}
+    }
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
     }
     setValidationError(null);
     setSelectedCustomerId('');
@@ -454,7 +511,7 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     const hasEventInPillsOrText = Boolean(eventPills.length > 0 || eventText.trim().length > 0);
 
     if (!hasEventInStructured && !hasEventInPillsOrText) {
-      setValidationError("Column 2 (Business Event *) is mandatory. Please select an Event Type in the Structured Form or choose an Event Pill in Text & Pills.");
+      triggerValidationError("Please select a Business Event (dropdown or pill) to proceed.");
       return;
     }
 
@@ -463,10 +520,14 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
     const hasObjectiveInPillsOrText = Boolean(objectivePills.length > 0 || objectiveText.trim().length > 0);
 
     if (!hasObjectiveInStructured && !hasObjectiveInPillsOrText) {
-      setValidationError("Column 3 (Business Objective *) is mandatory. Please select a Primary Objective in the Structured Form or choose an Objective Pill / Statement in Text & Pills.");
+      triggerValidationError("Please select a Business Objective (dropdown or pill) to proceed.");
       return;
     }
 
+    if (validationTimerRef.current) {
+      clearTimeout(validationTimerRef.current);
+      validationTimerRef.current = null;
+    }
     setValidationError(null);
 
     const finalCustomerName = structCustomerName.trim() || 'Customer';
@@ -1243,14 +1304,11 @@ export const CommunicationBrief: React.FC<CommunicationBriefProps> = ({
           )}
         </div>
 
-        {/* Validation Error Alert Banner */}
+        {/* Validation Error Alert Banner - Compact & Auto-dismissing (0.7s) */}
         {validationError && (
-          <div className="p-4 bg-red-50 border border-red-300 rounded-xl text-red-900 flex items-start space-x-3 shadow-2xs animate-fadeIn">
-            <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-            <div className="flex-1">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-red-900">Required Selection Missing</h4>
-              <p className="text-xs text-red-800 mt-0.5 leading-relaxed">{validationError}</p>
-            </div>
+          <div className="py-2.5 px-3.5 bg-red-50 border border-red-200 rounded-lg text-red-800 flex items-center space-x-2 text-xs font-medium shadow-2xs animate-fadeIn transition-all duration-150">
+            <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0" />
+            <span>{validationError}</span>
           </div>
         )}
 
